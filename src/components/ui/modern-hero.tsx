@@ -1,11 +1,14 @@
-
 "use client";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useRotatingText } from "../hooks/use-rotating-text";
 
 export function ModernHero() {
+  const rotatingWords = ["مكتب سيارات", "مكتب تأجير", "مكتب عقارات"];
+  const currentRotatingWord = useRotatingText(rotatingWords, 2000);
+
   return (
     <div className="relative overflow-hidden">
       {/* خلفية بنمط Grid غير واضح */}
@@ -25,11 +28,17 @@ export function ModernHero() {
           >
             {/* تباين عالي وخط سميك */}
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold tracking-tight text-gray-900 dark:text-white">
-              صمم تجربة المستخدم 
-              <span className="inline-block bg-gradient-to-r from-purple-600 to-pink-500 bg-clip-text text-transparent px-2">
-                المثالية
+              خل عملاءك يوصلون لكل خدماتك{" "}
+              <span className="inline">
+                سواء كنت{" "}
+                <span
+                  key={currentRotatingWord}
+                  className="inline-block animate-fade-in bg-gradient-to-r from-purple-600 to-pink-500 bg-clip-text text-transparent px-2 transition-all duration-500"
+                  style={{ minWidth: 120 }}
+                >
+                  {currentRotatingWord}
+                </span>
               </span>
-              لعملائك
             </h1>
             
             {/* نص ثانوي ناعم */}
@@ -76,7 +85,7 @@ export function ModernHero() {
           >
             {[
               { metric: "+2,500", label: "عميل راضٍ" },
-              { metric: "+150", label: "دولة حول العالم" },
+              { metric: "+150", label: "دولة حو�� العالم" },
               { metric: "99.9%", label: "نسبة الاستقرار" },
               { metric: "24/7", label: "دعم فني متاح" },
             ].map((item, index) => (
