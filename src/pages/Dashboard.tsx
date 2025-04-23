@@ -41,10 +41,15 @@ const Dashboard = () => {
         // Generate the URL based on the slug from the office data
         const galleryUrl = data.slug ? `https://ad51.me/${data.slug}` : "#";
         
+        // Get the public URL for the logo from Supabase storage
+        const logoUrl = data.logo_url 
+          ? supabase.storage.from("office-assets").getPublicUrl(data.logo_url).data.publicUrl
+          : "/placeholder.svg";
+        
         setOffice({
           name: data.name || "اسم المعرض",
           url: galleryUrl,
-          logo_url: data.logo_url || "",
+          logo_url: logoUrl,
         });
         setLoading(false);
       }
