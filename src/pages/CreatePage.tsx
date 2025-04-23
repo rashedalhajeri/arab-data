@@ -8,6 +8,8 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { useImageUpload } from "@/components/hooks/use-image-upload";
 import { toast } from "@/components/ui/sonner";
 import { Database } from "@/integrations/supabase/types";
+import ImageCropper from "@/components/ui/ImageCropper";
+import { useCropper } from "@/components/hooks/use-cropper";
 
 const phoneLengths: Record<string, number> = {
   SA: 9,
@@ -42,21 +44,70 @@ const CreatePage = () => {
   const [phone, setPhone] = useState("");
   const [errors, setErrors] = useState<{ [k: string]: string }>({});
 
+  // شعار المكتب
   const {
-    previewUrl: logoPreview,
     fileInputRef: logoInput,
     handleThumbnailClick: openLogo,
-    handleFileChange: onLogoChange,
     handleRemove: removeLogo,
-  } = useImageUpload();
+  } = useImageUpload(); // سنعدل هذا قليلاً بالأسفل
 
+  // الغلاف
   const {
-    previewUrl: coverPreview,
     fileInputRef: coverInput,
     handleThumbnailClick: openCover,
-    handleFileChange: onCoverChange,
     handleRemove: removeCover,
   } = useImageUpload();
+
+  // قص الصورة للشعار
+  const logoCropper = useCropper();
+  const [logoTemp, setLogoTemp] = useState<string | null>(null);
+
+  // قص الصورة للغلاف
+  const coverCropper = useCropper();
+  const [coverTemp, setCoverTemp] = useState<string | null>(null);
+
+  // نعدل وظيفة رفع الشعار
+  const onLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        // افتح نافذة القص
+        setLogoTemp(reader.result as string);
+        logoCropper.openCropper(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // نعدل وظيفة رفع الغلاف
+  const onCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setCoverTemp(reader.result as string);
+        coverCropper.openCropper(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // لحفظ الصورة بعد القص للشعار
+  const handleCropLogo = (cropped: string) => {
+    setLogoTemp(null);
+    setLogoPreview(cropped);
+  };
+
+  // لحفظ الصورة بعد القص للغلاف
+  const handleCropCover = (cropped: string) => {
+    setCoverTemp(null);
+    setCoverPreview(cropped);
+  };
+
+  // states الإضافية
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [coverPreview, setCoverPreview] = useState<string | null>(null);
 
   const slugBase = "ad51.me/";
 
@@ -272,6 +323,24 @@ const CreatePage = () => {
           </form>
         </CardContent>
       </Card>
+      {/* cropper modal شعار المكتب */}
+      <ImageCropper
+        open={logoCropper.isOpen}
+        image={logoTemp}
+        onClose={logoCropper.closeCropper}
+        onCrop={handleCropLogo}
+        aspect={1}
+        title="قص الشعار"
+      />
+      {/* cropper modal الغلاف */}
+      <ImageCropper
+        open={coverCropper.isOpen}
+        image={coverTemp}
+        onClose={coverCropper.closeCropper}
+        onCrop={handleCropCover}
+        aspect={4/1}
+        title="قص الغلاف"
+      />
     </div>
   );
 };
