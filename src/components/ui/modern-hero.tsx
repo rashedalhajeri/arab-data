@@ -1,11 +1,21 @@
+
 "use client";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, LogIn } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useRotatingText } from "@/components/hooks/use-rotating-text"; // إضافة hook
 
 export function ModernHero() {
   const openOfficeLink = "https://dashboard.lovable.dev";
+
+  // النصوص الديناميكية
+  const rotatingOptions = [
+    "مكتب سيارات",
+    "مكتب تأجير",
+    "مكتب عقارات"
+  ];
+  const rotatingText = useRotatingText(rotatingOptions, 2000);
 
   return (
     <div className="relative overflow-hidden bg-white dark:bg-gray-900">
@@ -28,7 +38,15 @@ export function ModernHero() {
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold tracking-tight text-gray-900 dark:text-white">
               افتح مكتبك برابط واحد
             </h1>
-
+            {/* نص متغير ديناميكي */}
+            <div className="flex flex-col items-center">
+              <span className="text-lg md:text-2xl font-semibold text-sky-600 mb-2 animate-fade-in">
+                {`سواء كنت `}
+                <span className="bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent transition-all duration-300">
+                  {rotatingText}
+                </span>
+              </span>
+            </div>
             {/* نص ثانوي ناعم */}
             <p className="text-xl md:text-2xl text-gray-600 dark:text-gray-300 font-light max-w-3xl mx-auto">
               منصة متكاملة تساعدك على بناء واجهات برمجية عصرية بأقل جهد وأعلى كفاءة، مع توفير تجربة مستخدم فريدة.
@@ -94,3 +112,4 @@ export function ModernHero() {
     </div>
   );
 }
+
