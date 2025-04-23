@@ -2,7 +2,7 @@
 "use client";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, LogIn } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function ModernHero() {
@@ -13,7 +13,7 @@ export function ModernHero() {
         className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"
         aria-hidden="true"
       />
-      
+
       <div className="relative container mx-auto px-4 py-24 sm:px-6 lg:px-8 lg:py-32">
         <div className="flex flex-col items-center text-center space-y-12">
           {/* العنوان الرئيسي بخط سميك جدًا مع تأثير متحرك */}
@@ -27,13 +27,13 @@ export function ModernHero() {
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold tracking-tight text-gray-900 dark:text-white">
               !منصة مكتبك الإلكتروني
             </h1>
-            
+
             {/* نص ثانوي ناعم */}
             <p className="text-xl md:text-2xl text-gray-600 dark:text-gray-300 font-light max-w-3xl mx-auto">
               منصة متكاملة تساعدك على بناء واجهات برمجية عصرية بأقل جهد وأعلى كفاءة، مع توفير تجربة مستخدم فريدة.
             </p>
           </motion.div>
-          
+
           {/* أزرار Rounded وبارزة بظل لطيف */}
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
@@ -59,10 +59,11 @@ export function ModernHero() {
               size="lg"
               className="rounded-full border-2 px-8 py-6 font-medium shadow-md hover:shadow-lg transition-all duration-300"
             >
-              تواصل معنا
+              <LogIn className="ml-2 h-5 w-5 rtl:rotate-180" />
+              تسجيل الدخول
             </Button>
           </motion.div>
-          
+
           {/* مؤشر عدد العملاء */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -91,3 +92,4 @@ export function ModernHero() {
     </div>
   );
 }
+
