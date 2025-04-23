@@ -46,7 +46,6 @@ const Auth = () => {
         navigate('/');
       }
     };
-    
     checkUser();
   }, [navigate]);
 
@@ -55,12 +54,10 @@ const Auth = () => {
     e.preventDefault();
     setLoginLoading(true);
     setLoginError("");
-    
     const { error } = await supabase.auth.signInWithPassword({
       email: loginEmail,
       password: loginPassword,
     });
-    
     setLoginLoading(false);
 
     if (error) {
@@ -74,34 +71,32 @@ const Auth = () => {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validate password match
     if (signupPassword !== signupConfirmPassword) {
       setSignupError("كلمتا المرور غير متطابقتين.");
       toast.error("كلمتا المرور غير متطابقتين.");
       return;
     }
-    
+
     // Validate username
     if (!signupUsername.trim()) {
       setSignupError("الرجاء إدخال اسم المستخدم.");
       toast.error("الرجاء إدخال اسم المستخدم.");
       return;
     }
-    
+
     setSignupLoading(true);
     setSignupError("");
-    
+
     const { error } = await supabase.auth.signUp({
       email: signupEmail,
       password: signupPassword,
       options: {
-        data: { 
-          username: signupUsername 
-        }
+        data: { username: signupUsername }
       }
     });
-    
+
     setSignupLoading(false);
 
     if (error) {
@@ -110,7 +105,6 @@ const Auth = () => {
     } else {
       toast.success("تم إنشاء الحساب. تحقق من بريدك الإلكتروني.");
       setActiveTab("login");
-      
       // Reset form
       setSignupEmail("");
       setSignupUsername("");
@@ -124,11 +118,9 @@ const Auth = () => {
     setResetLoading(true);
     setResetMessage("");
     setResetError("");
-    
     const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
       redirectTo: window.location.origin + "/auth",
     });
-    
     setResetLoading(false);
 
     if (error) {
@@ -142,7 +134,7 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-sky-50 via-purple-100 to-pink-100 dark:from-gray-900 dark:via-indigo-950 dark:to-slate-900">
-      <Card className="w-full max-w-md glass rounded-3xl shadow-xl">
+      <Card className="w-full max-w-md glass rounded-3xl shadow-xl" dir="rtl">
         <CardHeader>
           <CardTitle className="flex flex-col items-center gap-2 text-center text-2xl md:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-500">
             {showReset ? (
@@ -170,8 +162,9 @@ const Auth = () => {
               value={activeTab}
               className="w-full"
               onValueChange={(val) => setActiveTab(val as "login" | "signup")}
+              dir="rtl"
             >
-              <TabsList className="w-full justify-center bg-muted mb-6 rounded-full gap-2">
+              <TabsList className="w-full justify-center bg-muted mb-6 rounded-full gap-2 flex-row-reverse" dir="rtl">
                 <TabsTrigger
                   value="login"
                   className="flex-1 text-base font-bold rounded-full"
@@ -186,39 +179,44 @@ const Auth = () => {
                 </TabsTrigger>
               </TabsList>
               <TabsContent value="login">
-                <form className="space-y-4" onSubmit={handleLogin}>
-                  <div>
-                    <label className="sr-only" htmlFor="login-email">
+                <form className="space-y-4 flex flex-col" onSubmit={handleLogin} dir="rtl" autoComplete="on">
+                  <div className="flex flex-col gap-2">
+                    <label className="text-right text-sm font-bold" htmlFor="login-email">
                       البريد الإلكتروني
                     </label>
                     <Input
                       id="login-email"
                       type="email"
                       placeholder="البريد الإلكتروني"
+                      className="text-right placeholder:text-right"
                       value={loginEmail}
                       onChange={(e) => setLoginEmail(e.target.value)}
                       autoComplete="email"
                       required
+                      dir="rtl"
                     />
                   </div>
-                  <div className="relative">
-                    <label className="sr-only" htmlFor="login-password">
+                  <div className="flex flex-col gap-2 relative">
+                    <label className="text-right text-sm font-bold" htmlFor="login-password">
                       كلمة المرور
                     </label>
                     <Input
                       id="login-password"
                       type={showPassword ? "text" : "password"}
                       placeholder="كلمة المرور"
+                      className="text-right placeholder:text-right pr-12"
                       value={loginPassword}
                       onChange={(e) => setLoginPassword(e.target.value)}
                       autoComplete="current-password"
                       required
+                      dir="rtl"
                     />
                     <Button
                       type="button"
                       size="icon"
                       variant="ghost"
-                      className="absolute left-2 top-1/2 -translate-y-1/2"
+                      aria-label={showPassword ? "إخفاء كلمة المرور" : "إظهار كلمة المرور"}
+                      className="absolute right-2 top-[38px] z-10"
                       onClick={() => setShowPassword((s) => !s)}
                       tabIndex={-1}
                     >
@@ -230,9 +228,7 @@ const Auth = () => {
                     </Button>
                   </div>
                   {loginError && (
-                    <div className="text-destructive text-sm font-medium">
-                      {loginError}
-                    </div>
+                    <div className="text-destructive text-sm font-medium text-right">{loginError}</div>
                   )}
                   <Button
                     type="submit"
@@ -254,53 +250,60 @@ const Auth = () => {
                 </form>
               </TabsContent>
               <TabsContent value="signup">
-                <form className="space-y-4" onSubmit={handleSignup} autoComplete="off">
-                  <div>
-                    <label className="sr-only" htmlFor="signup-email">
+                <form className="space-y-4 flex flex-col" onSubmit={handleSignup} autoComplete="off" dir="rtl">
+                  <div className="flex flex-col gap-2">
+                    <label className="text-right text-sm font-bold" htmlFor="signup-email">
                       البريد الإلكتروني
                     </label>
                     <Input
                       id="signup-email"
                       type="email"
                       placeholder="البريد الإلكتروني"
+                      className="text-right placeholder:text-right"
                       value={signupEmail}
                       onChange={(e) => setSignupEmail(e.target.value)}
                       autoComplete="email"
                       required
+                      dir="rtl"
                     />
                   </div>
-                  <div>
-                    <label className="sr-only" htmlFor="signup-username">
+                  <div className="flex flex-col gap-2">
+                    <label className="text-right text-sm font-bold" htmlFor="signup-username">
                       اسم المستخدم
                     </label>
                     <Input
                       id="signup-username"
                       type="text"
                       placeholder="اسم المستخدم"
+                      className="text-right placeholder:text-right"
                       value={signupUsername}
                       onChange={(e) => setSignupUsername(e.target.value)}
                       autoComplete="username"
                       required
+                      dir="rtl"
                     />
                   </div>
-                  <div className="relative">
-                    <label className="sr-only" htmlFor="signup-password">
+                  <div className="flex flex-col gap-2 relative">
+                    <label className="text-right text-sm font-bold" htmlFor="signup-password">
                       كلمة المرور
                     </label>
                     <Input
                       id="signup-password"
                       type={showSignupPassword ? "text" : "password"}
                       placeholder="كلمة المرور"
+                      className="text-right placeholder:text-right pr-12"
                       value={signupPassword}
                       onChange={(e) => setSignupPassword(e.target.value)}
                       autoComplete="new-password"
                       required
+                      dir="rtl"
                     />
                     <Button
                       type="button"
                       size="icon"
                       variant="ghost"
-                      className="absolute left-2 top-1/2 -translate-y-1/2"
+                      aria-label={showSignupPassword ? "إخفاء كلمة المرور" : "إظهار كلمة المرور"}
+                      className="absolute right-2 top-[38px] z-10"
                       onClick={() => setShowSignupPassword((s) => !s)}
                       tabIndex={-1}
                     >
@@ -311,22 +314,24 @@ const Auth = () => {
                       )}
                     </Button>
                   </div>
-                  <div>
-                    <label className="sr-only" htmlFor="signup-confirm-password">
+                  <div className="flex flex-col gap-2">
+                    <label className="text-right text-sm font-bold" htmlFor="signup-confirm-password">
                       تأكيد كلمة المرور
                     </label>
                     <Input
                       id="signup-confirm-password"
                       type="password"
                       placeholder="تأكيد كلمة المرور"
+                      className="text-right placeholder:text-right"
                       value={signupConfirmPassword}
                       onChange={(e) => setSignupConfirmPassword(e.target.value)}
                       autoComplete="new-password"
                       required
+                      dir="rtl"
                     />
                   </div>
                   {signupError && (
-                    <div className="text-destructive text-sm font-medium">
+                    <div className="text-destructive text-sm font-medium text-right">
                       {signupError}
                     </div>
                   )}
@@ -342,28 +347,30 @@ const Auth = () => {
               </TabsContent>
             </Tabs>
           ) : (
-            <form className="space-y-4" onSubmit={handleResetPassword}>
-              <div>
-                <label htmlFor="reset-email" className="sr-only">
+            <form className="space-y-4 flex flex-col" onSubmit={handleResetPassword} dir="rtl">
+              <div className="flex flex-col gap-2">
+                <label htmlFor="reset-email" className="text-right text-sm font-bold">
                   البريد الإلكتروني
                 </label>
                 <Input
                   id="reset-email"
                   type="email"
                   placeholder="أدخل بريدك الإلكتروني"
+                  className="text-right placeholder:text-right"
                   value={resetEmail}
                   onChange={(e) => setResetEmail(e.target.value)}
                   autoComplete="email"
                   required
+                  dir="rtl"
                 />
               </div>
               {resetError && (
-                <div className="text-destructive text-sm font-medium">
+                <div className="text-destructive text-sm font-medium text-right">
                   {resetError}
                 </div>
               )}
               {resetMessage && (
-                <div className="text-emerald-600 text-sm font-bold flex items-center gap-2">
+                <div className="text-emerald-600 text-sm font-bold flex items-center gap-2 justify-end">
                   <Mail size={18} /> {resetMessage}
                 </div>
               )}
