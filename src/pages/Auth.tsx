@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -37,15 +38,29 @@ const Auth = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showSignupPassword, setShowSignupPassword] = useState(false);
 
+  // Check auth state on component mount
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        navigate('/');
+      }
+    };
+    
+    checkUser();
+  }, [navigate]);
+
   // Handlers
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoginLoading(true);
     setLoginError("");
+    
     const { error } = await supabase.auth.signInWithPassword({
       email: loginEmail,
       password: loginPassword,
     });
+    
     setLoginLoading(false);
 
     if (error) {
@@ -59,25 +74,34 @@ const Auth = () => {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate password match
     if (signupPassword !== signupConfirmPassword) {
       setSignupError("كلمتا المرور غير متطابقتين.");
       toast.error("كلمتا المرور غير متطابقتين.");
       return;
     }
+    
+    // Validate username
     if (!signupUsername.trim()) {
       setSignupError("الرجاء إدخال اسم المستخدم.");
       toast.error("الرجاء إدخال اسم المستخدم.");
       return;
     }
+    
     setSignupLoading(true);
     setSignupError("");
+    
     const { error } = await supabase.auth.signUp({
       email: signupEmail,
       password: signupPassword,
       options: {
-        data: { username: signupUsername }
+        data: { 
+          username: signupUsername 
+        }
       }
     });
+    
     setSignupLoading(false);
 
     if (error) {
@@ -86,6 +110,8 @@ const Auth = () => {
     } else {
       toast.success("تم إنشاء الحساب. تحقق من بريدك الإلكتروني.");
       setActiveTab("login");
+      
+      // Reset form
       setSignupEmail("");
       setSignupUsername("");
       setSignupPassword("");
@@ -98,9 +124,11 @@ const Auth = () => {
     setResetLoading(true);
     setResetMessage("");
     setResetError("");
+    
     const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
       redirectTo: window.location.origin + "/auth",
     });
+    
     setResetLoading(false);
 
     if (error) {
@@ -365,3 +393,4 @@ const Auth = () => {
 };
 
 export default Auth;
+
