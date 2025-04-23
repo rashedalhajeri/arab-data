@@ -1,4 +1,3 @@
-
 "use client";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -6,6 +5,8 @@ import { ArrowRight, LogIn } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function ModernHero() {
+  const openOfficeLink = "https://dashboard.lovable.dev";
+
   return (
     <div className="relative overflow-hidden bg-white dark:bg-gray-900">
       {/* خلفية بنمط Grid غير واضح */}
@@ -25,7 +26,7 @@ export function ModernHero() {
           >
             {/* العنوان الجديد */}
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold tracking-tight text-gray-900 dark:text-white">
-              !منصة مكتبك الإلكتروني
+              افتح مكتبك برابط واحد
             </h1>
 
             {/* نص ثانوي ناعم */}
@@ -48,8 +49,9 @@ export function ModernHero() {
                 "bg-gradient-to-r from-sky-500 to-cyan-500 text-white",
                 "hover:shadow-xl transition-all duration-300"
               )}
+              onClick={() => window.open(openOfficeLink, '_blank')}
             >
-              ابدأ الآن مجاناً
+              افتح المكتب الآن
               <ArrowRight className="mr-2 h-5 w-5 rtl:rotate-180" />
               <span className="absolute inset-0 opacity-0 group-hover:opacity-20 bg-gradient-to-r from-white to-transparent duration-300 transition-opacity" />
             </Button>
@@ -92,4 +94,3 @@ export function ModernHero() {
     </div>
   );
 }
-
