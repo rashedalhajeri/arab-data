@@ -26,21 +26,20 @@ export function ModernHero() {
             transition={{ duration: 0.6 }}
             className="space-y-6 max-w-4xl"
           >
-            {/* تباين عالي وخط سميك */}
+            {/* العنوان الجديد */}
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold tracking-tight text-gray-900 dark:text-white">
-              خل عملاءك يوصلون لكل خدماتك{" "}
-              <span className="inline">
-                سواء كنت{" "}
-                <span
-                  key={currentRotatingWord}
-                  className="inline-block animate-fade-in bg-gradient-to-r from-purple-600 to-pink-500 bg-clip-text text-transparent px-2 transition-all duration-500"
-                  style={{ minWidth: 120, display: 'inline-block' }}
-                >
-                  {currentRotatingWord}
-                </span>
-              </span>
+              !!افتح مكتبك برابط
             </h1>
-            
+            <div className="mt-2 text-2xl md:text-4xl font-bold text-gray-800 dark:text-gray-100 flex flex-col items-center gap-1">
+              <span>سواء كنت</span>
+              <span
+                key={currentRotatingWord}
+                className="inline-block animate-fade-in bg-gradient-to-r from-purple-600 to-pink-500 bg-clip-text text-transparent px-2 transition-all duration-500"
+                style={{ minWidth: 120, display: "inline-block" }}
+              >
+                {currentRotatingWord}
+              </span>
+            </div>
             {/* نص ثانوي ناعم */}
             <p className="text-xl md:text-2xl text-gray-600 dark:text-gray-300 font-light max-w-3xl mx-auto">
               منصة متكاملة تساعدك على بناء واجهات برمجية عصرية بأقل جهد وأعلى كفاءة، مع توفير تجربة مستخدم فريدة.
@@ -72,7 +71,7 @@ export function ModernHero() {
               size="lg"
               className="rounded-full border-2 px-8 py-6 font-medium shadow-md hover:shadow-lg transition-all duration-300"
             >
-              تواصل معنا
+              تواصل ��عنا
             </Button>
           </motion.div>
           
