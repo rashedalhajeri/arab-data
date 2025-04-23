@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -37,6 +37,25 @@ const CreatePage = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    let isMounted = true;
+    async function checkUserOffice() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user?.id) return;
+
+      const { data: office } = await supabase
+        .from("offices")
+        .select("id")
+        .eq("user_id", session.user.id)
+        .maybeSingle();
+      if (office && isMounted) {
+        navigate("/dashboard", { replace: true });
+      }
+    }
+    checkUserOffice();
+    return () => { isMounted = false; };
+  }, [navigate]);
+
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [slugAvailable, setSlugAvailable] = useState<null | boolean>(null);
@@ -44,7 +63,6 @@ const CreatePage = () => {
   const [phone, setPhone] = useState("");
   const [errors, setErrors] = useState<{ [k: string]: string }>({});
 
-  // شعار المكتب (بدون قص)
   const {
     fileInputRef: logoInput,
     handleThumbnailClick: openLogo,
@@ -53,7 +71,6 @@ const CreatePage = () => {
     handleRemove: removeLogo,
   } = useImageUpload();
 
-  // الغلاف (بدون قص)
   const {
     fileInputRef: coverInput,
     handleThumbnailClick: openCover,
