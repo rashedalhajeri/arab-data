@@ -40,12 +40,12 @@ const Dashboard = () => {
       if (isMounted) {
         // Generate the URL based on the slug from the office data
         const galleryUrl = data.slug ? `https://ad51.me/${data.slug}` : "#";
-        
+
         // Get the public URL for the logo from Supabase storage
         const logoUrl = data.logo_url 
           ? supabase.storage.from("office-assets").getPublicUrl(data.logo_url).data.publicUrl
           : "/placeholder.svg";
-        
+
         setOffice({
           name: data.name || "اسم المعرض",
           url: galleryUrl,
@@ -79,15 +79,17 @@ const Dashboard = () => {
           galleryLogo={office?.logo_url || "/placeholder.svg"}
         />
 
-        {/* محتوى لوحة التحكم الرئيسي */}
+        {/* محتوى لوحة التحكم */}
         <main className="flex-1 flex items-center justify-center p-4">
-          <Card className="max-w-2xl w-full mx-auto">
+          <Card className="max-w-2xl w-full mx-auto text-right" dir="rtl">
             <CardHeader>
-              <CardTitle>لوحة التحكم</CardTitle>
+              <CardTitle className="text-right">لوحة التحكم</CardTitle>
             </CardHeader>
             <CardContent>
-              <p>مرحباً بك في لوحة التحكم الخاصة بك!</p>
-              {/* يمكنك لاحقاً عرض معلومات إضافية هنا حسب القسم المحدد من القائمة الجانبية */}
+              <div className="space-y-4">
+                <p className="leading-relaxed">مرحباً بك في لوحة التحكم الخاصة بك!</p>
+                {/* يمكنك إضافة بطاقات أو أقسام إضافية هنا حسب الحاجة مستقبلاً */}
+              </div>
             </CardContent>
           </Card>
         </main>
@@ -97,3 +99,4 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+
