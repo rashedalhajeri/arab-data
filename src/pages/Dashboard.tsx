@@ -10,6 +10,11 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 const Dashboard = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [office, setOffice] = useState<null | {
+    name: string;
+    url?: string;
+    logo_url?: string;
+  }>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -32,8 +37,14 @@ const Dashboard = () => {
         navigate("/create-page");
         return;
       }
-
-      if (isMounted) setLoading(false);
+      if (isMounted) {
+        setOffice({
+          name: data.name || "اسم المعرض",
+          url: data.url || "",
+          logo_url: data.logo_url || "",
+        });
+        setLoading(false);
+      }
     };
 
     checkOffice();
@@ -54,7 +65,11 @@ const Dashboard = () => {
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-gradient-to-br from-sky-50 via-purple-100 to-pink-100 dark:from-gray-900 dark:via-indigo-950 dark:to-slate-900" dir="rtl">
         {/* الشريط الجانبي */}
-        <GallerySidebar />
+        <GallerySidebar
+          galleryName={office?.name || "اسم المعرض"}
+          galleryUrl={office?.url || "#"}
+          galleryLogo={office?.logo_url || "/placeholder.svg"}
+        />
 
         {/* محتوى لوحة التحكم الرئيسي */}
         <main className="flex-1 flex items-center justify-center p-4">
