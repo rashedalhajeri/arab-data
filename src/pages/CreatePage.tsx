@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { useImageUpload } from "@/components/hooks/use-image-upload";
 import { toast } from "@/components/ui/sonner";
+import { Database } from "@/integrations/supabase/types";
 
 const countries = [
   { code: "SA", name: "السعودية", currency: "SAR", dial: "+966" },
@@ -94,7 +95,7 @@ const CreatePage = () => {
 
       // 2- حفظ بيانات الصفحة في قاعدة البيانات (يجب وجود جدول offices أو ما شابه)
       const { error: insertError } = await supabase
-        .from("offices")
+        .from('offices')
         .insert({
           id: officeId,
           user_id: session.user.id,
@@ -178,7 +179,7 @@ const CreatePage = () => {
                 {logoPreview && (
                   <div className="w-20 h-20 rounded overflow-hidden border">
                     <img src={logoPreview} alt="الشعار" className="object-cover w-full h-full" />
-                    <Button variant="ghost" size="xs" onClick={removeLogo}>حذف</Button>
+                    <Button variant="ghost" size="sm" onClick={removeLogo}>حذف</Button>
                   </div>
                 )}
               </div>
@@ -194,7 +195,7 @@ const CreatePage = () => {
                 {coverPreview && (
                   <div className="w-full max-h-28 rounded overflow-hidden border">
                     <img src={coverPreview} alt="الغلاف" className="object-cover w-full h-full" />
-                    <Button variant="ghost" size="xs" onClick={removeCover}>حذف</Button>
+                    <Button variant="ghost" size="sm" onClick={removeCover}>حذف</Button>
                   </div>
                 )}
               </div>

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,6 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LogIn, UserPlus, Key, Mail, Eye, EyeOff } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
+import { Database } from "@/integrations/supabase/types";
+
+type Office = Database['public']['Tables']['offices']['Row'];
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -45,10 +47,10 @@ const Auth = () => {
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
           // هل لدى المستخدم صفحة معرفة؟
-          const { data }: { data: any[] | null } = await supabase
-            .from("offices")
-            .select("*")
-            .eq("user_id", session.user.id)
+          const { data } = await supabase
+            .from('offices')
+            .select('*')
+            .eq('user_id', session.user.id)
             .maybeSingle();
 
           if (data) {
