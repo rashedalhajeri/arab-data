@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 
 export function ModernHero() {
   return (
-    <div className="relative overflow-hidden">
+    <div className="relative overflow-hidden bg-white dark:bg-gray-900">
       {/* خلفية بنمط Grid غير واضح */}
       <div
         className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"
@@ -25,7 +25,7 @@ export function ModernHero() {
           >
             {/* العنوان الجديد */}
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold tracking-tight text-gray-900 dark:text-white">
-              !!افتح مكتبك برابط
+              !منصة مكتبك الإلكتروني
             </h1>
             
             {/* نص ثانوي ناعم */}
