@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarFooter } from "@/components/ui/sidebar";
-import { layoutDashboard, megaphone, qrCode, list, folder, settings } from "lucide-react";
+import { LayoutDashboard, Megaphone, QrCode, List, Folder, Settings } from "lucide-react";
 
 // أضف هنا بيانات افتراضية، يمكنك تعديلها لاحقًا بحسب بيانات المعرض الفعلية
 const GALLERY_NAME = "معرض المستقبل";
@@ -9,11 +9,11 @@ const GALLERY_URL = "https://gallery.com/amal";
 const GALLERY_LOGO = "/placeholder.svg"; // يمكنك استبدالها بصورة الشعار الفعلية إذا رفعتها
 
 const menuItems = [
-  { title: "نظرة عامة", icon: layoutDashboard, url: "#" },
-  { title: "إعلاناتي", icon: megaphone, url: "#" },
-  { title: "رموز QR", icon: qrCode, url: "#" },
-  { title: "الفئات", icon: folder, url: "#" },
-  { title: "الإعدادات", icon: settings, url: "#" },
+  { title: "نظرة عامة", icon: LayoutDashboard, url: "#" },
+  { title: "إعلاناتي", icon: Megaphone, url: "#" },
+  { title: "رموز QR", icon: QrCode, url: "#" },
+  { title: "الفئات", icon: Folder, url: "#" },
+  { title: "الإعدادات", icon: Settings, url: "#" },
 ];
 
 const GallerySidebar = () => {
