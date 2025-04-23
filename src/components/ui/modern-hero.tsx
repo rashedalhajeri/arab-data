@@ -34,7 +34,7 @@ export function ModernHero() {
                 <span
                   key={currentRotatingWord}
                   className="inline-block animate-fade-in bg-gradient-to-r from-purple-600 to-pink-500 bg-clip-text text-transparent px-2 transition-all duration-500"
-                  style={{ minWidth: 120 }}
+                  style={{ minWidth: 120, display: 'inline-block' }}
                 >
                   {currentRotatingWord}
                 </span>
