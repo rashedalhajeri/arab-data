@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,7 +9,6 @@ import { useImageUpload } from "@/components/hooks/use-image-upload";
 import { toast } from "@/components/ui/sonner";
 import { Database } from "@/integrations/supabase/types";
 
-// عدد أرقام الهاتف حسب الدولة
 const phoneLengths: Record<string, number> = {
   SA: 9,
   KW: 8,
@@ -37,7 +35,6 @@ const CreatePage = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
 
-  // Form state
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [slugAvailable, setSlugAvailable] = useState<null | boolean>(null);
@@ -45,7 +42,6 @@ const CreatePage = () => {
   const [phone, setPhone] = useState("");
   const [errors, setErrors] = useState<{ [k: string]: string }>({});
 
-  // File upload (شعار)
   const {
     previewUrl: logoPreview,
     fileInputRef: logoInput,
@@ -53,7 +49,7 @@ const CreatePage = () => {
     handleFileChange: onLogoChange,
     handleRemove: removeLogo,
   } = useImageUpload();
-  // File upload (غلاف)
+
   const {
     previewUrl: coverPreview,
     fileInputRef: coverInput,
@@ -62,13 +58,11 @@ const CreatePage = () => {
     handleRemove: removeCover,
   } = useImageUpload();
 
-  // Example: slug output ad51.me/name
   const slugBase = "ad51.me/";
 
-  // التحقق من توفر الـ slug
   const slugCheckTimeout = useRef<NodeJS.Timeout | null>(null);
+
   const handleSlugChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // نجبر الحروف على الإنجليزية الصغيرة
     const value = e.target.value.replace(/[^a-zA-Z0-9\-]/g, "").toLowerCase();
     setSlug(value);
     setErrors((er) => ({ ...er, slug: "" }));
@@ -77,7 +71,6 @@ const CreatePage = () => {
 
     if (value.length >= 3 && isValidSlug(value)) {
       slugCheckTimeout.current = setTimeout(async () => {
-        // تحقق هل الـ slug مستخدم من قبل؟
         let { data, error } = await supabase
           .from("offices")
           .select("id")
@@ -97,7 +90,6 @@ const CreatePage = () => {
     else if (!isValidSlug(slug)) e.slug = "اسم الرابط يجب أن يكون بالإنجليزية وحروف صغيرة وأرقام وشرطات فقط";
     else if (slugAvailable === false) e.slug = "اسم الرابط غير متاح، الرجاء اختيار اسم آخر";
     if (!country) e.country = "الدولة مطلوبة";
-    // تحقق رقم الهاتف حسب الدولة
     if (!phone.trim()) e.phone = "رقم الهاتف مطلوب";
     else if (country && phoneLengths[country] && phone.length !== phoneLengths[country])
       e.phone = `رقم الهاتف يجب أن يتكون من ${phoneLengths[country]} أرقام`;
@@ -114,20 +106,16 @@ const CreatePage = () => {
     setLoading(true);
 
     try {
-      // احصل على user id الحالي
       const { data: { session }, error: sessionErr } = await supabase.auth.getSession();
       if (sessionErr || !session?.user) throw new Error("لم يتم العثور على حساب المستخدم.");
 
-      // 1- ارفع الصور إلى storage
       const officeId = crypto.randomUUID();
       const logoPath = `logos/${officeId}.png`;
       const coverPath = `covers/${officeId}.png`;
 
-      // logo
       const logoFile = logoInput.current?.files?.[0];
       const coverFile = coverInput.current?.files?.[0];
 
-      // تأكد من وجود ملفات الصور
       if (!logoFile) throw new Error("يرجى رفع الشعار");
       if (!coverFile) throw new Error("يرجى رفع الغلاف");
 
@@ -137,7 +125,6 @@ const CreatePage = () => {
       if (logoErr) throw new Error("فشل رفع الشعار");
       if (coverErr) throw new Error("فشل رفع الغلاف");
 
-      // 2- حفظ بيانات الصفحة في قاعدة البيانات
       const { error: insertError } = await supabase
         .from('offices')
         .insert({
@@ -183,7 +170,7 @@ const CreatePage = () => {
               {errors.name && <div className="text-destructive text-xs font-bold mt-1">{errors.name}</div>}
             </div>
             <div>
-              <label className="font-bold">اسم الرابط بالإنجليزية (slug)</label>
+              <label className="font-bold">أسم الرابط</label>
               <div className="flex gap-2 items-center">
                 <span className="text-xs text-gray-500 rounded bg-gray-100 px-2 py-1"> {slugBase} </span>
                 <Input
@@ -227,7 +214,6 @@ const CreatePage = () => {
                 <span className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded">{selectedCountry?.dial ?? ""}</span>
                 <Input
                   value={phone}
-                  // يُسمح فقط بالأرقام وعدم وجود حروف
                   onChange={e => {
                     const digits = e.target.value.replace(/\D/g, "");
                     setPhone(digits);
@@ -273,7 +259,6 @@ const CreatePage = () => {
                 </Button>
                 {coverPreview && (
                   <div className="w-full max-h-28 rounded overflow-hidden border flex flex-col items-center">
-                    {/* إصلاح استعراض صورة الغلاف */}
                     <img src={coverPreview} alt="الغلاف" className="object-cover w-full h-full" />
                     <Button variant="ghost" size="sm" onClick={removeCover}>حذف</Button>
                   </div>
