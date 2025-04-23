@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -40,31 +41,45 @@ const Auth = () => {
   // Check auth state on component mount
   useEffect(() => {
     const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        navigate('/');
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          navigate('/');
+        }
+      } catch (error) {
+        console.error("Error checking authentication:", error);
       }
     };
     checkUser();
   }, [navigate]);
+
+  // Clear errors when changing tabs
+  useEffect(() => {
+    setLoginError("");
+    setSignupError("");
+  }, [activeTab]);
 
   // Handlers
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoginLoading(true);
     setLoginError("");
-    const { error } = await supabase.auth.signInWithPassword({
-      email: loginEmail,
-      password: loginPassword,
-    });
-    setLoginLoading(false);
-
-    if (error) {
-      setLoginError(error.message);
-      toast.error(error.message);
-    } else {
+    
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: loginEmail,
+        password: loginPassword,
+      });
+      
+      if (error) throw error;
+      
       toast.success("تم تسجيل الدخول بنجاح!");
       navigate("/");
+    } catch (error: any) {
+      setLoginError(error.message || "حدث خطأ أثناء تسجيل الدخول");
+      toast.error(error.message || "حدث خطأ أثناء تسجيل الدخول");
+    } finally {
+      setLoginLoading(false);
     }
   };
 
@@ -88,20 +103,17 @@ const Auth = () => {
     setSignupLoading(true);
     setSignupError("");
 
-    const { error } = await supabase.auth.signUp({
-      email: signupEmail,
-      password: signupPassword,
-      options: {
-        data: { username: signupUsername }
-      }
-    });
+    try {
+      const { error } = await supabase.auth.signUp({
+        email: signupEmail,
+        password: signupPassword,
+        options: {
+          data: { username: signupUsername }
+        }
+      });
 
-    setSignupLoading(false);
-
-    if (error) {
-      setSignupError(error.message);
-      toast.error(error.message);
-    } else {
+      if (error) throw error;
+      
       toast.success("تم إنشاء الحساب. تحقق من بريدك الإلكتروني.");
       setActiveTab("login");
       // Reset form
@@ -109,6 +121,11 @@ const Auth = () => {
       setSignupUsername("");
       setSignupPassword("");
       setSignupConfirmPassword("");
+    } catch (error: any) {
+      setSignupError(error.message || "حدث خطأ أثناء إنشاء الحساب");
+      toast.error(error.message || "حدث خطأ أثناء إنشاء الحساب");
+    } finally {
+      setSignupLoading(false);
     }
   };
 
@@ -117,18 +134,58 @@ const Auth = () => {
     setResetLoading(true);
     setResetMessage("");
     setResetError("");
-    const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
-      redirectTo: window.location.origin + "/auth",
-    });
-    setResetLoading(false);
-
-    if (error) {
-      setResetError(error.message);
-      toast.error(error.message);
-    } else {
+    
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+        redirectTo: window.location.origin + "/auth",
+      });
+      
+      if (error) throw error;
+      
       setResetMessage("تم إرسال رابط إعادة التعيين إلى بريدك الإلكتروني.");
       toast.success("تم الإرسال بنجاح!");
+    } catch (error: any) {
+      setResetError(error.message || "حدث خطأ أثناء إرسال رابط إعادة التعيين");
+      toast.error(error.message || "حدث خطأ أثناء إرسال رابط إعادة التعيين");
+    } finally {
+      setResetLoading(false);
     }
+  };
+
+  // Input change handlers with error clearing
+  const handleLoginEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setLoginEmail(e.target.value);
+    setLoginError("");
+  };
+
+  const handleLoginPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setLoginPassword(e.target.value);
+    setLoginError("");
+  };
+
+  const handleSignupEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSignupEmail(e.target.value);
+    setSignupError("");
+  };
+
+  const handleSignupUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSignupUsername(e.target.value);
+    setSignupError("");
+  };
+
+  const handleSignupPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSignupPassword(e.target.value);
+    setSignupError("");
+  };
+
+  const handleSignupConfirmPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSignupConfirmPassword(e.target.value);
+    setSignupError("");
+  };
+
+  const handleResetEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setResetEmail(e.target.value);
+    setResetError("");
   };
 
   return (
@@ -189,7 +246,7 @@ const Auth = () => {
                       placeholder="البريد الإلكتروني"
                       className="text-right placeholder:text-right"
                       value={loginEmail}
-                      onChange={(e) => setLoginEmail(e.target.value)}
+                      onChange={handleLoginEmailChange}
                       autoComplete="email"
                       required
                       dir="rtl"
@@ -204,9 +261,9 @@ const Auth = () => {
                         id="login-password"
                         type={showPassword ? "text" : "password"}
                         placeholder="كلمة المرور"
-                        className="text-right placeholder:text-right pr-3 pl-12"
+                        className="text-right placeholder:text-right pl-12"
                         value={loginPassword}
-                        onChange={(e) => setLoginPassword(e.target.value)}
+                        onChange={handleLoginPasswordChange}
                         autoComplete="current-password"
                         required
                         dir="rtl"
@@ -216,9 +273,8 @@ const Auth = () => {
                         size="icon"
                         variant="ghost"
                         aria-label={showPassword ? "إخفاء كلمة المرور" : "إظهار كلمة المرور"}
-                        className="absolute left-2 top-[38px] z-10"
+                        className="absolute left-2 top-1/2 -translate-y-1/2 z-10"
                         onClick={() => setShowPassword((s) => !s)}
-                        tabIndex={-1}
                       >
                         {showPassword ? (
                           <EyeOff size={18} />
@@ -262,7 +318,7 @@ const Auth = () => {
                       placeholder="البريد الإلكتروني"
                       className="text-right placeholder:text-right"
                       value={signupEmail}
-                      onChange={(e) => setSignupEmail(e.target.value)}
+                      onChange={handleSignupEmailChange}
                       autoComplete="email"
                       required
                       dir="rtl"
@@ -278,7 +334,7 @@ const Auth = () => {
                       placeholder="اسم المستخدم"
                       className="text-right placeholder:text-right"
                       value={signupUsername}
-                      onChange={(e) => setSignupUsername(e.target.value)}
+                      onChange={handleSignupUsernameChange}
                       autoComplete="username"
                       required
                       dir="rtl"
@@ -293,9 +349,9 @@ const Auth = () => {
                         id="signup-password"
                         type={showSignupPassword ? "text" : "password"}
                         placeholder="كلمة المرور"
-                        className="text-right placeholder:text-right pr-3 pl-12"
+                        className="text-right placeholder:text-right pl-12"
                         value={signupPassword}
-                        onChange={(e) => setSignupPassword(e.target.value)}
+                        onChange={handleSignupPasswordChange}
                         autoComplete="new-password"
                         required
                         dir="rtl"
@@ -305,9 +361,8 @@ const Auth = () => {
                         size="icon"
                         variant="ghost"
                         aria-label={showSignupPassword ? "إخفاء كلمة المرور" : "إظهار كلمة المرور"}
-                        className="absolute left-2 top-[38px] z-10"
+                        className="absolute left-2 top-1/2 -translate-y-1/2 z-10"
                         onClick={() => setShowSignupPassword((s) => !s)}
-                        tabIndex={-1}
                       >
                         {showSignupPassword ? (
                           <EyeOff size={18} />
@@ -327,7 +382,7 @@ const Auth = () => {
                       placeholder="تأكيد كلمة المرور"
                       className="text-right placeholder:text-right"
                       value={signupConfirmPassword}
-                      onChange={(e) => setSignupConfirmPassword(e.target.value)}
+                      onChange={handleSignupConfirmPasswordChange}
                       autoComplete="new-password"
                       required
                       dir="rtl"
@@ -361,7 +416,7 @@ const Auth = () => {
                   placeholder="أدخل بريدك الإلكتروني"
                   className="text-right placeholder:text-right"
                   value={resetEmail}
-                  onChange={(e) => setResetEmail(e.target.value)}
+                  onChange={handleResetEmailChange}
                   autoComplete="email"
                   required
                   dir="rtl"
