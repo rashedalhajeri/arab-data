@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarFooter } from "@/components/ui/sidebar";
 import { LayoutDashboard, Megaphone, QrCode, Folder, Settings } from "lucide-react";
@@ -25,7 +24,16 @@ const GallerySidebar: React.FC<GallerySidebarProps> = ({ galleryName, galleryUrl
           {/* الشعار + الاسم + الرابط */}
           <div className="flex flex-col items-center gap-3 pt-8 pb-6">
             <div className="w-20 h-20 rounded-full overflow-hidden shadow border bg-gray-100 flex items-center justify-center">
-              <img src={galleryLogo || "/placeholder.svg"} alt="شعار المعرض" className="object-cover w-full h-full" />
+              <img 
+                src={galleryLogo || "/placeholder.svg"} 
+                alt="شعار المعرض" 
+                className="object-cover w-full h-full"
+                onError={(e) => {
+                  const imgElement = e.target as HTMLImageElement;
+                  imgElement.onerror = null; // Prevent infinite loop
+                  imgElement.src = "/placeholder.svg";
+                }}
+              />
             </div>
             <h2 className="font-bold text-lg">{galleryName}</h2>
             <a href={galleryUrl} target="_blank" rel="noopener noreferrer" className="text-blue-500 text-sm break-all hover:underline">{galleryUrl}</a>
