@@ -12,7 +12,7 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [office, setOffice] = useState<null | {
     name: string;
-    url?: string;
+    url: string;
     logo_url?: string;
   }>(null);
 
@@ -38,9 +38,12 @@ const Dashboard = () => {
         return;
       }
       if (isMounted) {
+        // Generate the URL based on the slug from the office data
+        const galleryUrl = data.slug ? `https://ad51.me/${data.slug}` : "#";
+        
         setOffice({
           name: data.name || "اسم المعرض",
-          url: data.url || "",
+          url: galleryUrl,
           logo_url: data.logo_url || "",
         });
         setLoading(false);
