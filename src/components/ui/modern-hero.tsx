@@ -1,14 +1,11 @@
+
 "use client";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useRotatingText } from "../hooks/use-rotating-text";
 
 export function ModernHero() {
-  const rotatingWords = ["مكتب سيارات", "مكتب تأجير", "مكتب عقارات"];
-  const currentRotatingWord = useRotatingText(rotatingWords, 2000);
-
   return (
     <div className="relative overflow-hidden">
       {/* خلفية بنمط Grid غير واضح */}
@@ -30,16 +27,7 @@ export function ModernHero() {
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold tracking-tight text-gray-900 dark:text-white">
               !!افتح مكتبك برابط
             </h1>
-            <div className="mt-2 text-2xl md:text-4xl font-bold text-gray-800 dark:text-gray-100 flex flex-col items-center gap-1">
-              <span>سواء كنت</span>
-              <span
-                key={currentRotatingWord}
-                className="inline-block animate-fade-in bg-gradient-to-r from-purple-600 to-pink-500 bg-clip-text text-transparent px-2 transition-all duration-500"
-                style={{ minWidth: 120, display: "inline-block" }}
-              >
-                {currentRotatingWord}
-              </span>
-            </div>
+            
             {/* نص ثانوي ناعم */}
             <p className="text-xl md:text-2xl text-gray-600 dark:text-gray-300 font-light max-w-3xl mx-auto">
               منصة متكاملة تساعدك على بناء واجهات برمجية عصرية بأقل جهد وأعلى كفاءة، مع توفير تجربة مستخدم فريدة.
@@ -71,7 +59,7 @@ export function ModernHero() {
               size="lg"
               className="rounded-full border-2 px-8 py-6 font-medium shadow-md hover:shadow-lg transition-all duration-300"
             >
-              تواصل ��عنا
+              تواصل معنا
             </Button>
           </motion.div>
           
@@ -84,7 +72,7 @@ export function ModernHero() {
           >
             {[
               { metric: "+2,500", label: "عميل راضٍ" },
-              { metric: "+150", label: "دولة حو�� العالم" },
+              { metric: "+150", label: "دولة حول العالم" },
               { metric: "99.9%", label: "نسبة الاستقرار" },
               { metric: "24/7", label: "دعم فني متاح" },
             ].map((item, index) => (
