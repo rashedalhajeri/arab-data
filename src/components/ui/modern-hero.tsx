@@ -1,4 +1,3 @@
-
 "use client";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -60,7 +59,7 @@ export function ModernHero() {
               )}
               onClick={() => window.open(openOfficeLink, '_blank')}
             >
-              افتح المكتب الآن
+              سجل مجانا
               <ArrowRight className="mr-2 h-5 w-5 rtl:rotate-180" />
               <span className="absolute inset-0 opacity-0 group-hover:opacity-20 bg-gradient-to-r from-white to-transparent duration-300 transition-opacity" />
             </Button>
@@ -103,4 +102,3 @@ export function ModernHero() {
     </div>
   );
 }
-
