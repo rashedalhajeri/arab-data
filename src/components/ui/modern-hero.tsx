@@ -4,18 +4,9 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, LogIn } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useRotatingText } from "@/components/hooks/use-rotating-text";
 
 export function ModernHero() {
   const openOfficeLink = "https://dashboard.lovable.dev";
-
-  // النصوص الديناميكية
-  const rotatingOptions = [
-    "مكتب سيارات",
-    "مكتب عقارات",
-    "مكتب تأجير"
-  ];
-  const rotatingText = useRotatingText(rotatingOptions, 2000);
 
   return (
     <div className="relative overflow-hidden bg-white dark:bg-gray-900">
@@ -38,12 +29,12 @@ export function ModernHero() {
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold tracking-tight text-gray-900 dark:text-white">
               افتح مكتبك برابط واحد
             </h1>
-            {/* نص متغير ديناميكي */}
+            {/* نص ثابت: سواء كنت مكتب سيارات */}
             <div className="flex flex-col items-center">
               <span className="text-lg md:text-2xl font-semibold text-sky-600 mb-2">
-                {`سواء كنت `}
+                سواء كنت{" "}
                 <span className="bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent transition-all duration-300">
-                  {rotatingText}
+                  مكتب سيارات
                 </span>
               </span>
             </div>
@@ -112,3 +103,4 @@ export function ModernHero() {
     </div>
   );
 }
+
