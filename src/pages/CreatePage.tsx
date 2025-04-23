@@ -159,7 +159,7 @@ const CreatePage = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4 mt-2" autoComplete="off">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4 mt-2" autoComplete="off" dir="rtl">
             <div>
               <label className="font-bold">الاسم التجاري</label>
               <Input
