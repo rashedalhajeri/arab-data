@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,7 +20,9 @@ const Auth = () => {
 
   // Signup state
   const [signupEmail, setSignupEmail] = useState("");
+  const [signupUsername, setSignupUsername] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
+  const [signupConfirmPassword, setSignupConfirmPassword] = useState("");
   const [signupLoading, setSignupLoading] = useState(false);
   const [signupError, setSignupError] = useState("");
 
@@ -58,11 +59,24 @@ const Auth = () => {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (signupPassword !== signupConfirmPassword) {
+      setSignupError("كلمتا المرور غير متطابقتين.");
+      toast.error("كلمتا المرور غير متطابقتين.");
+      return;
+    }
+    if (!signupUsername.trim()) {
+      setSignupError("الرجاء إدخال اسم المستخدم.");
+      toast.error("الرجاء إدخال اسم المستخدم.");
+      return;
+    }
     setSignupLoading(true);
     setSignupError("");
     const { error } = await supabase.auth.signUp({
       email: signupEmail,
       password: signupPassword,
+      options: {
+        data: { username: signupUsername }
+      }
     });
     setSignupLoading(false);
 
@@ -73,7 +87,9 @@ const Auth = () => {
       toast.success("تم إنشاء الحساب. تحقق من بريدك الإلكتروني.");
       setActiveTab("login");
       setSignupEmail("");
+      setSignupUsername("");
       setSignupPassword("");
+      setSignupConfirmPassword("");
     }
   };
 
@@ -210,7 +226,7 @@ const Auth = () => {
                 </form>
               </TabsContent>
               <TabsContent value="signup">
-                <form className="space-y-4" onSubmit={handleSignup}>
+                <form className="space-y-4" onSubmit={handleSignup} autoComplete="off">
                   <div>
                     <label className="sr-only" htmlFor="signup-email">
                       البريد الإلكتروني
@@ -222,6 +238,20 @@ const Auth = () => {
                       value={signupEmail}
                       onChange={(e) => setSignupEmail(e.target.value)}
                       autoComplete="email"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="sr-only" htmlFor="signup-username">
+                      اسم المستخدم
+                    </label>
+                    <Input
+                      id="signup-username"
+                      type="text"
+                      placeholder="اسم المستخدم"
+                      value={signupUsername}
+                      onChange={(e) => setSignupUsername(e.target.value)}
+                      autoComplete="username"
                       required
                     />
                   </div>
@@ -252,6 +282,20 @@ const Auth = () => {
                         <Eye size={18} />
                       )}
                     </Button>
+                  </div>
+                  <div>
+                    <label className="sr-only" htmlFor="signup-confirm-password">
+                      تأكيد كلمة المرور
+                    </label>
+                    <Input
+                      id="signup-confirm-password"
+                      type="password"
+                      placeholder="تأكيد كلمة المرور"
+                      value={signupConfirmPassword}
+                      onChange={(e) => setSignupConfirmPassword(e.target.value)}
+                      autoComplete="new-password"
+                      required
+                    />
                   </div>
                   {signupError && (
                     <div className="text-destructive text-sm font-medium">
