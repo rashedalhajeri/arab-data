@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -200,32 +199,34 @@ const Auth = () => {
                     <label className="text-right text-sm font-bold" htmlFor="login-password">
                       كلمة المرور
                     </label>
-                    <Input
-                      id="login-password"
-                      type={showPassword ? "text" : "password"}
-                      placeholder="كلمة المرور"
-                      className="text-right placeholder:text-right pr-12"
-                      value={loginPassword}
-                      onChange={(e) => setLoginPassword(e.target.value)}
-                      autoComplete="current-password"
-                      required
-                      dir="rtl"
-                    />
-                    <Button
-                      type="button"
-                      size="icon"
-                      variant="ghost"
-                      aria-label={showPassword ? "إخفاء كلمة المرور" : "إظهار كلمة المرور"}
-                      className="absolute right-2 top-[38px] z-10"
-                      onClick={() => setShowPassword((s) => !s)}
-                      tabIndex={-1}
-                    >
-                      {showPassword ? (
-                        <EyeOff size={18} />
-                      ) : (
-                        <Eye size={18} />
-                      )}
-                    </Button>
+                    <div className="relative">
+                      <Input
+                        id="login-password"
+                        type={showPassword ? "text" : "password"}
+                        placeholder="كلمة المرور"
+                        className="text-right placeholder:text-right pr-3 pl-12"
+                        value={loginPassword}
+                        onChange={(e) => setLoginPassword(e.target.value)}
+                        autoComplete="current-password"
+                        required
+                        dir="rtl"
+                      />
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="ghost"
+                        aria-label={showPassword ? "إخفاء كلمة المرور" : "إظهار كلمة المرور"}
+                        className="absolute left-2 top-[38px] z-10"
+                        onClick={() => setShowPassword((s) => !s)}
+                        tabIndex={-1}
+                      >
+                        {showPassword ? (
+                          <EyeOff size={18} />
+                        ) : (
+                          <Eye size={18} />
+                        )}
+                      </Button>
+                    </div>
                   </div>
                   {loginError && (
                     <div className="text-destructive text-sm font-medium text-right">{loginError}</div>
@@ -287,32 +288,34 @@ const Auth = () => {
                     <label className="text-right text-sm font-bold" htmlFor="signup-password">
                       كلمة المرور
                     </label>
-                    <Input
-                      id="signup-password"
-                      type={showSignupPassword ? "text" : "password"}
-                      placeholder="كلمة المرور"
-                      className="text-right placeholder:text-right pr-12"
-                      value={signupPassword}
-                      onChange={(e) => setSignupPassword(e.target.value)}
-                      autoComplete="new-password"
-                      required
-                      dir="rtl"
-                    />
-                    <Button
-                      type="button"
-                      size="icon"
-                      variant="ghost"
-                      aria-label={showSignupPassword ? "إخفاء كلمة المرور" : "إظهار كلمة المرور"}
-                      className="absolute right-2 top-[38px] z-10"
-                      onClick={() => setShowSignupPassword((s) => !s)}
-                      tabIndex={-1}
-                    >
-                      {showSignupPassword ? (
-                        <EyeOff size={18} />
-                      ) : (
-                        <Eye size={18} />
-                      )}
-                    </Button>
+                    <div className="relative">
+                      <Input
+                        id="signup-password"
+                        type={showSignupPassword ? "text" : "password"}
+                        placeholder="كلمة المرور"
+                        className="text-right placeholder:text-right pr-3 pl-12"
+                        value={signupPassword}
+                        onChange={(e) => setSignupPassword(e.target.value)}
+                        autoComplete="new-password"
+                        required
+                        dir="rtl"
+                      />
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="ghost"
+                        aria-label={showSignupPassword ? "إخفاء كلمة المرور" : "إظهار كلمة المرور"}
+                        className="absolute left-2 top-[38px] z-10"
+                        onClick={() => setShowSignupPassword((s) => !s)}
+                        tabIndex={-1}
+                      >
+                        {showSignupPassword ? (
+                          <EyeOff size={18} />
+                        ) : (
+                          <Eye size={18} />
+                        )}
+                      </Button>
+                    </div>
                   </div>
                   <div className="flex flex-col gap-2">
                     <label className="text-right text-sm font-bold" htmlFor="signup-confirm-password">
