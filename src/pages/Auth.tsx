@@ -79,15 +79,30 @@ const Auth = () => {
     setLoginError("");
     
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email: loginEmail,
         password: loginPassword,
       });
       
       if (error) throw error;
       
+      // التحقق مما إذا كان المستخدم لديه صفحة مُعرَّفة
+      const { data: office } = await supabase
+        .from('offices')
+        .select('id')
+        .eq('user_id', data.user.id)
+        .maybeSingle();
+
       toast.success("تم تسجيل الدخول بنجاح!");
-      navigate("/");
+      
+      // توجيه المستخدم بناءً على وجود صفحة
+      if (office) {
+        // لديه صفحة معرفة، توجيه للوحة التحكم
+        navigate("/dashboard");
+      } else {
+        // ليس لديه صفحة، توجيه لإنشاء صفحة
+        navigate("/create-page");
+      }
     } catch (error: any) {
       setLoginError(error.message || "حدث خطأ أثناء تسجيل الدخول");
       toast.error(error.message || "حدث خطأ أثناء تسجيل الدخول");

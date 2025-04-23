@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>أداة تشخيص التطبيق</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@200;300;400;500;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Tajawal', sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f7fafc;
+      color: #2d3748;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #4a5568;
+      border-bottom: 2px solid #e2e8f0;
+      padding-bottom: 10px;
+    }
+    h2 {
+      margin-top: 20px;
+      color: #5a67d8;
+    }
+    .diagnostic-section {
+      margin-bottom: 20px;
+      padding: 15px;
+      background-color: #f8fafc;
+      border-radius: 6px;
+      border-right: 4px solid #5a67d8;
+    }
+    .error-panel {
+      background-color: #fff5f5;
+      border-right: 4px solid #c53030;
+    }
+    pre {
+      background-color: #edf2f7;
+      padding: 10px;
+      border-radius: 4px;
+      overflow-x: auto;
+      direction: ltr;
+      text-align: left;
+    }
+    button {
+      background-color: #5a67d8;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-top: 10px;
+      font-family: 'Tajawal', sans-serif;
+    }
+    button:hover {
+      background-color: #4c51bf;
+    }
+    .btn-error {
+      background-color: #c53030;
+    }
+    .btn-error:hover {
+      background-color: #9b2c2c;
+    }
+    .btn-warning {
+      background-color: #d69e2e;
+    }
+    .btn-warning:hover {
+      background-color: #b7791f;
+    }
+    .btn-success {
+      background-color: #38a169;
+    }
+    .btn-success:hover {
+      background-color: #2f855a;
+    }
+    .status-available {
+      color: #38a169;
+      font-weight: bold;
+    }
+    .status-unavailable {
+      color: #e53e3e;
+      font-weight: bold;
+    }
+    .status-unknown {
+      color: #dd6b20;
+      font-weight: bold;
+    }
+    .library-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .library-item {
+      padding: 8px;
+      border-radius: 4px;
+      background-color: #edf2f7;
+    }
+    .resource-stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
+      justify-content: space-between;
+    }
+    .stat-box {
+      background-color: #edf2f7;
+      padding: 10px;
+      border-radius: 4px;
+      flex: 1;
+      min-width: 100px;
+      text-align: center;
+    }
+    .stat-box .value {
+      font-size: 20px;
+      font-weight: bold;
+      color: #4a5568;
+    }
+    .loading {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(0, 0, 0, 0.1);
+      border-radius: 50%;
+      border-top-color: #5a67d8;
+      animation: spin 1s ease-in-out infinite;
+      margin-right: 10px;
+      vertical-align: middle;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .tab-container {
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+    .tab-button {
+      background-color: #edf2f7;
+      border: none;
+      outline: none;
+      cursor: pointer;
+      padding: 10px 15px;
+      margin-left: 5px;
+      border-radius: 4px 4px 0 0;
+      transition: 0.3s;
+    }
+    .tab-button:hover {
+      background-color: #e2e8f0;
+    }
+    .tab-button.active {
+      background-color: #5a67d8;
+      color: white;
+    }
+    .tab-content {
+      display: none;
+      padding: 10px;
+      border-top: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>أداة تشخيص وكشف المشكلات</h1>
+    
+    <div class="diagnostic-section">
+      <h2>تحليل المكتبات والتبعيات</h2>
+      <div id="library-analysis">جاري التحميل...</div>
+      <div class="tab-container" id="libs-tabs" style="display: none;">
+        <button class="tab-button active" data-tab="libs-status">حالة المكتبات</button>
+        <button class="tab-button" data-tab="loaded-resources">الملفات المحملة</button>
+        <button class="tab-button" data-tab="performance">أداء التحميل</button>
+      </div>
+      <div id="libs-status" class="tab-content" style="display: block;">
+        <div id="dependencies">جاري التحميل...</div>
+      </div>
+      <div id="loaded-resources" class="tab-content">
+        <div id="resources">جاري التحميل...</div>
+      </div>
+      <div id="performance" class="tab-content">
+        <div id="performance-data">جاري التحميل...</div>
+      </div>
+    </div>
+    
+    <div class="diagnostic-section">
+      <h2>حالة Supabase</h2>
+      <div id="supabase-status">جاري التحميل...</div>
+      <button id="test-supabase" class="btn-success">اختبار الاتصال بـ Supabase</button>
+    </div>
+    
+    <div class="diagnostic-section">
+      <h2>حالة DOM</h2>
+      <div id="dom-status">جاري التحميل...</div>
+    </div>
+    
+    <div class="diagnostic-section">
+      <h2>معلومات الجهاز والمتصفح</h2>
+      <div id="env-info">جاري التحميل...</div>
+    </div>
+    
+    <div class="diagnostic-section">
+      <h2>سجل الأخطاء</h2>
+      <div id="error-log">جاري التحميل...</div>
+    </div>
+    
+    <div class="diagnostic-section">
+      <h2>أدوات الإصلاح</h2>
+      <div>
+        <button id="fix-missing-deps" class="btn-success">إصلاح المكتبات المفقودة</button>
+        <button id="check-main" class="btn-success">فحص عنصر الجذر</button>
+        <button id="refresh-page" class="btn-warning">إعادة تحميل الصفحة</button>
+        <button id="clear-storage" class="btn-error">مسح التخزين المؤقت</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // دالة للتحليل والفحص
+    async function diagnoseApp() {
+      // الوصول للتطبيق الرئيسي
+      const appWindow = window.opener || window.parent;
+      const debug = appWindow.appDebug;
+      
+      // عرض نتائج الفحص
+      function updateSection(id, content, isError = false) {
+        const el = document.getElementById(id);
+        if (el) {
+          el.innerHTML = '';
+          
+          if (typeof content === 'object') {
+            const pre = document.createElement('pre');
+            pre.textContent = JSON.stringify(content, null, 2);
+            el.appendChild(pre);
+          } else {
+            if (isError) {
+              el.innerHTML = `<div class="error-panel">${content}</div>`;
+            } else {
+              el.textContent = content;
+            }
+          }
+        }
+      }
+      
+      // استرجاع بيانات التشخيص
+      if (!debug) {
+        updateSection('library-analysis', 'لا يمكن الوصول لأداة التشخيص! تأكد من فتح هذه الصفحة من التطبيق الرئيسي أو في وضع التطوير.', true);
+        return;
+      }
+      
+      // تفعيل التبويبات
+      document.getElementById('libs-tabs').style.display = 'block';
+      document.querySelectorAll('.tab-button').forEach(button => {
+        button.addEventListener('click', function() {
+          // إزالة الفئة النشطة من جميع الأزرار
+          document.querySelectorAll('.tab-button').forEach(btn => {
+            btn.classList.remove('active');
+          });
+          
+          // إخفاء جميع المحتويات
+          document.querySelectorAll('.tab-content').forEach(content => {
+            content.style.display = 'none';
+          });
+          
+          // إضافة الفئة النشطة للزر المحدد
+          this.classList.add('active');
+          
+          // عرض المحتوى المقابل
+          const tabId = this.getAttribute('data-tab');
+          document.getElementById(tabId).style.display = 'block';
+        });
+      });
+      
+      // عرض معلومات البيئة
+      updateSection('env-info', debug.env);
+      
+      // فحص حالة DOM
+      updateSection('dom-status', debug.inspectDOM());
+      
+      // عرض سجل الأخطاء
+      const errorLog = debug.errors.length ? debug.errors : 'لا توجد أخطاء مسجلة';
+      updateSection('error-log', errorLog);
+      
+      // تحليل المكتبات المتاحة
+      const dependencies = debug.checkDependencies();
+      
+      // إنشاء عرض مخصص للمكتبات
+      const depsEl = document.getElementById('dependencies');
+      if (depsEl) {
+        depsEl.innerHTML = '<h3>حالة المكتبات الأساسية</h3>';
+        
+        const libraryList = document.createElement('div');
+        libraryList.className = 'library-list';
+        
+        for (const [libName, status] of Object.entries(dependencies)) {
+          const libItem = document.createElement('div');
+          libItem.className = 'library-item';
+          
+          let statusClass = 'status-unknown';
+          if (status === 'متاح' || status.includes('متاح')) {
+            statusClass = 'status-available';
+          } else if (status === 'غير متاح' || status.includes('غير')) {
+            statusClass = 'status-unavailable';
+          }
+          
+          libItem.innerHTML = `
+            <div>${libName}</div>
+            <div class="${statusClass}">${status}</div>
+          `;
+          libraryList.appendChild(libItem);
+        }
+        
+        depsEl.appendChild(libraryList);
+        
+        // قائمة المكتبات المفقودة
+        const missingLibs = Object.entries(dependencies)
+          .filter(([_, status]) => status === 'غير متاح')
+          .map(([name]) => name);
+        
+        if (missingLibs.length > 0) {
+          const missingSection = document.createElement('div');
+          missingSection.innerHTML = `
+            <h3>المكتبات المفقودة</h3>
+            <div class="error-panel">
+              <p>تم اكتشاف ${missingLibs.length} مكتبة مفقودة:</p>
+              <ul>${missingLibs.map(lib => `<li>${lib}</li>`).join('')}</ul>
+              <p>قد يؤدي ذلك إلى ظهور شاشة بيضاء أو عدم عمل التطبيق بشكل صحيح.</p>
+            </div>
+          `;
+          depsEl.appendChild(missingSection);
+        }
+      }
+      
+      // تحليل الموارد المحملة
+      const resources = debug.analyzeLoadedResources();
+      const resourcesEl = document.getElementById('resources');
+      
+      if (resourcesEl && resources) {
+        resourcesEl.innerHTML = '<h3>ملخص الملفات المحملة</h3>';
+        
+        // إحصائيات الموارد
+        const statsDiv = document.createElement('div');
+        statsDiv.className = 'resource-stats';
+        
+        statsDiv.innerHTML = `
+          <div class="stat-box">
+            <div class="value">${resources.totalLoadedFiles || 0}</div>
+            <div>إجمالي الملفات</div>
+          </div>
+          <div class="stat-box">
+            <div class="value">${resources.jsFilesCount || 0}</div>
+            <div>ملفات JavaScript</div>
+          </div>
+          <div class="stat-box">
+            <div class="value">${resources.cssFilesCount || 0}</div>
+            <div>ملفات CSS</div>
+          </div>
+          <div class="stat-box">
+            <div class="value">${resources.fontFilesCount || 0}</div>
+            <div>الخطوط</div>
+          </div>
+        `;
+        
+        resourcesEl.appendChild(statsDiv);
+        
+        // ملفات React
+        if (resources.possibleReactChunks && resources.possibleReactChunks.length) {
+          const reactChunksDiv = document.createElement('div');
+          reactChunksDiv.innerHTML = `
+            <h3>تحميل مكتبات React</h3>
+            <ul>${resources.possibleReactChunks.map(chunk => `<li>${chunk}</li>`).join('')}</ul>
+          `;
+          resourcesEl.appendChild(reactChunksDiv);
+        }
+        
+        // الملفات الكبيرة
+        if (resources.largeFiles && resources.largeFiles.length) {
+          const largeFilesDiv = document.createElement('div');
+          largeFilesDiv.innerHTML = `
+            <h3>ملفات كبيرة الحجم</h3>
+            <ul>${resources.largeFiles.map(file => `<li>${file.name} (${file.size})</li>`).join('')}</ul>
+          `;
+          resourcesEl.appendChild(largeFilesDiv);
+        }
+      }
+      
+      // بيانات الأداء
+      const perfEl = document.getElementById('performance-data');
+      if (perfEl) {
+        const slowResources = debug.performance.resourceTiming();
+        
+        perfEl.innerHTML = `
+          <h3>زمن التحميل</h3>
+          <p>وقت بدء التطبيق: ${debug.performance.getElapsedTime()}</p>
+        `;
+        
+        if (Array.isArray(slowResources) && slowResources.length > 0) {
+          const slowResourcesDiv = document.createElement('div');
+          slowResourcesDiv.innerHTML = `
+            <h3>الموارد البطيئة</h3>
+            <ul>${slowResources.map(res => `<li>${res.name || ''} - ${res.duration}ms (${res.type || ''})</li>`).join('')}</ul>
+          `;
+          perfEl.appendChild(slowResourcesDiv);
+        }
+      }
+      
+      // اختبار الاتصال بـ Supabase
+      document.getElementById('test-supabase').addEventListener('click', async function() {
+        const btn = this;
+        const statusEl = document.getElementById('supabase-status');
+        
+        btn.disabled = true;
+        statusEl.innerHTML = '<div class="loading"></div> جاري الاختبار...';
+        
+        try {
+          const result = await debug.testSupabaseConnection();
+          updateSection('supabase-status', result);
+        } catch (error) {
+          updateSection('supabase-status', `فشل الاختبار: ${error.message || error}`, true);
+        } finally {
+          btn.disabled = false;
+        }
+      });
+      
+      // إصلاح المكتبات المفقودة
+      document.getElementById('fix-missing-deps').addEventListener('click', function() {
+        try {
+          // فتح نافذة جديدة مع اقتراحات الإصلاح
+          const missingLibs = Object.entries(dependencies)
+            .filter(([_, status]) => status === 'غير متاح')
+            .map(([name]) => name);
+          
+          let fixContent = `
+            <!DOCTYPE html>
+            <html lang="ar" dir="rtl">
+            <head>
+              <meta charset="UTF-8">
+              <title>إصلاح المكتبات المفقودة</title>
+              <style>
+                body { font-family: 'Tajawal', sans-serif; margin: 20px; }
+                pre { background: #f1f5f9; padding: 10px; border-radius: 4px; }
+                .command { color: #3b82f6; }
+              </style>
+            </head>
+            <body>
+              <h1>إصلاح المكتبات المفقودة</h1>
+              <p>تم اكتشاف ${missingLibs.length} مكتبة مفقودة. يمكن تثبيتها باستخدام الأوامر التالية:</p>
+              <pre><code class="command">npm install ${missingLibs.join(' ')}</code></pre>
+              <h2>خطوات الإصلاح:</h2>
+              <ol>
+                <li>افتح نافذة Terminal/Command Prompt في مجلد المشروع</li>
+                <li>قم بتنفيذ الأمر السابق لتثبيت المكتبات</li>
+                <li>أعد تشغيل خادم التطوير باستخدام <code class="command">npm run dev</code></li>
+              </ol>
+              <h2>في حالة استمرار المشكلة:</h2>
+              <ul>
+                <li>أعد تثبيت كافة المكتبات: <code class="command">npm install</code></li>
+                <li>تأكد من إعدادات الاستيراد في الملفات</li>
+                <li>تحقق من إصدارات المكتبات المتوافقة</li>
+                <li>قم بمسح الذاكرة المؤقتة للمتصفح أو استخدم أمر <code class="command">npm cache clean --force</code></li>
+              </ul>
+            </body>
+            </html>
+          `;
+          
+          const fixWindow = window.open('', 'fix_libs', 'width=600,height=500');
+          fixWindow.document.write(fixContent);
+          fixWindow.document.close();
+        } catch (e) {
+          alert('فشل في فتح نافذة الإصلاح: ' + e.message);
+        }
+      });
+      
+      // ربط الأزرار
+      document.getElementById('check-main').addEventListener('click', function() {
+        try {
+          const mainEl = appWindow.document.getElementById('root');
+          const status = mainEl ? 
+            `موجود. عدد العناصر: ${mainEl.childNodes.length}, مرئي: ${mainEl.offsetHeight > 0 ? 'نعم' : 'لا'}` : 
+            'غير موجود!';
+          alert('عنصر الجذر: ' + status);
+        } catch (e) {
+          alert('فشل فحص الشاشة الرئيسية: ' + e.message);
+        }
+      });
+      
+      document.getElementById('refresh-page').addEventListener('click', function() {
+        appWindow.location.reload();
+      });
+      
+      document.getElementById('clear-storage').addEventListener('click', function() {
+        if (confirm('هل أنت متأكد من رغبتك في مسح التخزين المؤقت؟ سيتم تسجيل خروجك من التطبيق.')) {
+          appWindow.localStorage.clear();
+          appWindow.sessionStorage.clear();
+          alert('تم مسح التخزين المؤقت. سيتم إعادة تحميل الصفحة الآن.');
+          appWindow.location.reload();
+        }
+      });
+      
+      // اختبار Supabase عند التحميل
+      try {
+        const result = await debug.testSupabaseConnection();
+        updateSection('supabase-status', result);
+      } catch (error) {
+        updateSection('supabase-status', `لم يتم الاختبار تلقائياً. يمكنك الضغط على زر الاختبار.`);
+      }
+    }
+
+    // تشغيل التشخيص عند تحميل الصفحة
+    window.addEventListener('DOMContentLoaded', diagnoseApp);
+  </script>
+</body>
+</html> 

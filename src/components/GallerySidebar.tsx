@@ -1,17 +1,8 @@
-
 import React from "react";
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarFooter
-} from "@/components/ui/sidebar";
-import { LayoutDashboard, Megaphone, QrCode, Folder, Settings } from "lucide-react";
+import { LogOut, LayoutDashboard, Megaphone, QrCode, Folder, Settings } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate, Link, useLocation } from "react-router-dom";
+import { toast } from "@/components/ui/sonner";
 
 interface GallerySidebarProps {
   galleryName: string;
@@ -19,78 +10,102 @@ interface GallerySidebarProps {
   galleryLogo: string;
 }
 
-const menuItems = [
-  { title: "نظرة عامة", icon: LayoutDashboard, url: "#" },
-  { title: "إعلاناتي", icon: Megaphone, url: "#" },
-  { title: "رموز QR", icon: QrCode, url: "#" },
-  { title: "الفئات", icon: Folder, url: "#" },
-  { title: "الإعدادات", icon: Settings, url: "#" },
-];
-
 const GallerySidebar: React.FC<GallerySidebarProps> = ({
   galleryName,
   galleryUrl,
   galleryLogo,
 }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  // تحديث عناصر القائمة باستخدام المسارات بدلاً من #
+  const menuItems = [
+    { title: "نظرة عامة", icon: LayoutDashboard, url: "/dashboard", path: "/dashboard" },
+    { title: "إعلاناتي", icon: Megaphone, url: "/dashboard/advertisements", path: "/dashboard/advertisements" },
+    { title: "رموز QR", icon: QrCode, url: "/dashboard/qr-codes", path: "/dashboard/qr-codes" },
+    { title: "الفئات", icon: Folder, url: "/dashboard/categories", path: "/dashboard/categories" },
+    { title: "الإعدادات", icon: Settings, url: "/dashboard/settings", path: "/dashboard/settings" },
+  ];
+
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      toast.success("تم تسجيل الخروج بنجاح");
+      navigate("/auth");
+    } catch (error) {
+      toast.error("حدث خطأ أثناء تسجيل الخروج");
+    }
+  };
+
   return (
-    <Sidebar className="min-h-screen bg-white dark:bg-slate-950 border-r p-0 flex flex-col w-64" dir="rtl">
-      <SidebarContent className="flex flex-col h-full justify-between p-0">
-        <div>
-          {/* الشعار + الاسم + الرابط */}
-          <div className="flex flex-col items-center gap-3 pt-8 pb-6" dir="rtl">
-            <div className="w-20 h-20 rounded-full overflow-hidden shadow border bg-gray-100 flex items-center justify-center">
-              <img
-                src={galleryLogo || "/placeholder.svg"}
-                alt="شعار المعرض"
-                className="object-cover w-full h-full"
-                onError={(e) => {
-                  const imgElement = e.target as HTMLImageElement;
-                  imgElement.onerror = null;
-                  imgElement.src = "/placeholder.svg";
-                }}
-              />
-            </div>
-            <h2 className="font-bold text-lg">{galleryName}</h2>
-            <a
-              href={galleryUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-500 text-sm break-all hover:underline"
-              dir="ltr"
-              style={{direction:"ltr",textAlign:"right",wordBreak:"break-word",width:"100%"}}
-            >
-              {galleryUrl}
-            </a>
+    <aside 
+      className="fixed top-0 right-0 h-screen w-64 overflow-hidden z-40"
+      dir="rtl"
+    >
+      {/* خلفية متدرجة للقائمة الجانبية */}
+      <div className="absolute inset-0 bg-gradient-to-b from-indigo-900 via-purple-900 to-purple-800 opacity-95"></div>
+      
+      <div className="relative h-full overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-transparent">
+        {/* رأس القائمة - الشعار والاسم */}
+        <div className="flex items-center gap-3 px-4 py-6 border-b border-white/10">
+          <div className="w-14 h-14 rounded-xl overflow-hidden shadow-xl border-2 border-white/20 bg-white/10 flex-shrink-0 backdrop-blur-sm">
+            <img
+              src={galleryLogo || "/placeholder.svg"}
+              alt="شعار المعرض"
+              className="object-cover w-full h-full"
+              onError={(e) => {
+                const imgElement = e.target as HTMLImageElement;
+                imgElement.onerror = null;
+                imgElement.src = "/placeholder.svg";
+              }}
+            />
           </div>
-          {/* القائمة */}
-          <SidebarGroup>
-            <SidebarGroupLabel className="text-gray-400 text-right pr-3">
-              القائمة
-            </SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {menuItems.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild>
-                      <a
-                        href={item.url}
-                        className="flex flex-row-reverse items-center gap-2 text-right justify-end px-4"
-                      >
-                        {React.createElement(item.icon, { size: 20 })}
-                        <span>{item.title}</span>
-                      </a>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
+          <h2 className="font-bold text-lg text-white truncate">{galleryName}</h2>
         </div>
-        <SidebarFooter>
-          {/* تذييل مستقبلي */}
-        </SidebarFooter>
-      </SidebarContent>
-    </Sidebar>
+
+        {/* قائمة العناصر */}
+        <div className="py-6 px-3">
+          <p className="text-purple-300 text-xs font-semibold pr-3 mb-4 uppercase tracking-wider">القائمة الرئيسية</p>
+          <nav>
+            <ul className="space-y-1.5">
+              {menuItems.map((item) => {
+                const isActive = location.pathname === item.path;
+                
+                return (
+                <li key={item.title}>
+                  <Link
+                    to={item.url}
+                    className={`flex items-center gap-3 py-2.5 px-4 rounded-lg transition-all duration-200
+                      ${isActive 
+                        ? 'bg-white/15 text-white font-medium shadow-sm' 
+                        : 'text-purple-200 hover:bg-white/10 hover:text-white'
+                      }`}
+                  >
+                    {React.createElement(item.icon, { 
+                      size: 18, 
+                      className: isActive ? "text-white" : "text-purple-300" 
+                    })}
+                    <span>{item.title}</span>
+                  </Link>
+                </li>
+                );
+              })}
+            </ul>
+          </nav>
+        </div>
+
+        {/* تذييل - زر تسجيل الخروج */}
+        <div className="absolute bottom-0 right-0 left-0 p-5 backdrop-blur-sm bg-purple-950/40 border-t border-white/10">
+          <button 
+            onClick={handleLogout}
+            className="w-full flex items-center gap-2 px-4 py-2.5 text-white hover:bg-red-500/20 rounded-lg transition-colors"
+          >
+            <LogOut size={18} className="text-red-300" />
+            <span>تسجيل الخروج</span>
+          </button>
+        </div>
+      </div>
+    </aside>
   );
 };
 
