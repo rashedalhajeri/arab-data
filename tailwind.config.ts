@@ -18,6 +18,9 @@ export default {
 			}
 		},
 		extend: {
+			fontFamily: {
+				'sans': ['Tajawal', 'sans-serif'],
+			},
 			colors: {
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
@@ -84,11 +87,17 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'aurora': {
+					'0%': { 'background-position': '0% 50%, 50% 50%' },
+					'50%': { 'background-position': '100% 50%, 50% 50%' },
+					'100%': { 'background-position': '0% 50%, 50% 50%' }
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'aurora': 'aurora 20s linear infinite'
 			}
 		}
 	},
