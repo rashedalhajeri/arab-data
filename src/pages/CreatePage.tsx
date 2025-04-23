@@ -44,70 +44,23 @@ const CreatePage = () => {
   const [phone, setPhone] = useState("");
   const [errors, setErrors] = useState<{ [k: string]: string }>({});
 
-  // شعار المكتب
+  // شعار المكتب (بدون قص)
   const {
     fileInputRef: logoInput,
     handleThumbnailClick: openLogo,
+    handleFileChange: logoFileChange,
+    previewUrl: logoPreview,
     handleRemove: removeLogo,
-  } = useImageUpload(); // سنعدل هذا قليلاً بالأسفل
+  } = useImageUpload();
 
-  // الغلاف
+  // الغلاف (بدون قص)
   const {
     fileInputRef: coverInput,
     handleThumbnailClick: openCover,
+    handleFileChange: coverFileChange,
+    previewUrl: coverPreview,
     handleRemove: removeCover,
   } = useImageUpload();
-
-  // قص الصورة للشعار
-  const logoCropper = useCropper();
-  const [logoTemp, setLogoTemp] = useState<string | null>(null);
-
-  // قص الصورة للغلاف
-  const coverCropper = useCropper();
-  const [coverTemp, setCoverTemp] = useState<string | null>(null);
-
-  // نعدل وظيفة رفع الشعار
-  const onLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        // افتح نافذة القص
-        setLogoTemp(reader.result as string);
-        logoCropper.openCropper(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  // نعدل وظيفة رفع الغلاف
-  const onCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setCoverTemp(reader.result as string);
-        coverCropper.openCropper(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  // لحفظ الصورة بعد القص للشعار
-  const handleCropLogo = (cropped: string) => {
-    setLogoTemp(null);
-    setLogoPreview(cropped);
-  };
-
-  // لحفظ الصورة بعد القص للغلاف
-  const handleCropCover = (cropped: string) => {
-    setCoverTemp(null);
-    setCoverPreview(cropped);
-  };
-
-  // states الإضافية
-  const [logoPreview, setLogoPreview] = useState<string | null>(null);
-  const [coverPreview, setCoverPreview] = useState<string | null>(null);
 
   const slugBase = "ad51.me/";
 
@@ -288,14 +241,32 @@ const CreatePage = () => {
             <div>
               <label className="font-bold">شعار المكتب</label>
               <div className="flex flex-col items-end gap-2">
-                <input ref={logoInput} type="file" accept="image/*" style={{ display: "none" }} onChange={onLogoChange} />
+                <input
+                  ref={logoInput}
+                  type="file"
+                  accept="image/*"
+                  style={{ display: "none" }}
+                  onChange={logoFileChange}
+                />
                 <Button type="button" onClick={openLogo} variant="outline" size="sm">
                   رفع الشعار
                 </Button>
                 {logoPreview && (
-                  <div className="w-20 h-20 rounded overflow-hidden border flex flex-col items-center">
-                    <img src={logoPreview} alt="الشعار" className="object-cover w-full h-full" />
-                    <Button variant="ghost" size="sm" onClick={removeLogo}>حذف</Button>
+                  <div className="w-20 h-20 rounded overflow-hidden border flex flex-col items-center relative mt-1">
+                    <img
+                      src={logoPreview}
+                      alt="الشعار"
+                      className="object-cover w-full h-full"
+                    />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={removeLogo}
+                      className="absolute top-0 left-0"
+                      type="button"
+                    >
+                      حذف
+                    </Button>
                   </div>
                 )}
               </div>
@@ -304,14 +275,33 @@ const CreatePage = () => {
             <div>
               <label className="font-bold">الغلاف</label>
               <div className="flex flex-col items-end gap-2">
-                <input ref={coverInput} type="file" accept="image/*" style={{ display: "none" }} onChange={onCoverChange} />
+                <input
+                  ref={coverInput}
+                  type="file"
+                  accept="image/*"
+                  style={{ display: "none" }}
+                  onChange={coverFileChange}
+                />
                 <Button type="button" onClick={openCover} variant="outline" size="sm">
                   رفع الغلاف
                 </Button>
                 {coverPreview && (
-                  <div className="w-full max-h-28 rounded overflow-hidden border flex flex-col items-center">
-                    <img src={coverPreview} alt="الغلاف" className="object-cover w-full h-full" />
-                    <Button variant="ghost" size="sm" onClick={removeCover}>حذف</Button>
+                  <div className="w-full max-h-32 rounded overflow-hidden border flex flex-col items-center relative mt-1">
+                    <img
+                      src={coverPreview}
+                      alt="الغلاف"
+                      className="object-cover w-full h-full"
+                      style={{ aspectRatio: "4/1", width: "100%" }}
+                    />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={removeCover}
+                      className="absolute top-0 left-0"
+                      type="button"
+                    >
+                      حذف
+                    </Button>
                   </div>
                 )}
               </div>
@@ -323,24 +313,6 @@ const CreatePage = () => {
           </form>
         </CardContent>
       </Card>
-      {/* cropper modal شعار المكتب */}
-      <ImageCropper
-        open={logoCropper.isOpen}
-        image={logoTemp}
-        onClose={logoCropper.closeCropper}
-        onCrop={handleCropLogo}
-        aspect={1}
-        title="قص الشعار"
-      />
-      {/* cropper modal الغلاف */}
-      <ImageCropper
-        open={coverCropper.isOpen}
-        image={coverTemp}
-        onClose={coverCropper.closeCropper}
-        onCrop={handleCropCover}
-        aspect={4/1}
-        title="قص الغلاف"
-      />
     </div>
   );
 };
