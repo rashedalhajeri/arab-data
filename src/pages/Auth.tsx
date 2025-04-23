@@ -44,7 +44,18 @@ const Auth = () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
-          navigate('/');
+          // هل لدى المستخدم صفحة معرفة؟
+          const { data }: { data: any[] | null } = await supabase
+            .from("offices")
+            .select("*")
+            .eq("user_id", session.user.id)
+            .maybeSingle();
+
+          if (data) {
+            navigate('/dashboard');
+          } else {
+            navigate('/create-page');
+          }
         }
       } catch (error) {
         console.error("Error checking authentication:", error);

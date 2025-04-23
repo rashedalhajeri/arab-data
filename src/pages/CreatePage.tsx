@@ -1,0 +1,213 @@
+
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { useImageUpload } from "@/components/hooks/use-image-upload";
+import { toast } from "@/components/ui/sonner";
+
+const countries = [
+  { code: "SA", name: "السعودية", currency: "SAR", dial: "+966" },
+  { code: "KW", name: "الكويت", currency: "KWD", dial: "+965" },
+  { code: "AE", name: "الإمارات", currency: "AED", dial: "+971" },
+  { code: "QA", name: "قطر", currency: "QAR", dial: "+974" },
+  { code: "OM", name: "عمان", currency: "OMR", dial: "+968" },
+  { code: "BH", name: "البحرين", currency: "BHD", dial: "+973" },
+];
+
+function isValidSlug(slug: string) {
+  return /^[a-z0-9\-]+$/.test(slug);
+}
+
+const CreatePage = () => {
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+
+  // Form state
+  const [name, setName] = useState("");
+  const [slug, setSlug] = useState("");
+  const [country, setCountry] = useState("");
+  const [phone, setPhone] = useState("");
+  const [errors, setErrors] = useState<{ [k: string]: string }>({});
+
+  // File upload (شعار)
+  const {
+    previewUrl: logoPreview,
+    fileInputRef: logoInput,
+    handleThumbnailClick: openLogo,
+    handleFileChange: onLogoChange,
+    handleRemove: removeLogo,
+  } = useImageUpload();
+  // File upload (غلاف)
+  const {
+    previewUrl: coverPreview,
+    fileInputRef: coverInput,
+    handleThumbnailClick: openCover,
+    handleFileChange: onCoverChange,
+    handleRemove: removeCover,
+  } = useImageUpload();
+
+  // Example: slug output ad51.me/name
+  const slugBase = "ad51.me/";
+
+  function validateForm() {
+    const e: any = {};
+    if (!name.trim()) e.name = "الاسم التجاري مطلوب";
+    if (!slug.trim()) e.slug = "اسم الرابط مطلوب";
+    else if (!isValidSlug(slug)) e.slug = "اسم الرابط يجب أن يكون بالإنجليزية وحروف صغيرة وأرقام وشرطات فقط";
+    if (!country) e.country = "الدولة مطلوبة";
+    if (!phone.trim()) e.phone = "رقم الهاتف مطلوب";
+    if (!logoPreview) e.logo = "شعار المكتب مطلوب";
+    if (!coverPreview) e.cover = "الغلاف مطلوب";
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!validateForm()) return;
+    setLoading(true);
+
+    try {
+      // احصل على user id الحالي
+      const { data: { session }, error: sessionErr } = await supabase.auth.getSession();
+      if (sessionErr || !session?.user) throw new Error("لم يتم العثور على حساب المستخدم.");
+
+      // 1- ارفع الصور إلى storage
+      // ملاحظة: يجب أن يكون لديك bucket مخصص، هنا نفترض اسمه "office-assets"
+      const officeId = crypto.randomUUID();
+      const logoPath = `logos/${officeId}.png`;
+      const coverPath = `covers/${officeId}.png`;
+
+      // logo
+      const logoFile = logoInput.current?.files?.[0];
+      const coverFile = coverInput.current?.files?.[0];
+
+      const uploadLogo = supabase.storage.from("office-assets").upload(logoPath, logoFile as File, { upsert: true });
+      const uploadCover = supabase.storage.from("office-assets").upload(coverPath, coverFile as File, { upsert: true });
+      const [{ error: logoErr }, { error: coverErr }] = await Promise.all([uploadLogo, uploadCover]);
+      if (logoErr) throw new Error("فشل رفع الشعار");
+      if (coverErr) throw new Error("فشل رفع الغلاف");
+
+      // 2- حفظ بيانات الصفحة في قاعدة البيانات (يجب وجود جدول offices أو ما شابه)
+      const { error: insertError } = await supabase
+        .from("offices")
+        .insert({
+          id: officeId,
+          user_id: session.user.id,
+          name,
+          slug,
+          country,
+          phone,
+          logo_url: logoPath,
+          cover_url: coverPath,
+        });
+      if (insertError) throw insertError;
+
+      toast.success("تم إنشاء الصفحة بنجاح!");
+      navigate("/dashboard");
+    } catch (err: any) {
+      toast.error(err.message || "حدث خطأ");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const selectedCountry = countries.find((c) => c.code === country);
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-sky-50 via-purple-100 to-pink-100 dark:from-gray-900 dark:via-indigo-950 dark:to-slate-900">
+      <Card className="w-full max-w-xl p-2 rounded-3xl shadow-2xl" dir="rtl">
+        <CardHeader>
+          <CardTitle className="text-center text-2xl font-extrabold">
+            إنشاء صفحة المكتب
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4 mt-2">
+            <div>
+              <label className="font-bold">الاسم التجاري</label>
+              <Input value={name} onChange={e => { setName(e.target.value); setErrors((er) => ({ ...er, name: "" }))}} placeholder="مثال: معرض التميز الحديث" />
+              {errors.name && <div className="text-destructive text-xs font-bold mt-1">{errors.name}</div>}
+            </div>
+            <div>
+              <label className="font-bold">اسم الرابط بالإنجليزية (slug)</label>
+              <div className="flex gap-2 items-center">
+                <span className="text-xs text-gray-500 rounded bg-gray-100 px-2 py-1"> {slugBase} </span>
+                <Input value={slug} onChange={e => { setSlug(e.target.value.trim().toLowerCase()); setErrors((er) => ({ ...er, slug: "" }));}}
+                  placeholder="carshow123"
+                  pattern="^[a-z0-9\-]+$"
+                  className="ltr text-left"
+                  dir="ltr"
+                />
+              </div>
+              {errors.slug && <div className="text-destructive text-xs font-bold mt-1">{errors.slug}</div>}
+            </div>
+            <div>
+              <label className="font-bold">الدولة</label>
+              <Select value={country} onValueChange={(value) => {setCountry(value); setErrors((er)=>({...er, country:""}))}}>
+                <SelectTrigger>
+                  <SelectValue placeholder="اختر الدولة" />
+                </SelectTrigger>
+                <SelectContent>
+                  {countries.map(c =>
+                    <SelectItem value={c.code} key={c.code}>{c.name} ({c.currency})</SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
+              {errors.country && <div className="text-destructive text-xs font-bold mt-1">{errors.country}</div>}
+            </div>
+            <div>
+              <label className="font-bold">رقم الهاتف</label>
+              <div className="flex gap-2 items-center">
+                <span className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded">{selectedCountry?.dial ?? ""}</span>
+                <Input value={phone} onChange={e => { setPhone(e.target.value); setErrors((er) => ({ ...er, phone: "" }))}} placeholder="5xxxxxxxx" type="tel" />
+              </div>
+              {errors.phone && <div className="text-destructive text-xs font-bold mt-1">{errors.phone}</div>}
+            </div>
+            <div>
+              <label className="font-bold">شعار المكتب</label>
+              <div className="flex flex-col items-end gap-2">
+                <input ref={logoInput} type="file" accept="image/*" style={{ display: "none" }} onChange={onLogoChange} />
+                <Button type="button" onClick={openLogo} variant="outline" size="sm">
+                  رفع الشعار
+                </Button>
+                {logoPreview && (
+                  <div className="w-20 h-20 rounded overflow-hidden border">
+                    <img src={logoPreview} alt="الشعار" className="object-cover w-full h-full" />
+                    <Button variant="ghost" size="xs" onClick={removeLogo}>حذف</Button>
+                  </div>
+                )}
+              </div>
+              {errors.logo && <div className="text-destructive text-xs font-bold mt-1">{errors.logo}</div>}
+            </div>
+            <div>
+              <label className="font-bold">الغلاف</label>
+              <div className="flex flex-col items-end gap-2">
+                <input ref={coverInput} type="file" accept="image/*" style={{ display: "none" }} onChange={onCoverChange} />
+                <Button type="button" onClick={openCover} variant="outline" size="sm">
+                  رفع الغلاف
+                </Button>
+                {coverPreview && (
+                  <div className="w-full max-h-28 rounded overflow-hidden border">
+                    <img src={coverPreview} alt="الغلاف" className="object-cover w-full h-full" />
+                    <Button variant="ghost" size="xs" onClick={removeCover}>حذف</Button>
+                  </div>
+                )}
+              </div>
+              {errors.cover && <div className="text-destructive text-xs font-bold mt-1">{errors.cover}</div>}
+            </div>
+            <Button type="submit" className="w-full rounded-full font-bold mt-4" disabled={loading}>
+              {loading ? "جاري الإنشاء..." : "إنشاء الصفحة"}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+export default CreatePage;
