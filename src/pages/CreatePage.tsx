@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,16 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { useImageUpload } from "@/components/hooks/use-image-upload";
 import { toast } from "@/components/ui/sonner";
 import { Database } from "@/integrations/supabase/types";
+
+// عدد أرقام الهاتف حسب الدولة
+const phoneLengths: Record<string, number> = {
+  SA: 9,
+  KW: 8,
+  AE: 9,
+  QA: 8,
+  OM: 8,
+  BH: 8,
+};
 
 const countries = [
   { code: "SA", name: "السعودية", currency: "SAR", dial: "+966" },
@@ -30,6 +40,7 @@ const CreatePage = () => {
   // Form state
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
+  const [slugAvailable, setSlugAvailable] = useState<null | boolean>(null);
   const [country, setCountry] = useState("");
   const [phone, setPhone] = useState("");
   const [errors, setErrors] = useState<{ [k: string]: string }>({});
@@ -54,13 +65,43 @@ const CreatePage = () => {
   // Example: slug output ad51.me/name
   const slugBase = "ad51.me/";
 
+  // التحقق من توفر الـ slug
+  const slugCheckTimeout = useRef<NodeJS.Timeout | null>(null);
+  const handleSlugChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // نجبر الحروف على الإنجليزية الصغيرة
+    const value = e.target.value.replace(/[^a-zA-Z0-9\-]/g, "").toLowerCase();
+    setSlug(value);
+    setErrors((er) => ({ ...er, slug: "" }));
+
+    if (slugCheckTimeout.current) clearTimeout(slugCheckTimeout.current);
+
+    if (value.length >= 3 && isValidSlug(value)) {
+      slugCheckTimeout.current = setTimeout(async () => {
+        // تحقق هل الـ slug مستخدم من قبل؟
+        let { data, error } = await supabase
+          .from("offices")
+          .select("id")
+          .eq("slug", value)
+          .maybeSingle();
+        setSlugAvailable(!data);
+      }, 600);
+    } else {
+      setSlugAvailable(null);
+    }
+  };
+
   function validateForm() {
     const e: any = {};
     if (!name.trim()) e.name = "الاسم التجاري مطلوب";
     if (!slug.trim()) e.slug = "اسم الرابط مطلوب";
     else if (!isValidSlug(slug)) e.slug = "اسم الرابط يجب أن يكون بالإنجليزية وحروف صغيرة وأرقام وشرطات فقط";
+    else if (slugAvailable === false) e.slug = "اسم الرابط غير متاح، الرجاء اختيار اسم آخر";
     if (!country) e.country = "الدولة مطلوبة";
+    // تحقق رقم الهاتف حسب الدولة
     if (!phone.trim()) e.phone = "رقم الهاتف مطلوب";
+    else if (country && phoneLengths[country] && phone.length !== phoneLengths[country])
+      e.phone = `رقم الهاتف يجب أن يتكون من ${phoneLengths[country]} أرقام`;
+    else if (!/^\d+$/.test(phone)) e.phone = "رقم الهاتف يجب أن يكون أرقام فقط";
     if (!logoPreview) e.logo = "شعار المكتب مطلوب";
     if (!coverPreview) e.cover = "الغلاف مطلوب";
     setErrors(e);
@@ -78,7 +119,6 @@ const CreatePage = () => {
       if (sessionErr || !session?.user) throw new Error("لم يتم العثور على حساب المستخدم.");
 
       // 1- ارفع الصور إلى storage
-      // ملاحظة: يجب أن يكون لديك bucket مخصص، هنا نفترض اسمه "office-assets"
       const officeId = crypto.randomUUID();
       const logoPath = `logos/${officeId}.png`;
       const coverPath = `covers/${officeId}.png`;
@@ -87,13 +127,17 @@ const CreatePage = () => {
       const logoFile = logoInput.current?.files?.[0];
       const coverFile = coverInput.current?.files?.[0];
 
-      const uploadLogo = supabase.storage.from("office-assets").upload(logoPath, logoFile as File, { upsert: true });
-      const uploadCover = supabase.storage.from("office-assets").upload(coverPath, coverFile as File, { upsert: true });
+      // تأكد من وجود ملفات الصور
+      if (!logoFile) throw new Error("يرجى رفع الشعار");
+      if (!coverFile) throw new Error("يرجى رفع الغلاف");
+
+      const uploadLogo = supabase.storage.from("office-assets").upload(logoPath, logoFile, { upsert: true });
+      const uploadCover = supabase.storage.from("office-assets").upload(coverPath, coverFile, { upsert: true });
       const [{ error: logoErr }, { error: coverErr }] = await Promise.all([uploadLogo, uploadCover]);
       if (logoErr) throw new Error("فشل رفع الشعار");
       if (coverErr) throw new Error("فشل رفع الغلاف");
 
-      // 2- حفظ بيانات الصفحة في قاعدة البيانات (يجب وجود جدول offices أو ما شابه)
+      // 2- حفظ بيانات الصفحة في قاعدة البيانات
       const { error: insertError } = await supabase
         .from('offices')
         .insert({
@@ -128,22 +172,38 @@ const CreatePage = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4 mt-2">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4 mt-2" autoComplete="off">
             <div>
               <label className="font-bold">الاسم التجاري</label>
-              <Input value={name} onChange={e => { setName(e.target.value); setErrors((er) => ({ ...er, name: "" }))}} placeholder="مثال: معرض التميز الحديث" />
+              <Input
+                value={name}
+                onChange={e => { setName(e.target.value); setErrors((er) => ({ ...er, name: "" }))}}
+                placeholder="مثال: معرض التميز الحديث"
+              />
               {errors.name && <div className="text-destructive text-xs font-bold mt-1">{errors.name}</div>}
             </div>
             <div>
               <label className="font-bold">اسم الرابط بالإنجليزية (slug)</label>
               <div className="flex gap-2 items-center">
                 <span className="text-xs text-gray-500 rounded bg-gray-100 px-2 py-1"> {slugBase} </span>
-                <Input value={slug} onChange={e => { setSlug(e.target.value.trim().toLowerCase()); setErrors((er) => ({ ...er, slug: "" }));}}
+                <Input
+                  value={slug}
+                  onChange={handleSlugChange}
                   placeholder="carshow123"
                   pattern="^[a-z0-9\-]+$"
                   className="ltr text-left"
                   dir="ltr"
+                  maxLength={30}
                 />
+                {slug.length >= 3 && (
+                  <span className={`text-xs font-bold ${slugAvailable == null ? "text-gray-400" : slugAvailable ? "text-green-600" : "text-red-600"}`}>
+                    {slugAvailable == null
+                      ? ""
+                      : slugAvailable
+                        ? "متاح"
+                        : "غير متاح"}
+                  </span>
+                )}
               </div>
               {errors.slug && <div className="text-destructive text-xs font-bold mt-1">{errors.slug}</div>}
             </div>
@@ -165,7 +225,26 @@ const CreatePage = () => {
               <label className="font-bold">رقم الهاتف</label>
               <div className="flex gap-2 items-center">
                 <span className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded">{selectedCountry?.dial ?? ""}</span>
-                <Input value={phone} onChange={e => { setPhone(e.target.value); setErrors((er) => ({ ...er, phone: "" }))}} placeholder="5xxxxxxxx" type="tel" />
+                <Input
+                  value={phone}
+                  // يُسمح فقط بالأرقام وعدم وجود حروف
+                  onChange={e => {
+                    const digits = e.target.value.replace(/\D/g, "");
+                    setPhone(digits);
+                    setErrors((er) => ({ ...er, phone: "" }))
+                  }}
+                  placeholder={`${
+                    selectedCountry?.code === "KW"
+                      ? "5xxxxxxx"
+                      : selectedCountry?.code === "SA"
+                        ? "5xxxxxxxx"
+                        : selectedCountry?.code === "AE"
+                          ? "5xxxxxxxx"
+                          : "xxxxxxxx"
+                  }`}
+                  type="tel"
+                  maxLength={country && phoneLengths[country] ? phoneLengths[country] : 9}
+                />
               </div>
               {errors.phone && <div className="text-destructive text-xs font-bold mt-1">{errors.phone}</div>}
             </div>
@@ -177,7 +256,7 @@ const CreatePage = () => {
                   رفع الشعار
                 </Button>
                 {logoPreview && (
-                  <div className="w-20 h-20 rounded overflow-hidden border">
+                  <div className="w-20 h-20 rounded overflow-hidden border flex flex-col items-center">
                     <img src={logoPreview} alt="الشعار" className="object-cover w-full h-full" />
                     <Button variant="ghost" size="sm" onClick={removeLogo}>حذف</Button>
                   </div>
@@ -193,7 +272,8 @@ const CreatePage = () => {
                   رفع الغلاف
                 </Button>
                 {coverPreview && (
-                  <div className="w-full max-h-28 rounded overflow-hidden border">
+                  <div className="w-full max-h-28 rounded overflow-hidden border flex flex-col items-center">
+                    {/* إصلاح استعراض صورة الغلاف */}
                     <img src={coverPreview} alt="الغلاف" className="object-cover w-full h-full" />
                     <Button variant="ghost" size="sm" onClick={removeCover}>حذف</Button>
                   </div>
