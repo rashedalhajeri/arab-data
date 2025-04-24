@@ -10,6 +10,7 @@ import { ExternalLink, Phone, MapPin, Share2, MessageCircle, Clock, Info, Star, 
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
+import DOMPurify from 'dompurify';
 
 interface Office {
   id: string;
@@ -22,11 +23,7 @@ interface Office {
 }
 
 export default function OfficeProfile() {
-  const {
-    slug
-  } = useParams<{
-    slug: string;
-  }>();
+  const { slug } = useParams<{ slug: string; }>();
   const [office, setOffice] = useState<Office | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -34,13 +31,18 @@ export default function OfficeProfile() {
   useEffect(() => {
     async function fetchOfficeData() {
       try {
+        // Input validation for slug
+        if (!slug || slug.length > 100 || /[<>'"\/\\]/.test(slug)) {
+          setError('معرف المكتب غير صالح');
+          setLoading(false);
+          return;
+        }
+
         setLoading(true);
-        const {
-          data,
-          error
-        } = await supabase.rpc('get_office_by_slug', {
+        const { data, error } = await supabase.rpc('get_office_by_slug', {
           slug_param: slug
         });
+        
         if (error) throw error;
         if (data && data.length > 0) {
           setOffice(data[0]);
@@ -54,17 +56,24 @@ export default function OfficeProfile() {
         setLoading(false);
       }
     }
+    
     if (slug) {
       fetchOfficeData();
     }
   }, [slug]);
 
   const handleShare = async () => {
+    if (!office) return;
+    
+    // Sanitize data for sharing
+    const safeTitle = DOMPurify.sanitize(office.name);
+    
     const shareData = {
-      title: office?.name,
-      text: `تفضل بزيارة صفحة ${office?.name}`,
+      title: safeTitle,
+      text: `تفضل بزيارة صفحة ${safeTitle}`,
       url: window.location.href
     };
+    
     try {
       if (navigator.share) {
         await navigator.share(shareData);
@@ -79,12 +88,28 @@ export default function OfficeProfile() {
 
   const getStorageUrl = (path: string | null): string => {
     if (!path) return "/placeholder.svg";
+    
+    // Security check: validate path format before processing
+    if (typeof path !== 'string') return "/placeholder.svg";
+    
+    // Prevent path traversal attacks
+    if (path.includes('..') || path.startsWith('/')) {
+      console.error('محاولة غير آمنة للوصول للملف:', path);
+      return "/placeholder.svg";
+    }
+    
     if (path.startsWith('http://') || path.startsWith('https://')) {
+      // For external URLs, validate that they are from trusted domains
+      const url = new URL(path);
+      const trustedDomains = ['rkiukoeankeojpntfhvv.supabase.co', 'supabase.co'];
+      if (!trustedDomains.some(domain => url.hostname.includes(domain))) {
+        console.warn('محاولة وصول لمصدر غير موثوق:', path);
+        return "/placeholder.svg";
+      }
       return path;
     }
-    const {
-      data
-    } = supabase.storage.from('office-assets').getPublicUrl(path);
+    
+    const { data } = supabase.storage.from('office-assets').getPublicUrl(path);
     return data?.publicUrl || "/placeholder.svg";
   };
 
@@ -106,16 +131,19 @@ export default function OfficeProfile() {
       </div>;
   }
 
+  // Safely sanitize any data that might be rendered
+  const safeName = DOMPurify.sanitize(office.name);
+  const safeCountry = DOMPurify.sanitize(office.country);
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-4xl mx-auto">
         <div className="bg-white shadow-sm">
-          {/* Reduced cover image height from h-72 sm:h-96 to h-48 sm:h-64 */}
           <div className="h-48 sm:h-64 relative overflow-hidden">
             {office.cover_url ? (
               <img 
                 src={getStorageUrl(office.cover_url)} 
-                alt={`غلاف ${office.name}`} 
+                alt={`غلاف ${safeName}`} 
                 className="w-full h-full object-cover" 
               />
             ) : (
@@ -125,24 +153,24 @@ export default function OfficeProfile() {
 
           <div className="px-4 sm:px-6 -mt-6">
             <div className="flex items-center gap-6">
-              <Avatar className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-white shadow-lg">
+              <Avatar className="w-20 h-20 sm:w-32 sm:h-32 rounded-full border-4 border-white shadow-lg">
                 <AvatarImage 
                   src={getStorageUrl(office.logo_url)} 
-                  alt={office.name} 
+                  alt={safeName} 
                   className="object-cover" 
                 />
-                <AvatarFallback className="text-2xl font-bold bg-primary text-white">
-                  {office.name.substring(0, 2)}
+                <AvatarFallback className="text-xl sm:text-2xl font-bold bg-primary text-white">
+                  {safeName.substring(0, 2)}
                 </AvatarFallback>
               </Avatar>
               
-              <div className="flex flex-col">
-                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-                  {office.name}
+              <div className="flex flex-col mt-4">
+                <h1 className="text-xl sm:text-3xl font-bold text-gray-900">
+                  {safeName}
                 </h1>
                 <div className="flex items-center gap-2 text-gray-600 mt-2">
-                  <MapPin className="w-5 h-5" />
-                  <span>{office.country}</span>
+                  <MapPin className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <span>{safeCountry}</span>
                 </div>
               </div>
             </div>
