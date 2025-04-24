@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
@@ -29,9 +29,6 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/create-page" element={<CreatePage />} />
-          
-          {/* مسار الصفحة العامة للمكتب */}
-          <Route path="/:slug" element={<PublicOfficeProfile />} />
           
           {/* مسارات لوحة التحكم */}
           <Route path="/dashboard" element={<DashboardLayout><Outlet /></DashboardLayout>}>
