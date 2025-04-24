@@ -73,6 +73,20 @@ export default function OfficeProfile() {
     }
   };
 
+  const getStorageUrl = (path: string | null): string => {
+    if (!path) return "/placeholder.svg";
+    
+    if (path.startsWith('http://') || path.startsWith('https://')) {
+      return path;
+    }
+    
+    const { data } = supabase.storage
+      .from('office-assets')
+      .getPublicUrl(path);
+    
+    return data?.publicUrl || "/placeholder.svg";
+  };
+
   if (loading) {
     return <OfficeProfileSkeleton />;
   }
@@ -95,25 +109,11 @@ export default function OfficeProfile() {
     );
   }
 
-  const getStorageUrl = (path: string | null): string => {
-    if (!path) return "/placeholder.svg";
-    
-    if (path.startsWith('http://') || path.startsWith('https://')) {
-      return path;
-    }
-    
-    const { data } = supabase.storage
-      .from('office-assets')
-      .getPublicUrl(path);
-    
-    return data?.publicUrl || "/placeholder.svg";
-  };
-
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-5xl mx-auto">
+      <div className="max-w-4xl mx-auto">
         <div className="relative bg-white shadow-sm">
-          <div className="h-48 sm:h-64 relative overflow-hidden bg-gray-100">
+          <div className="h-40 sm:h-48 relative overflow-hidden">
             {office.cover_url ? (
               <img 
                 src={getStorageUrl(office.cover_url)}
@@ -123,41 +123,50 @@ export default function OfficeProfile() {
             ) : (
               <div className="w-full h-full bg-gradient-to-r from-gray-100 to-gray-200" />
             )}
-            
-            <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/25 to-transparent" />
           </div>
           
-          <div className="container max-w-4xl mx-auto px-4">
-            <div className="relative -mt-16 flex items-end gap-5 mb-6 z-10">
-              <Avatar className="w-24 h-24 rounded-full border-4 border-white shadow-md">
+          <div className="relative px-4 sm:px-6">
+            <div className="flex flex-col sm:flex-row items-center sm:items-end gap-4 -mt-12 sm:-mt-16">
+              <Avatar className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-white shadow-lg">
                 <AvatarImage 
                   src={getStorageUrl(office.logo_url)}
                   alt={office.name}
                   className="object-cover"
                 />
-                <AvatarFallback className="text-2xl font-bold bg-primary text-white">
+                <AvatarFallback className="text-xl font-bold bg-primary text-white">
                   {office.name.substring(0, 2)}
                 </AvatarFallback>
               </Avatar>
-              <div className="flex-1 mb-1">
-                <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">
+              
+              <div className="flex-1 text-center sm:text-right pb-4">
+                <h1 className="text-2xl font-bold text-gray-900 mb-1">
                   {office.name}
                 </h1>
-                <div className="flex items-center gap-2 text-sm text-gray-600">
+                <div className="flex items-center justify-center sm:justify-start gap-2 text-sm text-gray-600">
                   <MapPin className="w-4 h-4" />
                   <span>{office.country}</span>
                 </div>
+              </div>
+
+              <div className="flex gap-2 pb-4">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={handleShare}
+                >
+                  <Share2 className="w-4 h-4 ml-2" />
+                  مشاركة
+                </Button>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="container max-w-4xl mx-auto px-4">
-          <div className="mt-8 mb-16">
+        <div className="mt-6 px-4 sm:px-6">
+          <div className="mb-16">
             <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center">
-                <h2 className="text-xl font-bold text-gray-900">إعلانات المكتب</h2>
-              </div>
+              <h2 className="text-xl font-bold text-gray-900">إعلانات المكتب</h2>
             </div>
 
             <div className="text-center py-16 bg-white rounded-xl shadow-sm border border-gray-100">
