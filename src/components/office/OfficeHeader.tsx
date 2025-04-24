@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { debug } from '@/lib/debug';
 
 interface OfficeHeaderProps {
   office: {
@@ -14,7 +15,10 @@ interface OfficeHeaderProps {
 export const OfficeHeader = ({ office }: OfficeHeaderProps) => {
   // تحسين بناء URL للتأكد من صحة تنسيق المسار
   const getLogoUrl = (logoPath: string) => {
-    if (!logoPath) return "/placeholder.svg";
+    if (!logoPath) {
+      debug.logError("No logo path provided", "OfficeHeader");
+      return "/placeholder.svg";
+    }
     
     // التحقق مما إذا كان المسار يحتوي بالفعل على URL كامل
     if (logoPath.startsWith('http')) {
@@ -22,20 +26,25 @@ export const OfficeHeader = ({ office }: OfficeHeaderProps) => {
     }
     
     // بناء URL صحيح إلى خزان التخزين
-    return `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/office-assets/${logoPath}`;
+    const fullUrl = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/office-assets/${logoPath}`;
+    console.log("Full logo URL constructed:", fullUrl);
+    return fullUrl;
   };
 
-  console.log("Logo URL being used:", getLogoUrl(office.logo_url));
+  const logoUrl = getLogoUrl(office.logo_url);
+  console.log("Final logo URL being used:", logoUrl);
 
   return (
     <div className="flex items-center justify-between px-4 py-3 bg-white/95 backdrop-blur-sm border-b border-gray-100 dark:bg-slate-900/95 dark:border-slate-800">
       <div className="flex items-center gap-3">
         <Avatar className="w-12 h-12 border-2 border-primary/10">
           <AvatarImage 
-            src={getLogoUrl(office.logo_url)}
+            src={logoUrl}
             alt={office.name}
             onError={(e) => {
-              console.error("Error loading logo image:", e);
+              const err = `Error loading logo image for ${office.name}: ${e}`;
+              console.error(err);
+              debug.logError(err, "OfficeHeader");
               e.currentTarget.onerror = null;
               // وضع صورة بديلة احتياطية للشعار
               e.currentTarget.src = "/placeholder.svg";

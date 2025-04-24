@@ -6,6 +6,7 @@ import { OfficeHeader } from '@/components/office/OfficeHeader';
 import { OfficeCover } from '@/components/office/OfficeCover';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
+import { debug } from '@/lib/debug';
 
 interface Office {
   id: string;
@@ -34,6 +35,7 @@ export default function PublicOfficeProfile() {
         
         if (error) {
           console.error("Error fetching office:", error);
+          debug.logError(`Error fetching office: ${error.message}`, "PublicOfficeProfile");
           throw error;
         }
         
@@ -51,18 +53,31 @@ export default function PublicOfficeProfile() {
           setOffice(officeData);
           
           // تسجيل عناوين URL للشعار والغلاف لأغراض التصحيح
-          console.log("Logo URL:", officeData.logo_url);
-          console.log("Cover URL:", officeData.cover_url);
+          console.log("Logo URL from database:", officeData.logo_url);
+          console.log("Cover URL from database:", officeData.cover_url);
+          
+          // التحقق من صحة البيانات
+          if (!officeData.logo_url) {
+            debug.logError("Logo URL is empty", "PublicOfficeProfile");
+          }
+          if (!officeData.cover_url) {
+            debug.logError("Cover URL is empty", "PublicOfficeProfile");
+          }
+          
           console.log("Complete Supabase URL for logo:", `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/office-assets/${officeData.logo_url}`);
           console.log("Complete Supabase URL for cover:", `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/office-assets/${officeData.cover_url}`);
         } else {
-          setError('لم يتم العثور على المكتب');
-          toast.error('لم يتم العثور على المكتب');
+          const errMsg = 'لم يتم العثور على المكتب';
+          setError(errMsg);
+          debug.logError(errMsg, "PublicOfficeProfile");
+          toast.error(errMsg);
         }
       } catch (error: any) {
+        const errMsg = error.message || 'حدث خطأ أثناء جلب بيانات المكتب';
         console.error('خطأ في جلب بيانات المكتب:', error);
-        setError(error.message || 'حدث خطأ أثناء جلب بيانات المكتب');
-        toast.error('حدث خطأ أثناء جلب بيانات المكتب');
+        setError(errMsg);
+        debug.logError(errMsg, "PublicOfficeProfile");
+        toast.error(errMsg);
       } finally {
         setLoading(false);
       }
