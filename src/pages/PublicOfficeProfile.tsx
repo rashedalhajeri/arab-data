@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
@@ -88,7 +87,7 @@ export default function PublicOfficeProfile() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-900 pb-16">
-      <OfficeHeader office={office} onShare={shareProfile} />
+      <OfficeHeader office={office} />
       <OfficeCover office={office} />
       <OfficeInfo office={office} />
 
