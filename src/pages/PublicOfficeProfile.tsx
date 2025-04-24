@@ -48,6 +48,13 @@ export default function PublicOfficeProfile() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [logoLoaded, setLogoLoaded] = useState(false);
+  const [useFallbackLogo, setUseFallbackLogo] = useState(false);
+  
+  // Placeholder image as a final fallback
+  const getPlaceholderLogo = (name: string) => {
+    const initials = name.substring(0, 2);
+    return `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23007BFF'/%3E%3Ctext x='50' y='55' font-family='Arial' font-size='35' text-anchor='middle' fill='white' dominant-baseline='middle'%3E${initials}%3C/text%3E%3C/svg%3E`;
+  };
 
   useEffect(() => {
     async function fetchOfficeData() {
@@ -109,7 +116,8 @@ export default function PublicOfficeProfile() {
 
   // Helper function to get logo URL
   const getLogoUrl = (logoPath: string) => {
-    if (!logoPath) return '';
+    if (useFallbackLogo) return getPlaceholderLogo(office.name);
+    if (!logoPath) return getPlaceholderLogo(office.name);
     
     // For debugging
     console.log('Original logo path:', logoPath);
@@ -193,13 +201,10 @@ export default function PublicOfficeProfile() {
                   src={getLogoUrl(office.logo_url)}
                   alt={office.name}
                   onLoad={() => setLogoLoaded(true)}
-                  onError={(e) => {
-                    console.error('Logo failed to load:', e);
+                  onError={() => {
+                    console.error('Logo failed to load');
                     setLogoLoaded(false);
-                    // Try a direct fallback
-                    if (office.logo_url && !office.logo_url.includes('data:image')) {
-                      (e.target as HTMLImageElement).src = office.logo_url;
-                    }
+                    setUseFallbackLogo(true);
                   }}
                   className="object-cover"
                 />
@@ -273,13 +278,10 @@ export default function PublicOfficeProfile() {
                   src={getLogoUrl(office.logo_url)}
                   alt={office.name}
                   onLoad={() => setLogoLoaded(true)}
-                  onError={(e) => {
-                    console.error('Logo failed to load:', e);
+                  onError={() => {
+                    console.error('Logo failed to load');
                     setLogoLoaded(false);
-                    // Try a direct fallback
-                    if (office.logo_url && !office.logo_url.includes('data:image')) {
-                      (e.target as HTMLImageElement).src = office.logo_url;
-                    }
+                    setUseFallbackLogo(true);
                   }}
                   className="object-cover"
                 />
