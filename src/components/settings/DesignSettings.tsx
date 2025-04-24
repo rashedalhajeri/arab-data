@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,21 @@ import {
   Moon,
   Sun
 } from "lucide-react";
+
+// تعريف نوع المكتب
+interface Office {
+  id?: string;
+  name?: string;
+  slug?: string;
+  created_at?: string;
+  updated_at?: string;
+  user_id?: string;
+  country?: string;
+  logo_url?: string;
+  cover_url?: string;
+  phone?: string;
+  settings?: { [key: string]: any };
+}
 
 interface ColorOption {
   id: string;
@@ -111,7 +127,7 @@ const DesignSettings = ({ office }: { office: any }) => {
             ...designSettings,
             updated_at: new Date().toISOString()
           }
-        }
+        } as any
       }).eq("id", office.id);
 
       if (error) throw error;
@@ -387,4 +403,4 @@ const DesignSettings = ({ office }: { office: any }) => {
   );
 };
 
-export default DesignSettings; 
+export default DesignSettings;

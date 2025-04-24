@@ -7,10 +7,23 @@ import { Save, CreditCard, Calendar, CheckCircle, Clock, AlertCircle, ArrowUpRig
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 
+interface Office {
+  id?: string;
+  name?: string;
+  slug?: string;
+  created_at?: string;
+  updated_at?: string;
+  user_id?: string;
+  country?: string;
+  logo_url?: string;
+  cover_url?: string;
+  phone?: string;
+  settings?: { [key: string]: any };
+}
+
 const SubscriptionSettings = ({ office }: { office: any }) => {
   const [loading, setLoading] = useState(false);
   
-  // تهيئة بيانات الاشتراك من المتجر
   const [subscription, setSubscription] = useState({
     plan: office?.settings?.subscription?.plan || "free",
     status: office?.settings?.subscription?.status || "active",
@@ -26,7 +39,6 @@ const SubscriptionSettings = ({ office }: { office: any }) => {
     }
   });
 
-  // حساب بيانات الاستخدام
   const [usage, setUsage] = useState({
     products: {
       used: 0,
@@ -38,7 +50,6 @@ const SubscriptionSettings = ({ office }: { office: any }) => {
     }
   });
 
-  // خطط الاشتراك
   const subscriptionPlans = [
     {
       id: "free",
@@ -83,14 +94,10 @@ const SubscriptionSettings = ({ office }: { office: any }) => {
     }
   ];
 
-  // تحديث الاشتراك
   const updateSubscription = async (planId: string) => {
     setLoading(true);
     
     try {
-      // في التطبيق الفعلي: هنا ستقوم بتوجيه المستخدم إلى بوابة الدفع
-      // لهذا المثال، سنقوم فقط بتحديث السجل في Supabase
-      
       const { error } = await supabase.from("offices").update({
         settings: {
           ...(office?.settings || {}),
@@ -99,12 +106,11 @@ const SubscriptionSettings = ({ office }: { office: any }) => {
             plan: planId,
             updated_at: new Date().toISOString()
           }
-        }
+        } as any
       }).eq("id", office.id);
 
       if (error) throw error;
       
-      // تحديث حالة الاشتراك المحلية
       setSubscription(prev => ({
         ...prev,
         plan: planId
@@ -118,7 +124,6 @@ const SubscriptionSettings = ({ office }: { office: any }) => {
     }
   };
 
-  // إلغاء الاشتراك
   const cancelSubscription = async () => {
     setLoading(true);
     
@@ -131,12 +136,11 @@ const SubscriptionSettings = ({ office }: { office: any }) => {
             cancel_at_period_end: true,
             updated_at: new Date().toISOString()
           }
-        }
+        } as any
       }).eq("id", office.id);
 
       if (error) throw error;
       
-      // تحديث حالة الاشتراك المحلية
       setSubscription(prev => ({
         ...prev,
         cancel_at_period_end: true
@@ -150,7 +154,6 @@ const SubscriptionSettings = ({ office }: { office: any }) => {
     }
   };
 
-  // تجديد الاشتراك
   const renewSubscription = async () => {
     setLoading(true);
     
@@ -163,12 +166,11 @@ const SubscriptionSettings = ({ office }: { office: any }) => {
             cancel_at_period_end: false,
             updated_at: new Date().toISOString()
           }
-        }
+        } as any
       }).eq("id", office.id);
 
       if (error) throw error;
       
-      // تحديث حالة الاشتراك المحلية
       setSubscription(prev => ({
         ...prev,
         cancel_at_period_end: false
@@ -182,7 +184,6 @@ const SubscriptionSettings = ({ office }: { office: any }) => {
     }
   };
 
-  // تنسيق التاريخ
   const formatDate = (dateString: string | null) => {
     if (!dateString) return "غير متوفر";
     
@@ -199,7 +200,6 @@ const SubscriptionSettings = ({ office }: { office: any }) => {
       <div>
         <h2 className="text-xl font-semibold mb-4">إعدادات الاشتراك</h2>
         
-        {/* ملخص الاشتراك الحالي */}
         <Card>
           <CardContent className="p-4 space-y-4">
             <h3 className="text-lg font-medium">الاشتراك الحالي</h3>
@@ -303,7 +303,6 @@ const SubscriptionSettings = ({ office }: { office: any }) => {
           </CardContent>
         </Card>
 
-        {/* خطط الاشتراك */}
         <div className="pt-8">
           <h3 className="text-lg font-medium mb-6">ترقية الاشتراك</h3>
           
@@ -342,7 +341,6 @@ const SubscriptionSettings = ({ office }: { office: any }) => {
           </div>
         </div>
 
-        {/* تفاصيل الفواتير */}
         <div className="pt-8">
           <Card>
             <CardContent className="p-6">
@@ -365,4 +363,4 @@ const SubscriptionSettings = ({ office }: { office: any }) => {
   );
 };
 
-export default SubscriptionSettings; 
+export default SubscriptionSettings;

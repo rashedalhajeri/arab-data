@@ -6,7 +6,22 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Save, Facebook, Instagram, Twitter, Youtube, TikTok, Linkedin, Link2 } from "lucide-react";
+import { Save, Facebook, Instagram, Twitter, Youtube, Music, Linkedin, Link2 } from "lucide-react";
+
+// تعريف نوع المكتب
+interface Office {
+  id?: string;
+  name?: string;
+  slug?: string;
+  created_at?: string;
+  updated_at?: string;
+  user_id?: string;
+  country?: string;
+  logo_url?: string;
+  cover_url?: string;
+  phone?: string;
+  settings?: { [key: string]: any };
+}
 
 const SocialMediaSettings = ({ office }: { office: any }) => {
   const [loading, setLoading] = useState(false);
@@ -114,42 +129,6 @@ const SocialMediaSettings = ({ office }: { office: any }) => {
       return true;
     } catch {
       return false;
-    }
-  };
-
-  // حفظ الإعدادات
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-
-    try {
-      // التحقق من صحة الروابط
-      validateUrls();
-
-      // تنقية الروابط المخصصة الفارغة
-      const filteredCustomLinks = socialMedia.custom_links.filter(
-        link => link.title.trim() !== "" || link.url.trim() !== ""
-      );
-
-      // تحديث الإعدادات في قاعدة البيانات
-      const { error } = await supabase.from("offices").update({
-        settings: {
-          ...(office?.settings || {}),
-          social_media: {
-            ...socialMedia,
-            custom_links: filteredCustomLinks,
-            updated_at: new Date().toISOString()
-          }
-        }
-      }).eq("id", office.id);
-
-      if (error) throw error;
-      
-      toast.success("تم تحديث إعدادات وسائل التواصل الاجتماعي بنجاح");
-    } catch (error: any) {
-      toast.error(error.message || "حدث خطأ أثناء تحديث الإعدادات");
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -286,7 +265,7 @@ const SocialMediaSettings = ({ office }: { office: any }) => {
                 {/* تيك توك */}
                 <div className="grid gap-2">
                   <Label htmlFor="tiktok" className="flex items-center gap-2">
-                    <TikTok size={16} /> تيك توك
+                    <Music size={16} /> تيك توك
                   </Label>
                   <Input
                     id="tiktok"
@@ -448,4 +427,4 @@ const SocialMediaSettings = ({ office }: { office: any }) => {
   );
 };
 
-export default SocialMediaSettings; 
+export default SocialMediaSettings;

@@ -8,8 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Save, Store, Globe, Upload, ShieldLock, AlertCircle, Info, ShoppingBag, DollarSign, Clock, MapPin, Phone, Mail, Shield } from "lucide-react";
-import Image from "next/image";
+import { Save, Store, Globe, Upload, Shield, AlertCircle, Info, ShoppingBag, DollarSign, Clock, MapPin, Phone, Mail } from "lucide-react";
 import countries from "@/lib/data/countries";
 import currencies from "@/lib/data/currencies";
 import {
@@ -20,6 +19,21 @@ import {
 } from "@/components/ui/tooltip";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+
+// تعريف نوع المكتب 
+interface Office {
+  id?: string;
+  name: string;
+  slug: string;
+  created_at?: string;
+  updated_at?: string;
+  user_id?: string;
+  country?: string;
+  logo_url?: string;
+  cover_url?: string;
+  phone?: string;
+  settings?: { [key: string]: any };
+}
 
 const GeneralSettings = ({ office }: { office: any }) => {
   const [loading, setLoading] = useState(false);
@@ -190,35 +204,34 @@ const GeneralSettings = ({ office }: { office: any }) => {
       }
 
       // التحقق من عدم وجود متجر آخر بنفس الرابط المخصص
-      if (settings.store_slug !== office.slug) {
+      if (settings.store_slug !== office?.slug) {
         const { data: existingOffice, error: slugCheckError } = await supabase
           .from("offices")
           .select("id")
           .eq("slug", settings.store_slug)
+          .not("id", "eq", office?.id)
           .single();
 
-        if (slugCheckError && slugCheckError.code !== 'PGRST116') {
-          throw slugCheckError;
-        }
-
         if (existingOffice) {
-          throw new Error("هذا الرابط المخصص مستخدم بالفعل، يرجى اختيار رابط آخر");
+          throw new Error("الرابط المخصص مستخدم بالفعل. يرجى اختيار رابط آخر");
         }
       }
 
       // تحديث الإعدادات في قاعدة البيانات
-      const { error } = await supabase.from("offices").update({
-        name: settings.store_name,
-        slug: settings.store_slug,
-        logo_url: settings.store_logo,
-        settings: {
-          ...(office?.settings || {}),
-          general: {
-            ...settings,
-            updated_at: new Date().toISOString()
-          }
-        }
-      }).eq("id", office.id);
+      const { error } = await supabase
+        .from("offices")
+        .update({
+          name: settings.store_name,
+          slug: settings.store_slug,
+          settings: {
+            ...(office?.settings || {}),
+            general: {
+              ...settings,
+              updated_at: new Date().toISOString()
+            }
+          } as any
+        })
+        .eq("id", office.id);
 
       if (error) throw error;
       
@@ -623,4 +636,4 @@ const GeneralSettings = ({ office }: { office: any }) => {
   );
 };
 
-export default GeneralSettings; 
+export default GeneralSettings;

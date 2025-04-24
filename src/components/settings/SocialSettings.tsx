@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -22,9 +23,7 @@ interface Office {
   logo_url?: string;
   cover_url?: string;
   phone?: string;
-  settings?: {
-    social?: any;
-  };
+  settings?: { [key: string]: any };
   social_settings?: string;
 }
 

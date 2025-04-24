@@ -8,6 +8,20 @@ import { supabase } from "@/integrations/supabase/client";
 import { Save, Palette, Check } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
+interface Office {
+  id?: string;
+  name?: string;
+  slug?: string;
+  created_at?: string;
+  updated_at?: string;
+  user_id?: string;
+  country?: string;
+  logo_url?: string;
+  cover_url?: string;
+  phone?: string;
+  settings?: { [key: string]: any };
+}
+
 // الألوان المتاحة للمتجر
 const themeColors = [
   { name: "أزرق", primary: "#1E40AF", secondary: "#3B82F6" },
@@ -95,7 +109,7 @@ const ThemeSettings = ({ office }: { office: any }) => {
             ...themeSettings,
             updated_at: new Date().toISOString()
           }
-        }
+        } as any
       }).eq("id", office.id);
 
       if (error) throw error;
@@ -513,4 +527,4 @@ const ThemeSettings = ({ office }: { office: any }) => {
   );
 };
 
-export default ThemeSettings; 
+export default ThemeSettings;
