@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
@@ -123,24 +124,24 @@ export default function OfficeProfile() {
 
           <div className="px-4 sm:px-6 -mt-16 sm:-mt-6">
             <div className="flex items-center gap-6">
-              <Avatar className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-white shadow-lg">
+              <Avatar className="w-20 h-20 sm:w-32 sm:h-32 rounded-full border-4 border-white shadow-lg">
                 <AvatarImage 
                   src={getStorageUrl(office.logo_url)} 
                   alt={office.name} 
                   className="object-cover" 
                 />
-                <AvatarFallback className="text-2xl font-bold bg-primary text-white">
+                <AvatarFallback className="text-xl font-bold bg-primary text-white">
                   {office.name.substring(0, 2)}
                 </AvatarFallback>
               </Avatar>
               
-              <div className="flex flex-col mt-12 sm:mt-0">
-                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+              <div className="flex flex-col mt-8 sm:mt-0">
+                <h1 className="text-xl sm:text-3xl font-bold text-gray-900">
                   {office.name}
                 </h1>
-                <div className="flex items-center gap-2 text-gray-600 mt-2">
-                  <MapPin className="w-5 h-5" />
-                  <span>{office.country}</span>
+                <div className="flex items-center gap-2 text-gray-600 mt-1">
+                  <MapPin className="w-4 h-4" />
+                  <span className="text-sm sm:text-base">{office.country}</span>
                 </div>
               </div>
             </div>
