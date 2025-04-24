@@ -111,27 +111,6 @@ export default function OfficeProfile() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-md sticky top-0 z-10">
-        <div className="container mx-auto py-3 px-4">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-3">
-              <Avatar className="w-12 h-12 border-2 border-primary/10">
-                <AvatarImage 
-                  src={getStorageUrl(office.logo_url)}
-                  alt={office.name}
-                />
-                <AvatarFallback className="text-md font-bold bg-primary text-white">
-                  {office.name.substring(0, 2)}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">{office.name}</h1>
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
-
       <div className="w-full aspect-[21/9] md:aspect-[3/1] relative overflow-hidden">
         {office.cover_url ? (
           <img 
