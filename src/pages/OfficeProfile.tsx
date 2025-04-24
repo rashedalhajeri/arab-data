@@ -5,7 +5,10 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { ExternalLink, Phone, MapPin } from 'lucide-react';
+import { ExternalLink, Phone, MapPin, Share2, MessageCircle, Clock, Info, Star, Calendar, Tag } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { toast } from 'sonner';
 
 interface Office {
   id: string;
@@ -31,9 +34,7 @@ export default function OfficeProfile() {
         const { data, error } = await supabase
           .rpc('get_office_by_slug', { slug_param: slug });
         
-        if (error) {
-          throw error;
-        }
+        if (error) throw error;
         
         if (data && data.length > 0) {
           setOffice(data[0]);
@@ -53,16 +54,23 @@ export default function OfficeProfile() {
     }
   }, [slug]);
 
-  const handleViewPublicPage = () => {
-    // استخدام الدومين الحالي بشكل تلقائي
-    const currentOrigin = window.location.origin;
-    console.log('الدومين الحالي:', currentOrigin);
-    
-    // استخدام المسار المباشر بدلاً من /p/:slug
-    const publicUrl = `${currentOrigin}/${slug}`;
-    console.log('رابط الصفحة العامة:', publicUrl);
-    
-    window.open(publicUrl, '_blank');
+  const handleShare = async () => {
+    const shareData = {
+      title: office?.name,
+      text: `تفضل بزيارة صفحة ${office?.name}`,
+      url: window.location.href
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(window.location.href);
+        toast.success('تم نسخ الرابط بنجاح');
+      }
+    } catch (error) {
+      console.error('خطأ في المشاركة:', error);
+    }
   };
 
   if (loading) {
@@ -87,81 +95,174 @@ export default function OfficeProfile() {
     );
   }
 
+  const getImageUrl = (path: string, bucket: 'office-assets') => {
+    if (!path) return null;
+    return `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/${bucket}/${path}`;
+  };
+
   return (
-    <div className="container mx-auto py-6 px-4">
-      {/* غلاف المكتب */}
-      <div className="relative w-full h-[300px] rounded-lg overflow-hidden mb-6">
+    <div className="min-h-screen bg-gray-50">
+      <header className="bg-white shadow-md sticky top-0 z-10">
+        <div className="container mx-auto py-3 px-4">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              <Avatar className="w-12 h-12 border-2 border-primary/10">
+                <AvatarImage 
+                  src={getImageUrl(office.logo_url, 'office-assets')}
+                  alt={office.name}
+                />
+                <AvatarFallback className="text-md font-bold bg-primary text-white">
+                  {office.name.substring(0, 2)}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <h1 className="text-xl font-bold text-gray-900">{office.name}</h1>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-500 flex items-center gap-1">
+                    <MapPin size={14} />
+                    {office.country}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={handleShare}
+                className="flex items-center gap-1 text-gray-700"
+              >
+                <Share2 size={16} />
+                <span className="hidden sm:inline">مشاركة</span>
+              </Button>
+              <a href={`tel:${office.phone}`}>
+                <Button 
+                  variant="default" 
+                  size="sm"
+                  className="flex items-center gap-1 bg-primary text-white"
+                >
+                  <Phone size={16} />
+                  <span className="hidden sm:inline">اتصال</span>
+                </Button>
+              </a>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div className="w-full aspect-[21/9] md:aspect-[3/1] relative overflow-hidden">
         {office.cover_url ? (
           <img 
-            src={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/office-assets/${office.cover_url}`} 
+            src={getImageUrl(office.cover_url, 'office-assets')}
             alt={`غلاف ${office.name}`}
             className="w-full h-full object-cover"
           />
         ) : (
-          <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-            <span className="text-gray-400">لا يوجد صورة غلاف</span>
+          <div className="w-full h-full bg-gradient-to-r from-primary/10 to-primary/20 flex items-center justify-center">
+            <div className="text-center text-gray-600 p-6 max-w-md">
+              <h3 className="text-2xl font-bold mb-2">{office.name}</h3>
+              <p className="text-gray-500">المكتب لم يقم بإضافة صورة غلاف حتى الآن</p>
+            </div>
           </div>
         )}
       </div>
 
-      <div className="bg-white rounded-lg shadow-lg p-6 relative">
-        {/* شعار المكتب */}
-        <div className="absolute -top-20 right-8 w-32 h-32">
-          <Avatar className="w-32 h-32 border-4 border-white shadow-md">
-            <AvatarImage 
-              src={office.logo_url ? `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/office-assets/${office.logo_url}` : ''} 
-              alt={office.name} 
-            />
-            <AvatarFallback className="text-3xl bg-primary text-white">
-              {office.name.substring(0, 2)}
-            </AvatarFallback>
-          </Avatar>
-        </div>
-
-        {/* معلومات المكتب */}
-        <div className="mt-12 text-right">
-          <div className="flex flex-col md:flex-row md:justify-between md:items-start">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">{office.name}</h1>
-              <div className="flex flex-col md:flex-row md:items-center gap-4 text-gray-600 mb-6">
-                <div className="flex items-center gap-2">
-                  <MapPin size={18} />
-                  <span className="text-gray-700">الدولة:</span>
-                  <span>{office.country}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Phone size={18} />
-                  <span className="text-gray-700">رقم الهاتف:</span>
-                  <a href={`tel:${office.phone}`} className="text-primary hover:underline">
-                    {office.phone}
-                  </a>
+      <div className="container mx-auto px-4">
+        <div className="bg-white rounded-xl shadow-xl p-6 -mt-16 relative z-10 border border-gray-100">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-6">
+              <Avatar className="w-28 h-28 border-4 border-white shadow-lg">
+                <AvatarImage 
+                  src={getImageUrl(office.logo_url, 'office-assets')}
+                  alt={office.name}
+                />
+                <AvatarFallback className="text-3xl font-bold bg-primary text-white">
+                  {office.name.substring(0, 2)}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1">
+                <h1 className="text-3xl font-bold text-gray-900 mb-3">{office.name}</h1>
+                <div className="flex flex-wrap gap-4 text-gray-600">
+                  <Badge variant="outline" className="gap-1 px-3 py-1 text-sm font-normal text-gray-700 border-gray-300">
+                    <Star size={14} className="text-amber-500" />
+                    <span>مكتب مميز</span>
+                  </Badge>
+                  <Badge variant="outline" className="gap-1 px-3 py-1 text-sm font-normal text-gray-700 border-gray-300">
+                    <Calendar size={14} className="text-blue-500" />
+                    <span>عضو جديد</span>
+                  </Badge>
                 </div>
               </div>
             </div>
             
-            {/* زر عرض الصفحة */}
-            <div className="mb-4 md:mb-0">
-              <Button 
-                onClick={handleViewPublicPage}
-                className="flex items-center gap-2 bg-primary hover:bg-primary/90"
-              >
-                <ExternalLink size={18} />
-                عرض الصفحة العامة
+            <div className="flex flex-col sm:flex-row gap-3 mt-4 md:mt-0">
+              <Button variant="outline" className="gap-2">
+                <MessageCircle size={16} />
+                <span>مراسلة</span>
               </Button>
+              <a href={`tel:${office.phone}`} className="w-full sm:w-auto">
+                <Button className="w-full gap-2">
+                  <Phone size={16} />
+                  <span>{office.phone}</span>
+                </Button>
+              </a>
+            </div>
+          </div>
+          
+          <Separator className="my-6" />
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="flex flex-col">
+              <span className="text-sm text-gray-500 mb-1">المكان</span>
+              <div className="flex items-center gap-2">
+                <MapPin size={18} className="text-gray-400" />
+                <span className="font-medium">{office.country}</span>
+              </div>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-sm text-gray-500 mb-1">للتواصل</span>
+              <div className="flex items-center gap-2">
+                <Phone size={18} className="text-gray-400" />
+                <a href={`tel:${office.phone}`} className="font-medium hover:text-primary transition-colors">
+                  {office.phone}
+                </a>
+              </div>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-sm text-gray-500 mb-1">تاريخ الإنضمام</span>
+              <div className="flex items-center gap-2">
+                <Clock size={18} className="text-gray-400" />
+                <span className="font-medium">حديثاً</span>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* القسم الرئيسي للمحتوى */}
-        <div className="mt-8">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">إعلانات المكتب</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* هنا يمكن إضافة قائمة الإعلانات الخاصة بالمكتب لاحقاً */}
-            <Card className="h-64 flex items-center justify-center">
-              <CardContent className="p-6 text-center text-gray-400">
-                سيتم عرض إعلانات المكتب هنا قريباً
-              </CardContent>
-            </Card>
+        <div className="mt-8 bg-white p-6 rounded-xl shadow-md">
+          <div className="flex items-center mb-4">
+            <Info size={18} className="text-primary ml-2" />
+            <h2 className="text-xl font-bold">عن المكتب</h2>
+          </div>
+          
+          <p className="text-gray-600 leading-relaxed">
+            مكتب متخصص يقدم خدمات مميزة لعملائه في {office.country}. نحن نسعى دائماً لتقديم أفضل الخدمات وتلبية احتياجات عملائنا بأعلى معايير الجودة والاحترافية.
+          </p>
+        </div>
+
+        <div className="mt-8 mb-16">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center">
+              <Tag size={20} className="text-primary ml-2" />
+              <h2 className="text-2xl font-bold text-gray-900">إعلانات المكتب</h2>
+            </div>
+          </div>
+
+          <div className="text-center py-16 bg-white rounded-xl shadow-sm border border-gray-100">
+            <div className="max-w-md mx-auto">
+              <Tag size={48} className="mx-auto mb-4 text-gray-300" />
+              <h3 className="text-xl font-semibold text-gray-800 mb-2">لا توجد إعلانات حالياً</h3>
+              <p className="text-gray-500">لم يقم المكتب بإضافة أي إعلانات بعد. يمكنك العودة لاحقاً للاطلاع على الإعلانات الجديدة.</p>
+            </div>
           </div>
         </div>
       </div>
@@ -172,14 +273,11 @@ export default function OfficeProfile() {
 function OfficeProfileSkeleton() {
   return (
     <div className="container mx-auto py-6 px-4">
-      {/* غلاف المكتب */}
       <Skeleton className="w-full h-[300px] rounded-lg mb-6" />
 
       <div className="bg-white rounded-lg shadow-lg p-6 relative">
-        {/* شعار المكتب */}
         <Skeleton className="absolute -top-20 right-8 w-32 h-32 rounded-full" />
 
-        {/* معلومات المكتب */}
         <div className="mt-12 text-right">
           <div className="flex flex-col md:flex-row md:justify-between md:items-start">
             <div>
@@ -193,7 +291,6 @@ function OfficeProfileSkeleton() {
           </div>
         </div>
 
-        {/* القسم الرئيسي للمحتوى */}
         <div className="mt-8">
           <Skeleton className="h-8 w-48 mb-4" />
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -205,4 +302,4 @@ function OfficeProfileSkeleton() {
       </div>
     </div>
   );
-} 
+}
