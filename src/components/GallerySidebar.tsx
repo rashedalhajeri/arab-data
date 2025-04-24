@@ -30,26 +30,45 @@ const GallerySidebar: React.FC<GallerySidebarProps> = ({
 
   const handleLogout = async () => {
     try {
-      // تحسين آلية تسجيل الخروج
+      // تحقق أولاً من وجود جلسة نشطة لتجنب خطأ "Auth session missing"
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      // إذا لم تكن هناك جلسة نشطة، انتقل مباشرة إلى صفحة تسجيل الدخول
+      if (!session) {
+        toast.info("لم يتم العثور على جلسة، جاري إعادة توجيهك...");
+        setTimeout(() => {
+          navigate("/auth", { replace: true });
+        }, 300);
+        return;
+      }
+      
+      // إذا كانت هناك جلسة نشطة، قم بتسجيل الخروج
       const { error } = await supabase.auth.signOut();
       
       if (error) {
         console.error("خطأ في تسجيل الخروج:", error.message);
-        toast.error("حدث خطأ أثناء تسجيل الخروج");
+        // في حالة حدوث خطأ في تسجيل الخروج، قم بمسح البيانات المحلية والانتقال إلى صفحة تسجيل الدخول
+        toast.error("حدث خطأ أثناء تسجيل الخروج، جاري إعادة التوجيه");
+        localStorage.removeItem("supabase.auth.token");
+        setTimeout(() => {
+          navigate("/auth", { replace: true });
+        }, 300);
         return;
       }
       
-      // إضافة مهلة قصيرة للتأكد من تنظيف الجلسة قبل الانتقال
+      // نجاح تسجيل الخروج
       toast.success("تم تسجيل الخروج بنجاح");
-      
-      // استخدام التأخير الزمني لضمان انتهاء عملية تسجيل الخروج
       setTimeout(() => {
-        // إعادة توجيه المستخدم مباشرة إلى صفحة تسجيل الدخول
         navigate("/auth", { replace: true });
       }, 300);
+      
     } catch (error) {
       console.error("خطأ غير متوقع أثناء تسجيل الخروج:", error);
       toast.error("حدث خطأ أثناء تسجيل الخروج");
+      // رغم الخطأ، حاول الانتقال إلى صفحة تسجيل الدخول
+      setTimeout(() => {
+        navigate("/auth", { replace: true });
+      }, 300);
     }
   };
 

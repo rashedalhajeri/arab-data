@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import GallerySidebar from "@/components/GallerySidebar";
 import { Loader2 } from "lucide-react";
+import { toast } from "@/components/ui/sonner";
 
 // Tipo para los datos de la oficina
 interface OfficeData {
@@ -46,19 +47,42 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
 
   // الاستماع إلى تغييرات حالة المصادقة
   useEffect(() => {
+    // تسجيل بداية إنشاء مكون لوحة التحكم
+    console.log("تهيئة لوحة التحكم...");
+    
+    // إعداد مستمع لتغييرات حالة المصادقة
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         console.log("حالة المصادقة تغيرت:", event);
         
         // إذا كان الحدث هو تسجيل الخروج، فإعادة توجيه المستخدم إلى صفحة تسجيل الدخول
         if (event === 'SIGNED_OUT') {
+          toast.info("تم تسجيل الخروج من النظام");
           navigate('/auth', { replace: true });
+        } else if (event === 'SIGNED_IN') {
+          // إعادة تحميل بيانات المكتب عند تسجيل الدخول
+          fetchOfficeData();
         }
       }
     );
 
+    // التحقق من وجود جلسة عند بدء التشغيل
+    const checkInitialSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.log("لا توجد جلسة نشطة، إعادة توجيه إلى صفحة تسجيل الدخول");
+        navigate('/auth', { replace: true });
+      } else {
+        console.log("تم العثور على جلسة نشطة، جاري تحميل بيانات المكتب");
+        fetchOfficeData();
+      }
+    };
+    
+    checkInitialSession();
+
     // إلغاء الاشتراك عند تفكيك المكون
     return () => {
+      console.log("تفكيك مكون لوحة التحكم");
       subscription.unsubscribe();
     };
   }, [navigate]);
@@ -108,10 +132,8 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
     }
   };
 
-  // Cargar datos al iniciar
-  useEffect(() => {
-    fetchOfficeData();
-  }, []);
+  // We no longer need to call fetchOfficeData here as it's now handled by the auth state change listener
+  // This avoids duplicate fetch calls
 
   // Si está cargando, mostrar un indicador de carga
   if (loading && !office) {
@@ -154,4 +176,4 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   );
 };
 
-export default DashboardLayout; 
+export default DashboardLayout;
