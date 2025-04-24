@@ -19,6 +19,11 @@ export const OfficeCover = ({ office }: OfficeCoverProps) => {
           src={getCoverUrl(office.cover_url)} 
           alt={`غلاف ${office.name}`}
           className="w-full h-full object-cover"
+          onError={(e) => {
+            console.error("Error loading cover image:", e);
+            e.currentTarget.onerror = null;
+            e.currentTarget.src = "/placeholder.svg";
+          }}
         />
       ) : (
         <div className="w-full h-full bg-gradient-to-r from-primary/5 to-primary/10 animate-aurora" />

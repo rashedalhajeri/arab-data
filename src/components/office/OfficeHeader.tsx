@@ -24,8 +24,12 @@ export const OfficeHeader = ({ office }: OfficeHeaderProps) => {
           <AvatarImage 
             src={getLogoUrl(office.logo_url)}
             alt={office.name}
+            onError={(e) => {
+              console.error("Error loading logo image:", e);
+              e.currentTarget.onerror = null;
+            }}
           />
-          <AvatarFallback>{office.name.substring(0, 2)}</AvatarFallback>
+          <AvatarFallback>{office.name?.substring(0, 2) || "?"}</AvatarFallback>
         </Avatar>
         <div>
           <h1 className="text-xl font-bold text-gray-900 dark:text-white">{office.name}</h1>

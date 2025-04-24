@@ -26,14 +26,25 @@ export default function PublicOfficeProfile() {
     async function fetchOfficeData() {
       try {
         setLoading(true);
+        console.log("Fetching office with slug:", slug);
         
         const { data, error } = await supabase
           .rpc('get_office_by_slug', { slug_param: slug });
         
-        if (error) throw error;
+        if (error) {
+          console.error("Error fetching office:", error);
+          throw error;
+        }
+        
+        console.log("Office data received:", data);
         
         if (data && data.length > 0) {
           setOffice(data[0]);
+          // Log the logo and cover URLs for debugging
+          console.log("Logo URL:", data[0].logo_url);
+          console.log("Cover URL:", data[0].cover_url);
+          console.log("Complete Supabase URL for logo:", `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/office-assets/${data[0].logo_url}`);
+          console.log("Complete Supabase URL for cover:", `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/office-assets/${data[0].cover_url}`);
         } else {
           setError('لم يتم العثور على المكتب');
         }
