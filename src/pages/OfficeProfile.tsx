@@ -110,55 +110,61 @@ export default function OfficeProfile() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
-      <div className="relative">
-        <div className="w-full h-[300px] relative overflow-hidden bg-gray-100">
-          {office.cover_url ? (
-            <img 
-              src={getStorageUrl(office.cover_url)}
-              alt={`غلاف ${office.name}`}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <div className="w-full h-full bg-gradient-to-r from-gray-100 to-gray-200" />
-          )}
-          
-          <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
-        </div>
-        
-        <div className="container mx-auto px-4">
-          <div className="relative -mt-20 flex items-end gap-6 mb-8">
-            <Avatar className="w-28 h-28 rounded-full border-4 border-white shadow-lg">
-              <AvatarImage 
-                src={getStorageUrl(office.logo_url)}
-                alt={office.name}
-                className="object-cover"
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-5xl mx-auto">
+        <div className="relative bg-white shadow-sm">
+          <div className="h-48 sm:h-64 relative overflow-hidden bg-gray-100">
+            {office.cover_url ? (
+              <img 
+                src={getStorageUrl(office.cover_url)}
+                alt={`غلاف ${office.name}`}
+                className="w-full h-full object-cover"
               />
-              <AvatarFallback className="text-3xl font-bold bg-primary text-white">
-                {office.name.substring(0, 2)}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1 mb-2">
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-                {office.name}
-              </h1>
+            ) : (
+              <div className="w-full h-full bg-gradient-to-r from-gray-100 to-gray-200" />
+            )}
+            
+            <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+          </div>
+          
+          <div className="container max-w-4xl mx-auto px-4">
+            <div className="relative -mt-16 flex items-end gap-5 mb-6 z-10">
+              <Avatar className="w-24 h-24 rounded-full border-4 border-white shadow-md">
+                <AvatarImage 
+                  src={getStorageUrl(office.logo_url)}
+                  alt={office.name}
+                  className="object-cover"
+                />
+                <AvatarFallback className="text-2xl font-bold bg-primary text-white">
+                  {office.name.substring(0, 2)}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 mb-1">
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">
+                  {office.name}
+                </h1>
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <MapPin className="w-4 h-4" />
+                  <span>{office.country}</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <div className="container mx-auto px-4">
-        <div className="mt-8 mb-16">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center">
-              <h2 className="text-2xl font-bold text-gray-900">إعلانات المكتب</h2>
+        <div className="container max-w-4xl mx-auto px-4">
+          <div className="mt-8 mb-16">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center">
+                <h2 className="text-xl font-bold text-gray-900">إعلانات المكتب</h2>
+              </div>
             </div>
-          </div>
 
-          <div className="text-center py-16 bg-white rounded-xl shadow-sm border border-gray-100">
-            <div className="max-w-md mx-auto">
-              <h3 className="text-xl font-semibold text-gray-800 mb-2">لا توجد إعلانات حالياً</h3>
-              <p className="text-gray-500">لم يقم المكتب بإضافة أي إعلانات بعد. يمكنك العودة لاحقاً للاطلاع على الإعلانات الجديدة.</p>
+            <div className="text-center py-16 bg-white rounded-xl shadow-sm border border-gray-100">
+              <div className="max-w-md mx-auto">
+                <h3 className="text-lg font-semibold text-gray-800 mb-2">لا توجد إعلانات حالياً</h3>
+                <p className="text-sm text-gray-500">لم يقم المكتب بإضافة أي إعلانات بعد. يمكنك العودة لاحقاً للاطلاع على الإعلانات الجديدة.</p>
+              </div>
             </div>
           </div>
         </div>
