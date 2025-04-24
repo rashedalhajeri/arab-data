@@ -4,11 +4,7 @@ import { supabase } from '../lib/supabase';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
-import { ExternalLink, Phone, MapPin, Share2, MessageCircle, Clock, Info, Star, Calendar, Tag } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { toast } from 'sonner';
+import { MapPin } from 'lucide-react';
 
 interface Office {
   id: string;
@@ -58,24 +54,6 @@ export default function OfficeProfile() {
     }
   }, [slug]);
 
-  const handleShare = async () => {
-    const shareData = {
-      title: office?.name,
-      text: `تفضل بزيارة صفحة ${office?.name}`,
-      url: window.location.href
-    };
-    try {
-      if (navigator.share) {
-        await navigator.share(shareData);
-      } else {
-        await navigator.clipboard.writeText(window.location.href);
-        toast.success('تم نسخ الرابط بنجاح');
-      }
-    } catch (error) {
-      console.error('خطأ في المشاركة:', error);
-    }
-  };
-
   const getStorageUrl = (path: string | null): string => {
     if (!path) return "/placeholder.svg";
     if (path.startsWith('http://') || path.startsWith('https://')) {
@@ -109,7 +87,8 @@ export default function OfficeProfile() {
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-4xl mx-auto">
         <div className="bg-white shadow-sm">
-          <div className="h-72 sm:h-96 relative overflow-hidden">
+          {/* Cover Image Section - Consistent height across screen sizes */}
+          <div className="relative h-48 sm:h-64 md:h-72 lg:h-96 overflow-hidden">
             {office.cover_url ? (
               <img 
                 src={getStorageUrl(office.cover_url)} 
@@ -121,26 +100,27 @@ export default function OfficeProfile() {
             )}
           </div>
 
-          <div className="px-4 sm:px-6 -mt-6">
-            <div className="flex items-center gap-6">
-              <Avatar className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-white shadow-lg">
+          {/* Profile Info Section - Responsive padding and spacing */}
+          <div className="px-4 sm:px-6 py-6 -mt-6">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
+              <Avatar className="w-20 h-20 sm:w-24 sm:h-24 md:w-32 md:h-32 rounded-full border-4 border-white shadow-lg mx-auto sm:mx-0">
                 <AvatarImage 
                   src={getStorageUrl(office.logo_url)} 
                   alt={office.name} 
                   className="object-cover" 
                 />
-                <AvatarFallback className="text-2xl font-bold bg-primary text-white">
+                <AvatarFallback className="text-xl sm:text-2xl font-bold bg-primary text-white">
                   {office.name.substring(0, 2)}
                 </AvatarFallback>
               </Avatar>
               
-              <div className="flex flex-col">
-                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+              <div className="flex flex-col text-center sm:text-right">
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">
                   {office.name}
                 </h1>
-                <div className="flex items-center gap-2 text-gray-600 mt-2">
-                  <MapPin className="w-5 h-5" />
-                  <span>{office.country}</span>
+                <div className="flex items-center gap-2 text-gray-600 mt-2 justify-center sm:justify-start">
+                  <MapPin className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <span className="text-sm sm:text-base">{office.country}</span>
                 </div>
               </div>
             </div>
@@ -150,13 +130,13 @@ export default function OfficeProfile() {
         <div className="mt-6 px-4 sm:px-6">
           <div className="mb-16">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-gray-900">إعلانات المكتب</h2>
+              <h2 className="text-lg sm:text-xl font-bold text-gray-900">إعلانات المكتب</h2>
             </div>
 
-            <div className="text-center py-16 bg-white rounded-xl shadow-sm border border-gray-100">
-              <div className="max-w-md mx-auto">
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">لا توجد إعلانات حالياً</h3>
-                <p className="text-sm text-gray-500">لم يقم المكتب بإضافة أي إعلانات بعد. يمكنك العودة لاحقاً للاطلاع على الإعلانات الجديدة.</p>
+            <div className="text-center py-12 sm:py-16 bg-white rounded-xl shadow-sm border border-gray-100">
+              <div className="max-w-md mx-auto px-4">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-2">لا توجد إعلانات حالياً</h3>
+                <p className="text-xs sm:text-sm text-gray-500">لم يقم المكتب بإضافة أي إعلانات بعد. يمكنك العودة لاحقاً للاطلاع على الإعلانات الجديدة.</p>
               </div>
             </div>
           </div>
@@ -167,31 +147,31 @@ export default function OfficeProfile() {
 }
 
 function OfficeProfileSkeleton() {
-  return <div className="container mx-auto py-6 px-4">
-      <Skeleton className="w-full h-[300px] rounded-lg mb-6" />
+  return <div className="container mx-auto py-4 sm:py-6">
+      <Skeleton className="w-full h-48 sm:h-64 md:h-72 lg:h-96 rounded-lg mb-6" />
 
-      <div className="bg-white rounded-lg shadow-lg p-6 relative">
-        <Skeleton className="absolute -top-20 right-8 w-32 h-32 rounded-full" />
+      <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 relative">
+        <Skeleton className="absolute -top-16 sm:-top-20 right-8 w-24 h-24 sm:w-32 sm:h-32 rounded-full" />
 
-        <div className="mt-12 text-right">
+        <div className="mt-8 sm:mt-12 text-right">
           <div className="flex flex-col md:flex-row md:justify-between md:items-start">
             <div>
-              <Skeleton className="h-10 w-64 mb-2" />
+              <Skeleton className="h-8 sm:h-10 w-48 sm:w-64 mb-2" />
               <div className="flex flex-col md:flex-row md:items-center gap-4 mb-6">
-                <Skeleton className="h-6 w-32" />
-                <Skeleton className="h-6 w-32" />
+                <Skeleton className="h-4 sm:h-6 w-24 sm:w-32" />
+                <Skeleton className="h-4 sm:h-6 w-24 sm:w-32" />
               </div>
             </div>
-            <Skeleton className="h-10 w-40" />
+            <Skeleton className="h-8 sm:h-10 w-32 sm:w-40" />
           </div>
         </div>
 
         <div className="mt-8">
-          <Skeleton className="h-8 w-48 mb-4" />
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <Skeleton className="h-64" />
-            <Skeleton className="h-64 hidden md:block" />
-            <Skeleton className="h-64 hidden lg:block" />
+          <Skeleton className="h-6 sm:h-8 w-36 sm:w-48 mb-4" />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            <Skeleton className="h-48 sm:h-64" />
+            <Skeleton className="h-48 sm:h-64 hidden md:block" />
+            <Skeleton className="h-48 sm:h-64 hidden lg:block" />
           </div>
         </div>
       </div>
