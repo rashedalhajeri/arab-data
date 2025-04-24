@@ -56,6 +56,22 @@ export function useCreateOffice() {
     setLoading(true);
 
     try {
+      // تحقق مفصل من البيانات قبل الإرسال
+      const validationErrors: Record<string, string> = {};
+
+      if (!data.name?.trim()) validationErrors.name = "الاسم التجاري مطلوب";
+      if (!data.slug?.trim()) validationErrors.slug = "اسم الرابط مطلوب";
+      if (!data.country) validationErrors.country = "الدولة مطلوبة";
+      if (!data.phone?.trim()) validationErrors.phone = "رقم الهاتف مطلوب";
+      if (!data.logo) validationErrors.logo = "شعار المكتب مطلوب";
+      if (!data.cover) validationErrors.cover = "الغلاف مطلوب";
+
+      if (Object.keys(validationErrors).length > 0) {
+        setErrors(validationErrors);
+        setLoading(false);
+        return;
+      }
+
       const { data: sessionData, error: sessionErr } = await supabase.auth.getSession();
       
       if (sessionErr) {
@@ -71,16 +87,18 @@ export function useCreateOffice() {
       const logoPath = `logos/${officeId}.png`;
       const coverPath = `covers/${officeId}.png`;
 
-      const logoFile = await fetch(data.logo).then(r => r.blob());
-      const coverFile = await fetch(data.cover).then(r => r.blob());
+      // التحقق من وجود الملفات
+      const logoFile = data.logo ? await fetch(data.logo).then(r => r.blob()) : null;
+      const coverFile = data.cover ? await fetch(data.cover).then(r => r.blob()) : null;
 
-      if (!logoFile) throw new Error("يرجى رفع الشعار");
-      if (!coverFile) throw new Error("يرجى رفع الغلاف");
+      if (!logoFile || !coverFile) {
+        throw new Error("يرجى رفع الشعار والغلاف بشكل صحيح");
+      }
 
-      const uploadLogo = supabase.storage.from("office-assets").upload(logoPath, logoFile, { upsert: true });
-      const uploadCover = supabase.storage.from("office-assets").upload(coverPath, coverFile, { upsert: true });
-      
-      const [logoResult, coverResult] = await Promise.all([uploadLogo, uploadCover]);
+      const [logoResult, coverResult] = await Promise.all([
+        supabase.storage.from("office-assets").upload(logoPath, logoFile, { upsert: true }),
+        supabase.storage.from("office-assets").upload(coverPath, coverFile, { upsert: true })
+      ]);
       
       if (logoResult.error) {
         throw new Error("فشل رفع الشعار: " + logoResult.error.message);
