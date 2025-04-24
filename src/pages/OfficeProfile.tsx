@@ -113,7 +113,7 @@ export default function OfficeProfile() {
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-4xl mx-auto">
         <div className="relative bg-white shadow-sm">
-          <div className="h-40 sm:h-48 relative overflow-hidden">
+          <div className="h-48 sm:h-56 relative overflow-hidden rounded-none sm:rounded-2xl">
             {office.cover_url ? (
               <img 
                 src={getStorageUrl(office.cover_url)}
@@ -123,12 +123,12 @@ export default function OfficeProfile() {
             ) : (
               <div className="w-full h-full bg-gradient-to-r from-gray-100 to-gray-200" />
             )}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/25 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-transparent" />
           </div>
           
           <div className="relative px-4 sm:px-6">
-            <div className="flex flex-col sm:flex-row items-center sm:items-end gap-4 -mt-12 sm:-mt-16">
-              <Avatar className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-white shadow-lg">
+            <div className="flex flex-col sm:flex-row items-center sm:items-end gap-4 -mt-16 sm:-mt-20">
+              <Avatar className="w-24 h-24 sm:w-28 sm:h-28 rounded-full border-4 border-white shadow-lg">
                 <AvatarImage 
                   src={getStorageUrl(office.logo_url)}
                   alt={office.name}
@@ -140,10 +140,10 @@ export default function OfficeProfile() {
               </Avatar>
               
               <div className="flex-1 text-center sm:text-right pb-4">
-                <h1 className="text-2xl font-bold text-gray-900 mb-1">
+                <h1 className="text-2xl font-bold text-gray-900 mb-2">
                   {office.name}
                 </h1>
-                <div className="flex items-center justify-center sm:justify-start gap-2 text-sm text-gray-600">
+                <div className="flex items-center justify-center sm:justify-end gap-2 text-sm text-gray-600">
                   <MapPin className="w-4 h-4" />
                   <span>{office.country}</span>
                 </div>
