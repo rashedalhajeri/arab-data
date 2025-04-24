@@ -113,7 +113,7 @@ export default function OfficeProfile() {
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-4xl mx-auto">
         <div className="relative bg-white shadow-sm">
-          <div className="h-48 sm:h-56 relative overflow-hidden rounded-none sm:rounded-2xl">
+          <div className="h-64 sm:h-72 relative overflow-hidden rounded-none sm:rounded-2xl">
             {office.cover_url ? (
               <img 
                 src={getStorageUrl(office.cover_url)}
@@ -123,43 +123,56 @@ export default function OfficeProfile() {
             ) : (
               <div className="w-full h-full bg-gradient-to-r from-gray-100 to-gray-200" />
             )}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-transparent" />
-          </div>
-          
-          <div className="relative px-4 sm:px-6">
-            <div className="flex flex-col sm:flex-row items-center sm:items-end gap-4 -mt-16 sm:-mt-20">
-              <Avatar className="w-24 h-24 sm:w-28 sm:h-28 rounded-full border-4 border-white shadow-lg">
-                <AvatarImage 
-                  src={getStorageUrl(office.logo_url)}
-                  alt={office.name}
-                  className="object-cover"
-                />
-                <AvatarFallback className="text-xl font-bold bg-primary text-white">
-                  {office.name.substring(0, 2)}
-                </AvatarFallback>
-              </Avatar>
-              
-              <div className="flex-1 text-center sm:text-right pb-4">
-                <h1 className="text-2xl font-bold text-gray-900 mb-2">
-                  {office.name}
-                </h1>
-                <div className="flex items-center justify-center sm:justify-end gap-2 text-sm text-gray-600">
-                  <MapPin className="w-4 h-4" />
-                  <span>{office.country}</span>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+            
+            <div className="absolute bottom-6 right-4 sm:right-6 left-4 sm:left-6">
+              <div className="flex items-center gap-4">
+                <Avatar className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-white/90 shadow-lg">
+                  <AvatarImage 
+                    src={getStorageUrl(office.logo_url)}
+                    alt={office.name}
+                    className="object-cover"
+                  />
+                  <AvatarFallback className="text-xl font-bold bg-primary text-white">
+                    {office.name.substring(0, 2)}
+                  </AvatarFallback>
+                </Avatar>
+                
+                <div className="flex-1">
+                  <h1 className="text-2xl font-bold text-white mb-1">
+                    {office.name}
+                  </h1>
+                  <div className="flex items-center gap-2 text-sm text-gray-200">
+                    <MapPin className="w-4 h-4" />
+                    <span>{office.country}</span>
+                  </div>
+                </div>
+
+                <div className="hidden sm:block">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={handleShare}
+                    className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+                  >
+                    <Share2 className="w-4 h-4 ml-2" />
+                    مشاركة
+                  </Button>
                 </div>
               </div>
-
-              <div className="flex gap-2 pb-4">
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={handleShare}
-                >
-                  <Share2 className="w-4 h-4 ml-2" />
-                  مشاركة
-                </Button>
-              </div>
             </div>
+          </div>
+          
+          <div className="sm:hidden p-4">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={handleShare}
+              className="w-full"
+            >
+              <Share2 className="w-4 h-4 ml-2" />
+              مشاركة
+            </Button>
           </div>
         </div>
 
