@@ -9,7 +9,7 @@ interface OfficeCoverProps {
 export const OfficeCover = ({ office }: OfficeCoverProps) => {
   const getCoverUrl = (coverPath: string) => {
     if (!coverPath) return null;
-    return `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/covers/${coverPath}`;
+    return `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/office-assets/${coverPath}`;
   };
 
   return (
