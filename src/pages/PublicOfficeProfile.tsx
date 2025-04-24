@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase';
 import { OfficeHeader } from '@/components/office/OfficeHeader';
 import { OfficeCover } from '@/components/office/OfficeCover';
 import { Skeleton } from '@/components/ui/skeleton';
+import { toast } from 'sonner';
 
 interface Office {
   id: string;
@@ -39,27 +40,29 @@ export default function PublicOfficeProfile() {
         console.log("Office data received:", data);
         
         if (data && data.length > 0) {
-          // Process the data to ensure paths are correctly formatted
+          // معالجة البيانات للتأكد من تنسيق المسارات بشكل صحيح
           const officeData = {
             ...data[0],
-            // Ensure logo_url and cover_url are properly set
+            // التأكد من تعيين logo_url و cover_url بشكل صحيح
             logo_url: data[0].logo_url || '',
             cover_url: data[0].cover_url || '',
           };
           
           setOffice(officeData);
           
-          // Log the logo and cover URLs for debugging
+          // تسجيل عناوين URL للشعار والغلاف لأغراض التصحيح
           console.log("Logo URL:", officeData.logo_url);
           console.log("Cover URL:", officeData.cover_url);
           console.log("Complete Supabase URL for logo:", `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/office-assets/${officeData.logo_url}`);
           console.log("Complete Supabase URL for cover:", `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/office-assets/${officeData.cover_url}`);
         } else {
           setError('لم يتم العثور على المكتب');
+          toast.error('لم يتم العثور على المكتب');
         }
       } catch (error: any) {
         console.error('خطأ في جلب بيانات المكتب:', error);
         setError(error.message || 'حدث خطأ أثناء جلب بيانات المكتب');
+        toast.error('حدث خطأ أثناء جلب بيانات المكتب');
       } finally {
         setLoading(false);
       }

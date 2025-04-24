@@ -12,18 +12,20 @@ interface OfficeHeaderProps {
 }
 
 export const OfficeHeader = ({ office }: OfficeHeaderProps) => {
-  // Updated URL construction to ensure correct path formatting
+  // تحسين بناء URL للتأكد من صحة تنسيق المسار
   const getLogoUrl = (logoPath: string) => {
-    if (!logoPath) return null;
+    if (!logoPath) return "/placeholder.svg";
     
-    // Check if path already contains the full URL
+    // التحقق مما إذا كان المسار يحتوي بالفعل على URL كامل
     if (logoPath.startsWith('http')) {
       return logoPath;
     }
     
-    // Construct proper URL to the storage bucket
+    // بناء URL صحيح إلى خزان التخزين
     return `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/office-assets/${logoPath}`;
   };
+
+  console.log("Logo URL being used:", getLogoUrl(office.logo_url));
 
   return (
     <div className="flex items-center justify-between px-4 py-3 bg-white/95 backdrop-blur-sm border-b border-gray-100 dark:bg-slate-900/95 dark:border-slate-800">
@@ -35,7 +37,7 @@ export const OfficeHeader = ({ office }: OfficeHeaderProps) => {
             onError={(e) => {
               console.error("Error loading logo image:", e);
               e.currentTarget.onerror = null;
-              // Set a fallback placeholder for the logo
+              // وضع صورة بديلة احتياطية للشعار
               e.currentTarget.src = "/placeholder.svg";
             }}
           />
