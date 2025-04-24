@@ -1,12 +1,13 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Save, CreditCard, Calendar, CheckCircle, Clock, AlertCircle, ArrowUpRight } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
+import { CreditCard, Star, Clock, Calendar, CheckCircle, Shield, Activity, Award } from "lucide-react";
 
+// تعريف نوع المكتب المعزز بإعدادات الاشتراك
 interface Office {
   id?: string;
   name?: string;
@@ -21,343 +22,343 @@ interface Office {
   settings?: { [key: string]: any };
 }
 
-const SubscriptionSettings = ({ office }: { office: any }) => {
+// تعريف نوع بيانات الاشتراك
+interface SubscriptionData {
+  plan: string;
+  status: string;
+  current_period_end?: string;
+  cancel_at_period_end?: boolean;
+  trial_end?: string;
+  payment_method?: string;
+}
+
+const SubscriptionSettings = ({ office }: { office: Office }) => {
   const [loading, setLoading] = useState(false);
+  const [subscriptionData, setSubscriptionData] = useState<SubscriptionData | null>(null);
   
-  const [subscription, setSubscription] = useState({
-    plan: office?.settings?.subscription?.plan || "free",
-    status: office?.settings?.subscription?.status || "active",
-    current_period_end: office?.settings?.subscription?.current_period_end || null,
-    cancel_at_period_end: office?.settings?.subscription?.cancel_at_period_end || false,
-    payment_method: office?.settings?.subscription?.payment_method || null,
-    features: office?.settings?.subscription?.features || {
-      max_products: 20,
-      max_storage: 500,
-      custom_domain: false,
-      analytics: false,
-      priority_support: false,
+  useEffect(() => {
+    // استجلاب بيانات الاشتراك من إعدادات المكتب
+    if (office?.settings?.subscription) {
+      setSubscriptionData(office.settings.subscription);
     }
-  });
+  }, [office]);
 
-  const [usage, setUsage] = useState({
-    products: {
-      used: 0,
-      max: subscription.features.max_products
-    },
-    storage: {
-      used: 0,
-      max: subscription.features.max_storage
+  // تنسيق التاريخ
+  const formatDate = (dateString: string | undefined) => {
+    if (!dateString) return "غير محدد";
+    const date = new Date(dateString);
+    return date.toLocaleDateString('ar-SA', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+  };
+
+  // الحصول على حالة الاشتراك
+  const getSubscriptionStatus = () => {
+    if (!subscriptionData) return "غير نشط";
+    if (subscriptionData.status === "active") {
+      return subscriptionData.cancel_at_period_end ? "سينتهي قريباً" : "نشط";
+    } else if (subscriptionData.status === "canceled") {
+      return "ملغى";
+    } else {
+      return "غير نشط";
     }
-  });
+  };
 
-  const subscriptionPlans = [
-    {
-      id: "free",
-      name: "مجاني",
-      price: "0",
-      description: "خطة أساسية مناسبة للبدء",
-      features: [
-        "حتى 20 منتج",
-        "500 ميجابايت مساحة تخزين",
-        "بدون مجال مخصص",
-        "دعم عبر البريد الإلكتروني"
-      ],
-      current: subscription.plan === "free"
-    },
-    {
-      id: "basic",
-      name: "أساسي",
-      price: "99",
-      description: "الأنسب للمتاجر الصغيرة",
-      features: [
-        "حتى 100 منتج",
-        "2 جيجابايت مساحة تخزين",
-        "مجال مخصص",
-        "تحليلات أساسية",
-        "دعم عبر الدردشة"
-      ],
-      current: subscription.plan === "basic"
-    },
-    {
-      id: "pro",
-      name: "احترافي",
-      price: "199",
-      description: "مثالي للمتاجر المتوسطة",
-      features: [
-        "حتى 500 منتج",
-        "10 جيجابايت مساحة تخزين",
-        "مجال مخصص",
-        "تحليلات متقدمة",
-        "أولوية الدعم"
-      ],
-      current: subscription.plan === "pro"
-    }
-  ];
-
-  const updateSubscription = async (planId: string) => {
+  // تغيير خطة الاشتراك
+  const handleChangePlan = async (plan: string) => {
     setLoading(true);
     
     try {
-      const { error } = await supabase.from("offices").update({
+      // استخدام type assertion لإخبار TypeScript أن office يحتوي على إعدادات
+      const updatedOffice = {
+        ...office,
         settings: {
           ...(office?.settings || {}),
           subscription: {
-            ...subscription,
-            plan: planId,
+            ...(office?.settings?.subscription || {}),
+            plan: plan,
             updated_at: new Date().toISOString()
           }
         }
-      }).eq("id", office.id);
-
+      };
+      
+      const { error } = await supabase.from("offices").update({
+        // تحويل صريح لمنع أخطاء TypeScript
+        settings: updatedOffice.settings
+      } as any).eq("id", office?.id);
+      
       if (error) throw error;
       
-      setSubscription(prev => ({
-        ...prev,
-        plan: planId
-      }));
+      toast.success(`تم تغيير خطة الاشتراك إلى ${plan} بنجاح`);
       
-      toast.success("تم تحديث الاشتراك بنجاح");
+      // تحديث بيانات الاشتراك المحلية
+      setSubscriptionData(prev => ({
+        ...prev!,
+        plan: plan
+      }));
     } catch (error: any) {
-      toast.error(error.message || "حدث خطأ أثناء تحديث الاشتراك");
+      toast.error(error.message || "حدث خطأ أثناء تغيير خطة الاشتراك");
     } finally {
       setLoading(false);
     }
   };
-
-  const cancelSubscription = async () => {
+  
+  // إلغاء الاشتراك
+  const handleCancelSubscription = async () => {
     setLoading(true);
     
     try {
-      const { error } = await supabase.from("offices").update({
+      // استخدام type assertion لإخبار TypeScript أن office يحتوي على إعدادات
+      const updatedOffice = {
+        ...office,
         settings: {
           ...(office?.settings || {}),
           subscription: {
-            ...subscription,
+            ...(office?.settings?.subscription || {}),
+            status: "canceled",
             cancel_at_period_end: true,
             updated_at: new Date().toISOString()
           }
         }
-      }).eq("id", office.id);
-
+      };
+      
+      const { error } = await supabase.from("offices").update({
+        // تحويل صريح لمنع أخطاء TypeScript
+        settings: updatedOffice.settings
+      } as any).eq("id", office?.id);
+      
       if (error) throw error;
       
-      setSubscription(prev => ({
-        ...prev,
+      toast.success("تم إلغاء الاشتراك بنجاح. ستظل خطتك الحالية نشطة حتى نهاية فترة الفوترة الحالية.");
+      
+      // تحديث بيانات الاشتراك المحلية
+      setSubscriptionData(prev => ({
+        ...prev!,
+        status: "canceled",
         cancel_at_period_end: true
       }));
-      
-      toast.success("تم جدولة إلغاء الاشتراك عند نهاية الفترة الحالية");
     } catch (error: any) {
       toast.error(error.message || "حدث خطأ أثناء إلغاء الاشتراك");
     } finally {
       setLoading(false);
     }
   };
-
-  const renewSubscription = async () => {
+  
+  // استئناف الاشتراك
+  const handleResumeSubscription = async () => {
     setLoading(true);
     
     try {
-      const { error } = await supabase.from("offices").update({
+      // استخدام type assertion لإخبار TypeScript أن office يحتوي على إعدادات
+      const updatedOffice = {
+        ...office,
         settings: {
           ...(office?.settings || {}),
           subscription: {
-            ...subscription,
+            ...(office?.settings?.subscription || {}),
+            status: "active",
             cancel_at_period_end: false,
             updated_at: new Date().toISOString()
           }
         }
-      }).eq("id", office.id);
-
+      };
+      
+      const { error } = await supabase.from("offices").update({
+        // تحويل صريح لمنع أخطاء TypeScript
+        settings: updatedOffice.settings
+      } as any).eq("id", office?.id);
+      
       if (error) throw error;
       
-      setSubscription(prev => ({
-        ...prev,
+      toast.success("تم استئناف الاشتراك بنجاح.");
+      
+      // تحديث بيانات الاشتراك المحلية
+      setSubscriptionData(prev => ({
+        ...prev!,
+        status: "active",
         cancel_at_period_end: false
       }));
-      
-      toast.success("تم تجديد الاشتراك بنجاح");
     } catch (error: any) {
-      toast.error(error.message || "حدث خطأ أثناء تجديد الاشتراك");
+      toast.error(error.message || "حدث خطأ أثناء استئناف الاشتراك");
     } finally {
       setLoading(false);
     }
   };
 
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return "غير متوفر";
-    
-    const date = new Date(dateString);
-    return date.toLocaleDateString('ar-SA', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
-
   return (
-    <div className="space-y-8">
-      <div>
-        <h2 className="text-xl font-semibold mb-4">إعدادات الاشتراك</h2>
-        
-        <Card>
-          <CardContent className="p-4 space-y-4">
-            <h3 className="text-lg font-medium">الاشتراك الحالي</h3>
-            
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">الخطة:</span>
-                  <Badge variant={subscription.plan === 'free' ? 'secondary' : 'default'}>
-                    {subscriptionPlans.find(p => p.id === subscription.plan)?.name || "مجاني"}
-                  </Badge>
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">الحالة:</span>
-                  <div className="flex items-center gap-1">
-                    {subscription.status === 'active' ? (
-                      <>
-                        <CheckCircle className="h-4 w-4 text-green-500" />
-                        <span className="text-sm font-medium text-green-500">نشط</span>
-                      </>
-                    ) : (
-                      <>
-                        <AlertCircle className="h-4 w-4 text-red-500" />
-                        <span className="text-sm font-medium text-red-500">غير نشط</span>
-                      </>
-                    )}
-                  </div>
-                </div>
-                
-                {subscription.current_period_end && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">تاريخ التجديد:</span>
-                    <div className="flex items-center gap-1">
-                      <Calendar className="h-4 w-4 text-gray-500" />
-                      <span className="text-sm">{formatDate(subscription.current_period_end)}</span>
-                    </div>
-                  </div>
-                )}
-                
-                {subscription.payment_method && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">طريقة الدفع:</span>
-                    <div className="flex items-center gap-1">
-                      <CreditCard className="h-4 w-4 text-gray-500" />
-                      <span className="text-sm">**** {subscription.payment_method}</span>
-                    </div>
-                  </div>
-                )}
-                
-                {subscription.cancel_at_period_end && (
-                  <div className="mt-2 p-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-md">
-                    <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
-                      <Clock className="h-4 w-4" />
-                      <span className="text-sm">سينتهي اشتراكك في: {formatDate(subscription.current_period_end)}</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-              
-              <div className="space-y-4">
-                <div>
-                  <div className="flex justify-between mb-1">
-                    <span className="text-sm">المنتجات: {usage.products.used}/{usage.products.max}</span>
-                    <span className="text-sm text-muted-foreground">{Math.round((usage.products.used / usage.products.max) * 100)}%</span>
-                  </div>
-                  <Progress value={(usage.products.used / usage.products.max) * 100} />
-                </div>
-                
-                <div>
-                  <div className="flex justify-between mb-1">
-                    <span className="text-sm">المساحة التخزينية: {usage.storage.used} MB/{usage.storage.max} MB</span>
-                    <span className="text-sm text-muted-foreground">{Math.round((usage.storage.used / usage.storage.max) * 100)}%</span>
-                  </div>
-                  <Progress value={(usage.storage.used / usage.storage.max) * 100} />
-                </div>
-                
-                <div className="flex justify-end pt-2">
-                  {subscription.cancel_at_period_end ? (
-                    <Button
-                      onClick={renewSubscription}
-                      size="sm"
-                      variant="outline"
-                      disabled={loading}
-                    >
-                      إلغاء إنهاء الاشتراك
-                    </Button>
-                  ) : (
-                    <Button
-                      onClick={cancelSubscription}
-                      size="sm"
-                      variant="outline"
-                      disabled={loading || subscription.plan === 'free'}
-                    >
-                      إلغاء الاشتراك
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <div className="pt-8">
-          <h3 className="text-lg font-medium mb-6">ترقية الاشتراك</h3>
-          
-          <div className="grid gap-6 md:grid-cols-3">
-            {subscriptionPlans.map((plan) => (
-              <Card key={plan.id} className={`overflow-hidden ${plan.current ? 'ring-2 ring-primary ring-offset-2' : ''}`}>
-                <div className={`p-1 ${plan.current ? 'bg-primary' : 'bg-muted'}`}></div>
-                <CardContent className="p-6">
-                  <h4 className="text-xl font-bold">{plan.name}</h4>
-                  <div className="mt-1 mb-4">
-                    <span className="text-3xl font-bold">{plan.price}</span>
-                    <span className="text-muted-foreground"> ريال/شهريًا</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground mb-4">{plan.description}</p>
-                  
-                  <ul className="space-y-2 mb-6">
-                    {plan.features.map((feature, index) => (
-                      <li key={index} className="flex items-center gap-2 text-sm">
-                        <CheckCircle className="h-4 w-4 text-primary" />
-                        <span>{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  
-                  <Button
-                    onClick={() => updateSubscription(plan.id)}
-                    className="w-full"
-                    variant={plan.current ? 'outline' : 'default'}
-                    disabled={loading || plan.current}
-                  >
-                    {plan.current ? 'خطتك الحالية' : 'ترقية'}
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
+    <div className="space-y-6">
+      <Card className="mb-6">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold">
+              <CreditCard className="mr-2 inline-block h-5 w-5" />
+              بيانات الاشتراك
+            </h3>
+            <Badge variant="outline">{getSubscriptionStatus()}</Badge>
           </div>
-        </div>
-
-        <div className="pt-8">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-medium">سجل الفواتير</h3>
-                <Button variant="outline" size="sm" className="flex items-center gap-1">
-                  <span>عرض جميع الفواتير</span>
-                  <ArrowUpRight className="h-4 w-4" />
+          
+          <Separator className="my-4" />
+          
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Star className="h-4 w-4 text-yellow-500" />
+              <span className="font-bold">الخطة الحالية:</span>
+              <span>{subscriptionData?.plan || "مجانية"}</span>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4 text-blue-500" />
+              <span className="font-bold">تاريخ نهاية الفترة الحالية:</span>
+              <span>{formatDate(subscriptionData?.current_period_end)}</span>
+            </div>
+            
+            {subscriptionData?.trial_end && (
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-green-500" />
+                <span className="font-bold">تاريخ نهاية الفترة التجريبية:</span>
+                <span>{formatDate(subscriptionData.trial_end)}</span>
+              </div>
+            )}
+            
+            {subscriptionData?.payment_method && (
+              <div className="flex items-center gap-2">
+                <CreditCard className="h-4 w-4 text-gray-500" />
+                <span className="font-bold">طريقة الدفع:</span>
+                <span>{subscriptionData.payment_method}</span>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardContent className="p-6">
+          <h3 className="text-lg font-semibold mb-4">إدارة الاشتراك</h3>
+          
+          <Separator className="my-4" />
+          
+          <div className="space-y-4">
+            {subscriptionData?.status === "canceled" && subscriptionData?.cancel_at_period_end ? (
+              <div>
+                <p className="text-sm text-gray-500">
+                  تم إلغاء اشتراكك وسيتم إنهاؤه في {formatDate(subscriptionData.current_period_end)}.
+                </p>
+                <Button 
+                  variant="secondary"
+                  onClick={handleResumeSubscription}
+                  disabled={loading}
+                >
+                  {loading ? 'جاري الاستئناف...' : 'استئناف الاشتراك'}
                 </Button>
               </div>
-              
-              <div className="text-center py-8 text-muted-foreground">
-                لا توجد فواتير سابقة
+            ) : (
+              <div>
+                <p className="text-sm text-gray-500">
+                  يمكنك تغيير خطتك أو إلغاء اشتراكك في أي وقت.
+                </p>
+                <div className="flex gap-4">
+                  <Button 
+                    onClick={() => handleChangePlan("premium")}
+                    disabled={loading}
+                  >
+                    {loading ? 'جاري التغيير...' : 'تغيير الخطة إلى مميزة'}
+                  </Button>
+                  <Button 
+                    variant="destructive"
+                    onClick={handleCancelSubscription}
+                    disabled={loading}
+                  >
+                    {loading ? 'جاري الإلغاء...' : 'إلغاء الاشتراك'}
+                  </Button>
+                </div>
               </div>
-            </CardContent>
-          </Card>
-        </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center space-x-4">
+              <div className="rounded-full bg-green-100 p-3">
+                <CheckCircle className="h-6 w-6 text-green-600" />
+              </div>
+              <div>
+                <h4 className="text-lg font-semibold">مميزات الخطة المميزة</h4>
+                <p className="text-sm text-gray-500">استمتع بميزات إضافية وخدمات حصرية.</p>
+              </div>
+            </div>
+            <Separator className="my-4" />
+            <ul className="list-disc pl-5 text-sm text-gray-600">
+              <li>وصول غير محدود للإعلانات</li>
+              <li>دعم فني على مدار الساعة</li>
+              <li>تحليلات متقدمة</li>
+            </ul>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center space-x-4">
+              <div className="rounded-full bg-blue-100 p-3">
+                <Shield className="h-6 w-6 text-blue-600" />
+              </div>
+              <div>
+                <h4 className="text-lg font-semibold">الأمان والحماية</h4>
+                <p className="text-sm text-gray-500">نحن نحرص على حماية بياناتك ومعلوماتك.</p>
+              </div>
+            </div>
+            <Separator className="my-4" />
+            <ul className="list-disc pl-5 text-sm text-gray-600">
+              <li>تشفير البيانات بالكامل</li>
+              <li>حماية من الهجمات الإلكترونية</li>
+              <li>تحديثات أمنية دورية</li>
+            </ul>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center space-x-4">
+              <div className="rounded-full bg-orange-100 p-3">
+                <Activity className="h-6 w-6 text-orange-600" />
+              </div>
+              <div>
+                <h4 className="text-lg font-semibold">تتبع النشاط</h4>
+                <p className="text-sm text-gray-500">راقب أداء متجرك وإعلاناتك.</p>
+              </div>
+            </div>
+            <Separator className="my-4" />
+            <ul className="list-disc pl-5 text-sm text-gray-600">
+              <li>تقارير مفصلة للإعلانات</li>
+              <li>تتبع الزيارات والمبيعات</li>
+              <li>تحليل سلوك العملاء</li>
+            </ul>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center space-x-4">
+              <div className="rounded-full bg-yellow-100 p-3">
+                <Award className="h-6 w-6 text-yellow-600" />
+              </div>
+              <div>
+                <h4 className="text-lg font-semibold">الجوائز والمكافآت</h4>
+                <p className="text-sm text-gray-500">احصل على مكافآت عند تحقيق أهدافك.</p>
+              </div>
+            </div>
+            <Separator className="my-4" />
+            <ul className="list-disc pl-5 text-sm text-gray-600">
+              <li>مكافآت للإعلانات الناجحة</li>
+              <li>جوائز لأفضل المتاجر</li>
+              <li>عروض حصرية</li>
+            </ul>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

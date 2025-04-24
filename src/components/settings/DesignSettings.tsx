@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -26,7 +27,7 @@ import {
   Sun
 } from "lucide-react";
 
-// تعريف نوع المكتب
+// تعريف نوع المكتب المعزز بإعدادات التصميم
 interface Office {
   id?: string;
   name?: string;
@@ -48,7 +49,7 @@ interface ColorOption {
   contrastText: string;
 }
 
-const DesignSettings = ({ office }: { office: any }) => {
+const DesignSettings = ({ office }: { office: Office }) => {
   const [loading, setLoading] = useState(false);
   
   // تهيئة إعدادات التصميم
@@ -119,15 +120,22 @@ const DesignSettings = ({ office }: { office: any }) => {
     setLoading(true);
 
     try {
-      const { error } = await supabase.from("offices").update({
+      // استخدام type assertion لإخبار TypeScript أن office يحتوي على إعدادات
+      const updatedOffice = {
+        ...office,
         settings: {
           ...(office?.settings || {}),
           design: {
             ...designSettings,
             updated_at: new Date().toISOString()
           }
-        } 
-      }).eq("id", office.id);
+        }
+      };
+
+      const { error } = await supabase.from("offices").update({
+        // تحويل صريح لمنع أخطاء TypeScript
+        settings: updatedOffice.settings
+      } as any).eq("id", office?.id);
 
       if (error) throw error;
       

@@ -1,12 +1,20 @@
-
 import React, { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Save, Palette, Sun, Moon } from "lucide-react";
+import { Palette, Save } from "lucide-react";
 
 interface Office {
   id?: string;
@@ -32,10 +40,9 @@ interface ColorTheme {
   textColor: string;
 }
 
-const ThemeSettings = ({ office }: { office: any }) => {
+const ThemeSettings = ({ office }: { office: Office }) => {
   const [loading, setLoading] = useState(false);
   
-  // Initialize theme settings
   const [themeSettings, setThemeSettings] = useState({
     mode: office?.settings?.theme?.mode || "light",
     colorTheme: office?.settings?.theme?.colorTheme || "blue",
@@ -43,8 +50,7 @@ const ThemeSettings = ({ office }: { office: any }) => {
     borderRadius: office?.settings?.theme?.borderRadius || "medium",
     customCss: office?.settings?.theme?.customCss || ""
   });
-  
-  // Available color themes
+
   const colorThemes: ColorTheme[] = [
     {
       id: "blue",
@@ -92,22 +98,21 @@ const ThemeSettings = ({ office }: { office: any }) => {
       textColor: "#92400e"
     }
   ];
-  
-  // Handle settings change
+
   const handleChange = (field: string, value: string) => {
     setThemeSettings(prev => ({
       ...prev,
       [field]: value
     }));
   };
-  
-  // Save theme settings
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    
+
     try {
-      const { error } = await supabase.from("offices").update({
+      const updatedOffice = {
+        ...office,
         settings: {
           ...(office?.settings || {}),
           theme: {
@@ -115,13 +120,17 @@ const ThemeSettings = ({ office }: { office: any }) => {
             updated_at: new Date().toISOString()
           }
         }
-      }).eq("id", office.id);
-      
+      };
+
+      const { error } = await supabase.from("offices").update({
+        settings: updatedOffice.settings
+      } as any).eq("id", office?.id);
+
       if (error) throw error;
       
-      toast.success("تم تحديث إعدادات الثيم بنجاح");
+      toast.success("تم تحديث إعدادات المظهر بنجاح");
     } catch (error: any) {
-      toast.error(error.message || "حدث خطأ أثناء تحديث إعدادات الثيم");
+      toast.error(error.message || "حدث خطأ أثناء تحديث الإعدادات");
     } finally {
       setLoading(false);
     }
@@ -131,7 +140,7 @@ const ThemeSettings = ({ office }: { office: any }) => {
     <form onSubmit={handleSubmit} className="space-y-6">
       <Card>
         <CardContent className="p-6">
-          <h3 className="text-lg font-semibold mb-4">وضع الثيم</h3>
+          <h3 className="text-lg font-semibold mb-4">وضع المظهر</h3>
           
           <RadioGroup
             value={themeSettings.mode}
@@ -166,7 +175,7 @@ const ThemeSettings = ({ office }: { office: any }) => {
       
       <Card>
         <CardContent className="p-6">
-          <h3 className="text-lg font-semibold mb-4">لون الثيم</h3>
+          <h3 className="text-lg font-semibold mb-4">لون المظهر</h3>
           
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
             {colorThemes.map((theme) => (
@@ -284,7 +293,7 @@ const ThemeSettings = ({ office }: { office: any }) => {
         disabled={loading}
         className="w-full sm:w-auto"
       >
-        {loading ? 'جاري الحفظ...' : 'حفظ إعدادات الثيم'}
+        {loading ? 'جاري الحفظ...' : 'حفظ إعدادات المظهر'}
         <Save size={16} className="mr-2" />
       </Button>
     </form>
