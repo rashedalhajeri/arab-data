@@ -20,7 +20,6 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 
-// تعريف نوع المكتب 
 interface Office {
   id?: string;
   name: string;
@@ -41,7 +40,6 @@ const GeneralSettings = ({ office }: { office: any }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   
-  // تهيئة الإعدادات العامة
   const [settings, setSettings] = useState({
     store_name: office?.settings?.general?.store_name || office?.name || "",
     store_slug: office?.settings?.general?.store_slug || office?.slug || "",
@@ -51,6 +49,7 @@ const GeneralSettings = ({ office }: { office: any }) => {
     store_email: office?.settings?.general?.store_email || "",
     store_phone: office?.settings?.general?.store_phone || "",
     store_address: office?.settings?.general?.store_address || "",
+    store_description: office?.settings?.general?.store_description || "",
     country: office?.settings?.general?.country || "SA",
     currency: office?.settings?.general?.currency || "SAR",
     timezone: office?.settings?.general?.timezone || "",
@@ -69,7 +68,6 @@ const GeneralSettings = ({ office }: { office: any }) => {
     business_type: office?.settings?.general?.business_type || "retail"
   });
 
-  // أنواع الأعمال
   const businessTypes = [
     { id: "retail", name: "متجر تجزئة" },
     { id: "wholesale", name: "تجارة جملة" },
@@ -78,14 +76,12 @@ const GeneralSettings = ({ office }: { office: any }) => {
     { id: "other", name: "أخرى" }
   ];
 
-  // تغيير الإعدادات
   const handleChange = (field: string, value: any) => {
     setSettings(prev => ({
       ...prev,
       [field]: value
     }));
 
-    // تحديث العملة تلقائيًا عند تغيير الدولة
     if (field === "country") {
       const selectedCountry = countries.find(c => c.code === value);
       if (selectedCountry) {
@@ -97,9 +93,7 @@ const GeneralSettings = ({ office }: { office: any }) => {
     }
   };
 
-  // تغيير قيمة المتجر النشط
   const handleActiveChange = (checked: boolean) => {
-    // إذا كان المتجر سينشط، نتأكد من إلغاء وضع الصيانة
     if (checked) {
       setSettings(prev => ({
         ...prev,
@@ -114,9 +108,7 @@ const GeneralSettings = ({ office }: { office: any }) => {
     }
   };
 
-  // تغيير وضع الصيانة
   const handleMaintenanceChange = (checked: boolean) => {
-    // إذا تم تفعيل وضع الصيانة، يجب إيقاف المتجر
     if (checked) {
       setSettings(prev => ({
         ...prev,
@@ -131,19 +123,16 @@ const GeneralSettings = ({ office }: { office: any }) => {
     }
   };
 
-  // رفع شعار المتجر
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // التحقق من نوع الملف
     const fileType = file.type;
     if (!fileType.startsWith('image/')) {
       toast.error("يرجى اختيار ملف صورة صالح");
       return;
     }
 
-    // التحقق من حجم الملف (الحد الأقصى 1 ميجابايت)
     if (file.size > 1 * 1024 * 1024) {
       toast.error("حجم الملف كبير جدًا. الحد الأقصى هو 1 ميجابايت");
       return;
@@ -152,23 +141,19 @@ const GeneralSettings = ({ office }: { office: any }) => {
     setLogoUploading(true);
 
     try {
-      // إنشاء اسم فريد للملف
       const fileExt = file.name.split('.').pop();
       const fileName = `${office.id}/logo-${Date.now()}.${fileExt}`;
       const filePath = `offices/${fileName}`;
 
-      // رفع الملف إلى Supabase Storage
       const { error: uploadError } = await supabase.storage
         .from('public')
         .upload(filePath, file, { upsert: true });
 
       if (uploadError) throw uploadError;
 
-      // الحصول على URL العام للصورة
       const { data } = supabase.storage.from('public').getPublicUrl(filePath);
       
       if (data) {
-        // تحديث إعدادات الشعار
         handleChange('store_logo', data.publicUrl);
         toast.success("تم رفع الشعار بنجاح");
       }
@@ -176,20 +161,17 @@ const GeneralSettings = ({ office }: { office: any }) => {
       toast.error(error.message || "حدث خطأ أثناء رفع الشعار");
     } finally {
       setLogoUploading(false);
-      // إعادة تعيين حقل الملف
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
     }
   };
 
-  // حفظ الإعدادات
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      // التحقق من صحة الإعدادات
       if (!settings.store_name.trim()) {
         throw new Error("يجب إدخال اسم المتجر");
       }
@@ -198,12 +180,10 @@ const GeneralSettings = ({ office }: { office: any }) => {
         throw new Error("يجب إدخال الرابط المخصص للمتجر");
       }
 
-      // التحقق من صحة الرابط المخصص (يجب أن يحتوي على أحرف إنجليزية وأرقام وشرطات فقط)
       if (!/^[a-z0-9-]+$/.test(settings.store_slug)) {
-        throw new Error("الرابط المخصص يجب أن يحتوي على أحرف إنجليزية صغيرة وأرقام وشرطات فقط");
+        throw new Error("الرابط المخصص يجب أن يحتوي على أحرف إنجليزية وأرقام وشرطات فقط");
       }
 
-      // التحقق من عدم وجود متجر آخر بنفس الرابط المخصص
       if (settings.store_slug !== office?.slug) {
         const { data: existingOffice, error: slugCheckError } = await supabase
           .from("offices")
@@ -217,7 +197,6 @@ const GeneralSettings = ({ office }: { office: any }) => {
         }
       }
 
-      // تحديث الإعدادات في قاعدة البيانات
       const { error } = await supabase
         .from("offices")
         .update({
@@ -243,11 +222,9 @@ const GeneralSettings = ({ office }: { office: any }) => {
     }
   };
 
-  // تغيير كلمة المرور
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // التحقق من تطابق كلمات المرور
     if (settings.newPassword !== settings.confirmPassword) {
       toast.error("كلمة المرور الجديدة غير متطابقة");
       return;
@@ -256,14 +233,12 @@ const GeneralSettings = ({ office }: { office: any }) => {
     setLoading(true);
     
     try {
-      // تغيير كلمة المرور (هذا مثال بسيط، يجب تكييفه مع طريقة المصادقة لديك)
       const { error } = await supabase.auth.updateUser({
         password: settings.newPassword
       });
       
       if (error) throw error;
       
-      // إعادة تعيين حقول كلمة المرور
       setSettings(prev => ({
         ...prev,
         currentPassword: "",
@@ -271,7 +246,6 @@ const GeneralSettings = ({ office }: { office: any }) => {
         confirmPassword: ""
       }));
       
-      // إغلاق الحوار
       setShowPasswordDialog(false);
       
       toast.success("تم تغيير كلمة المرور بنجاح");
@@ -288,13 +262,11 @@ const GeneralSettings = ({ office }: { office: any }) => {
         <h2 className="text-xl font-semibold mb-4">الإعدادات العامة</h2>
         
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* معلومات المتجر الأساسية */}
           <Card>
             <CardContent className="p-4 space-y-4">
               <h3 className="text-lg font-medium">معلومات المتجر الأساسية</h3>
               
               <div className="grid gap-4 sm:grid-cols-2">
-                {/* اسم المتجر */}
                 <div className="grid gap-2">
                   <Label htmlFor="store_name" className="flex items-center gap-2">
                     <ShoppingBag size={16} /> اسم المتجر
@@ -308,7 +280,6 @@ const GeneralSettings = ({ office }: { office: any }) => {
                   />
                 </div>
                 
-                {/* رابط المتجر */}
                 <div className="grid gap-2">
                   <Label htmlFor="store_url" className="flex items-center gap-2">
                     <Globe size={16} /> رابط المتجر
@@ -326,7 +297,6 @@ const GeneralSettings = ({ office }: { office: any }) => {
                 </div>
               </div>
               
-              {/* وصف المتجر */}
               <div className="grid gap-2">
                 <Label htmlFor="store_description">وصف المتجر</Label>
                 <Textarea
@@ -340,13 +310,11 @@ const GeneralSettings = ({ office }: { office: any }) => {
             </CardContent>
           </Card>
 
-          {/* شعار وأيقونة المتجر */}
           <Card>
             <CardContent className="p-4 space-y-4">
               <h3 className="text-lg font-medium">شعار وأيقونة المتجر</h3>
               
               <div className="grid gap-6 sm:grid-cols-2">
-                {/* شعار المتجر */}
                 <div className="space-y-2">
                   <Label>شعار المتجر</Label>
                   <div className="flex flex-col items-center gap-4">
@@ -399,7 +367,6 @@ const GeneralSettings = ({ office }: { office: any }) => {
                   </div>
                 </div>
                 
-                {/* أيقونة المتجر */}
                 <div className="space-y-2">
                   <Label>أيقونة المتجر (Favicon)</Label>
                   <div className="flex flex-col items-center gap-4">
@@ -455,13 +422,11 @@ const GeneralSettings = ({ office }: { office: any }) => {
             </CardContent>
           </Card>
 
-          {/* معلومات الاتصال */}
           <Card>
             <CardContent className="p-4 space-y-4">
               <h3 className="text-lg font-medium">معلومات الاتصال</h3>
               
               <div className="grid gap-4 sm:grid-cols-2">
-                {/* البريد الإلكتروني */}
                 <div className="grid gap-2">
                   <Label htmlFor="store_email" className="flex items-center gap-2">
                     <Mail size={16} /> البريد الإلكتروني
@@ -475,7 +440,6 @@ const GeneralSettings = ({ office }: { office: any }) => {
                   />
                 </div>
                 
-                {/* رقم الهاتف */}
                 <div className="grid gap-2">
                   <Label htmlFor="store_phone" className="flex items-center gap-2">
                     <Phone size={16} /> رقم الهاتف
@@ -488,7 +452,6 @@ const GeneralSettings = ({ office }: { office: any }) => {
                   />
                 </div>
                 
-                {/* العنوان */}
                 <div className="grid gap-2 sm:col-span-2">
                   <Label htmlFor="store_address" className="flex items-center gap-2">
                     <MapPin size={16} /> العنوان
@@ -505,13 +468,11 @@ const GeneralSettings = ({ office }: { office: any }) => {
             </CardContent>
           </Card>
 
-          {/* المنطقة والعملة */}
           <Card>
             <CardContent className="p-4 space-y-4">
               <h3 className="text-lg font-medium">المنطقة والعملة</h3>
               
               <div className="grid gap-4 sm:grid-cols-3">
-                {/* الدولة */}
                 <div className="grid gap-2">
                   <Label htmlFor="country" className="flex items-center gap-2">
                     <Globe size={16} /> الدولة
@@ -534,7 +495,6 @@ const GeneralSettings = ({ office }: { office: any }) => {
                   </Select>
                 </div>
                 
-                {/* العملة */}
                 <div className="grid gap-2">
                   <Label htmlFor="currency" className="flex items-center gap-2">
                     <DollarSign size={16} /> العملة
@@ -557,7 +517,6 @@ const GeneralSettings = ({ office }: { office: any }) => {
                   </Select>
                 </div>
                 
-                {/* المنطقة الزمنية */}
                 <div className="grid gap-2">
                   <Label htmlFor="timezone" className="flex items-center gap-2">
                     <Clock size={16} /> المنطقة الزمنية
@@ -586,7 +545,6 @@ const GeneralSettings = ({ office }: { office: any }) => {
             </CardContent>
           </Card>
 
-          {/* وضع الصيانة */}
           <Card>
             <CardContent className="p-4 space-y-4">
               <div className="flex items-center justify-between">

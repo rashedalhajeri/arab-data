@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Check, X, ChevronLeft, Upload, Trash2, Plus } from "lucide-react";
@@ -30,12 +29,13 @@ interface AdvertisementData {
   kilometers?: string;
   fuelType?: string;
   images?: any[];
-  // Adding missing properties based on error messages
   bodyType?: string;
   engineSize?: string;
   import?: string;
   condition?: string;
   gearType?: string;
+  propertyType?: string;
+  area?: string;
 }
 
 // Interface for form errors
@@ -68,7 +68,9 @@ const AddAdvertisement = () => {
     engineSize: "",
     import: "",
     condition: "",
-    gearType: ""
+    gearType: "",
+    propertyType: "",
+    area: ""
   });
   
   // State for form validation and submission
@@ -420,10 +422,12 @@ const AddAdvertisement = () => {
   const renderRealEstateFields = () => {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Real estate specific fields would go here */}
         <div className="space-y-2">
           <Label htmlFor="propertyType">نوع العقار</Label>
-          <Select onValueChange={(value) => handleChange("propertyType", value)}>
+          <Select 
+            value={adData.propertyType} 
+            onValueChange={(value) => handleChange("propertyType", value)}
+          >
             <SelectTrigger>
               <SelectValue placeholder="اختر نوع العقار" />
             </SelectTrigger>
@@ -439,7 +443,13 @@ const AddAdvertisement = () => {
         
         <div className="space-y-2">
           <Label htmlFor="area">المساحة (متر مربع)</Label>
-          <Input id="area" type="number" placeholder="مثال: 150" />
+          <Input 
+            id="area" 
+            type="number" 
+            placeholder="مثال: 150"
+            value={adData.area}
+            onChange={(e) => handleChange("area", e.target.value)}
+          />
         </div>
       </div>
     );

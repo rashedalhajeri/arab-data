@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -127,7 +126,7 @@ const DesignSettings = ({ office }: { office: any }) => {
             ...designSettings,
             updated_at: new Date().toISOString()
           }
-        } as any
+        } 
       }).eq("id", office.id);
 
       if (error) throw error;

@@ -106,7 +106,7 @@ const SubscriptionSettings = ({ office }: { office: any }) => {
             plan: planId,
             updated_at: new Date().toISOString()
           }
-        } as any
+        }
       }).eq("id", office.id);
 
       if (error) throw error;
@@ -136,7 +136,7 @@ const SubscriptionSettings = ({ office }: { office: any }) => {
             cancel_at_period_end: true,
             updated_at: new Date().toISOString()
           }
-        } as any
+        }
       }).eq("id", office.id);
 
       if (error) throw error;
@@ -166,7 +166,7 @@ const SubscriptionSettings = ({ office }: { office: any }) => {
             cancel_at_period_end: false,
             updated_at: new Date().toISOString()
           }
-        } as any
+        }
       }).eq("id", office.id);
 
       if (error) throw error;
