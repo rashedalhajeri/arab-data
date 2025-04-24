@@ -113,7 +113,7 @@ export default function OfficeProfile() {
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-4xl mx-auto">
         <div className="relative bg-white shadow-sm">
-          <div className="h-64 sm:h-72 relative overflow-hidden rounded-none sm:rounded-2xl">
+          <div className="h-64 sm:h-80 relative overflow-hidden rounded-none sm:rounded-2xl">
             {office.cover_url ? (
               <img 
                 src={getStorageUrl(office.cover_url)}
@@ -125,7 +125,7 @@ export default function OfficeProfile() {
             )}
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
             
-            <div className="absolute bottom-6 right-4 sm:right-6 left-4 sm:left-6">
+            <div className="absolute bottom-12 right-4 sm:right-6 left-4 sm:left-6">
               <div className="flex items-center gap-4">
                 <Avatar className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-white/90 shadow-lg">
                   <AvatarImage 
