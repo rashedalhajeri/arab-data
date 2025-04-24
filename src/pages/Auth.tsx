@@ -252,12 +252,16 @@ const Auth = () => {
                 <TabsTrigger
                   value="login"
                   className="flex-1 text-base font-bold rounded-full"
+                  id="tab-login"
+                  name="auth-tab"
                 >
                   دخول
                 </TabsTrigger>
                 <TabsTrigger
                   value="signup"
                   className="flex-1 text-base font-bold rounded-full"
+                  id="tab-signup"
+                  name="auth-tab"
                 >
                   تسجيل جديد
                 </TabsTrigger>

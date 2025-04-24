@@ -1,85 +1,14 @@
-import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import React from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Loader2, UserIcon, Eye, BarChart3, TrendingUp, Plus } from "lucide-react";
-import GallerySidebar from "@/components/GallerySidebar";
 import { Button } from "@/components/ui/button";
+import { Eye, BarChart3, TrendingUp, Plus, UserIcon } from "lucide-react";
+import { useDashboard } from "@/components/DashboardLayout";
 
 const Dashboard = () => {
-  const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
-  const [office, setOffice] = useState<null | {
-    name: string;
-    url: string;
-    logo_url?: string;
-  }>(null);
-
-  useEffect(() => {
-    let isMounted = true;
-    const checkOffice = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session?.user?.id) {
-        navigate("/auth");
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from("offices")
-        .select("*")
-        .eq("user_id", session.user.id)
-        .maybeSingle();
-
-      if (!data) {
-        navigate("/create-page");
-        return;
-      }
-      if (isMounted) {
-        // Generate the URL based on the slug from the office data
-        const galleryUrl = data.slug ? `https://ad51.me/${data.slug}` : "#";
-
-        // Get the public URL for the logo from Supabase storage
-        const logoUrl = data.logo_url 
-          ? supabase.storage.from("office-assets").getPublicUrl(data.logo_url).data.publicUrl
-          : "/placeholder.svg";
-
-        setOffice({
-          name: data.name || "اسم المعرض",
-          url: galleryUrl,
-          logo_url: logoUrl,
-        });
-        setLoading(false);
-      }
-    };
-
-    checkOffice();
-    return () => {
-      isMounted = false;
-    };
-  }, [navigate]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-indigo-950 dark:to-slate-900" dir="rtl">
-        <Loader2 className="animate-spin text-purple-700" size={40} />
-      </div>
-    );
-  }
+  const { office } = useDashboard();
 
   return (
-    <div dir="rtl" className="bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-indigo-950 dark:to-slate-900 min-h-screen">
-      {/* القائمة الجانبية */}
-      <GallerySidebar
-        galleryName={office?.name || "اسم المعرض"}
-        galleryUrl={office?.url || "#"}
-        galleryLogo={office?.logo_url || "/placeholder.svg"}
-      />
-
-      {/* محتوى لوحة التحكم */}
-      <main className="mr-64 py-8 px-8 min-h-screen">
-        <div className="max-w-5xl space-y-8">
+    <>
           {/* ترويسة الصفحة */}
           <header className="flex justify-between items-center mb-10">
             <div>
@@ -87,7 +16,7 @@ const Dashboard = () => {
                 className="flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-md"
                 asChild
               >
-                <a href={office?.url || "#"} target="_blank" rel="noopener noreferrer">
+            <a href={office?.displayUrl || "#"} target="_blank" rel="noopener noreferrer">
                   <Eye size={16} />
                   <span>عرض الصفحة</span>
                 </a>
@@ -174,7 +103,10 @@ const Dashboard = () => {
               <CardContent>
                 <div className="text-center p-8 border border-dashed border-gray-300 dark:border-gray-700 rounded-lg bg-gray-50/50 dark:bg-slate-800/30">
                   <p className="text-gray-500 dark:text-gray-400 mb-5">لم تقم بإضافة أي إعلانات حتى الآن</p>
-                  <Button className="flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white">
+              <Button 
+                className="flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white"
+                onClick={() => window.location.href = "/dashboard/advertisements"}
+              >
                     <Plus size={16} />
                     <span>إضافة إعلان جديد</span>
                   </Button>
@@ -182,9 +114,7 @@ const Dashboard = () => {
               </CardContent>
             </Card>
           </section>
-        </div>
-      </main>
-    </div>
+    </>
   );
 };
 

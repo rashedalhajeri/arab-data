@@ -39,21 +39,48 @@ const CreatePage = () => {
 
   useEffect(() => {
     let isMounted = true;
+    
+    // تحسين دالة التحقق من المكتب
     async function checkUserOffice() {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user?.id) return;
+      try {
+        // التحقق من وجود جلسة مسبقاً للمستخدم
+        const { data, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error("خطأ في الحصول على الجلسة:", error.message);
+          return;
+        }
+        
+        const session = data?.session;
+        if (!session?.user?.id || !isMounted) return;
 
-      const { data: office } = await supabase
-        .from("offices")
-        .select("id")
-        .eq("user_id", session.user.id)
-        .maybeSingle();
-      if (office && isMounted) {
-        navigate("/dashboard", { replace: true });
+        // استعلام عن مكتب المستخدم فقط إذا كانت الجلسة نشطة
+        const { data: office, error: officeError } = await supabase
+          .from("offices")
+          .select("id")
+          .eq("user_id", session.user.id)
+          .limit(1)
+          .single();
+        
+        if (officeError && officeError.code !== 'PGRST116') {
+          // PGRST116 هو خطأ "لم يتم العثور على نتائج" وهو متوقع عندما لا يكون للمستخدم مكتب
+          console.error("خطأ في استعلام المكتب:", officeError.message);
+          return;
+        }
+
+        // توجيه المستخدم للوحة التحكم إذا كان لديه مكتب بالفعل
+        if (office && isMounted) {
+          navigate("/dashboard", { replace: true });
+        }
+      } catch (err) {
+        console.error("خطأ عام:", err);
       }
     }
+    
     checkUserOffice();
-    return () => { isMounted = false; };
+    
+    return () => { 
+      isMounted = false; 
+    };
   }, [navigate]);
 
   const [name, setName] = useState("");
@@ -88,17 +115,35 @@ const CreatePage = () => {
     setSlug(value);
     setErrors((er) => ({ ...er, slug: "" }));
 
-    if (slugCheckTimeout.current) clearTimeout(slugCheckTimeout.current);
+    if (slugCheckTimeout.current) {
+      clearTimeout(slugCheckTimeout.current);
+      slugCheckTimeout.current = null;
+    }
 
+    // تحقق فقط إذا كان الاسم بالطول المناسب ومتوافق مع النمط
     if (value.length >= 3 && isValidSlug(value)) {
+      setSlugAvailable(null); // حالة تحميل
+      
       slugCheckTimeout.current = setTimeout(async () => {
-        let { data, error } = await supabase
-          .from("offices")
-          .select("id")
-          .eq("slug", value)
-          .maybeSingle();
-        setSlugAvailable(!data);
-      }, 600);
+        try {
+          const { data, error } = await supabase
+            .from("offices")
+            .select("id")
+            .eq("slug", value)
+            .limit(1)
+            .maybeSingle();
+            
+          if (error) {
+            console.error("خطأ في التحقق من توفر الاسم:", error.message);
+            return;
+          }
+          
+          setSlugAvailable(!data);
+        } catch (err) {
+          console.error("خطأ عام في التحقق من توفر الاسم:", err);
+          setSlugAvailable(null);
+        }
+      }, 600); // تأخير للحد من عدد الطلبات
     } else {
       setSlugAvailable(null);
     }
@@ -127,25 +172,45 @@ const CreatePage = () => {
     setLoading(true);
 
     try {
-      const { data: { session }, error: sessionErr } = await supabase.auth.getSession();
-      if (sessionErr || !session?.user) throw new Error("لم يتم العثور على حساب المستخدم.");
+      // التحقق من الجلسة مرة واحدة
+      const { data, error: sessionErr } = await supabase.auth.getSession();
+      
+      if (sessionErr) {
+        throw new Error("خطأ في جلسة المستخدم: " + sessionErr.message);
+      }
+      
+      const session = data?.session;
+      if (!session?.user) {
+        throw new Error("الرجاء تسجيل الدخول لإنشاء صفحة المكتب");
+      }
 
+      // إنشاء معرف فريد للمكتب
       const officeId = crypto.randomUUID();
       const logoPath = `logos/${officeId}.png`;
       const coverPath = `covers/${officeId}.png`;
 
+      // التحقق من وجود الملفات
       const logoFile = logoInput.current?.files?.[0];
       const coverFile = coverInput.current?.files?.[0];
 
       if (!logoFile) throw new Error("يرجى رفع الشعار");
       if (!coverFile) throw new Error("يرجى رفع الغلاف");
 
+      // رفع الملفات بالتوازي
       const uploadLogo = supabase.storage.from("office-assets").upload(logoPath, logoFile, { upsert: true });
       const uploadCover = supabase.storage.from("office-assets").upload(coverPath, coverFile, { upsert: true });
-      const [{ error: logoErr }, { error: coverErr }] = await Promise.all([uploadLogo, uploadCover]);
-      if (logoErr) throw new Error("فشل رفع الشعار");
-      if (coverErr) throw new Error("فشل رفع الغلاف");
+      
+      const [logoResult, coverResult] = await Promise.all([uploadLogo, uploadCover]);
+      
+      if (logoResult.error) {
+        throw new Error("فشل رفع الشعار: " + logoResult.error.message);
+      }
+      
+      if (coverResult.error) {
+        throw new Error("فشل رفع الغلاف: " + coverResult.error.message);
+      }
 
+      // إدخال بيانات المكتب
       const { error: insertError } = await supabase
         .from('offices')
         .insert({
@@ -158,12 +223,16 @@ const CreatePage = () => {
           logo_url: logoPath,
           cover_url: coverPath,
         });
-      if (insertError) throw insertError;
+        
+      if (insertError) {
+        throw new Error("فشل إنشاء المكتب: " + insertError.message);
+      }
 
-      toast.success("تم إنشاء الصفحة بنجاح!");
+      toast.success("تم إنشاء صفحة المكتب بنجاح!");
       navigate("/dashboard");
     } catch (err: any) {
-      toast.error(err.message || "حدث خطأ");
+      toast.error(err.message || "حدث خطأ أثناء إنشاء الصفحة");
+      console.error("خطأ في إنشاء الصفحة:", err);
     } finally {
       setLoading(false);
     }
@@ -187,6 +256,8 @@ const CreatePage = () => {
                 value={name}
                 onChange={e => { setName(e.target.value); setErrors((er) => ({ ...er, name: "" }))}}
                 placeholder="مثال: معرض التميز الحديث"
+                id="office-name"
+                name="office-name"
               />
               {errors.name && <div className="text-destructive text-xs font-bold mt-1">{errors.name}</div>}
             </div>
@@ -202,6 +273,8 @@ const CreatePage = () => {
                   className="ltr text-left"
                   dir="ltr"
                   maxLength={30}
+                  id="office-slug"
+                  name="office-slug"
                 />
                 {slug.length >= 3 && (
                   <span className={`text-xs font-bold ${slugAvailable == null ? "text-gray-400" : slugAvailable ? "text-green-600" : "text-red-600"}`}>
@@ -218,7 +291,7 @@ const CreatePage = () => {
             <div>
               <label className="font-bold">الدولة</label>
               <Select value={country} onValueChange={(value) => {setCountry(value); setErrors((er)=>({...er, country:""}))}}>
-                <SelectTrigger>
+                <SelectTrigger id="country-select" name="country-select">
                   <SelectValue placeholder="اختر الدولة" />
                 </SelectTrigger>
                 <SelectContent>
@@ -251,6 +324,8 @@ const CreatePage = () => {
                   }`}
                   type="tel"
                   maxLength={country && phoneLengths[country] ? phoneLengths[country] : 9}
+                  id="office-phone"
+                  name="office-phone"
                 />
               </div>
               {errors.phone && <div className="text-destructive text-xs font-bold mt-1">{errors.phone}</div>}
@@ -264,6 +339,8 @@ const CreatePage = () => {
                   accept="image/*"
                   style={{ display: "none" }}
                   onChange={logoFileChange}
+                  id="office-logo"
+                  name="office-logo"
                 />
                 <Button type="button" onClick={openLogo} variant="outline" size="sm">
                   رفع الشعار
@@ -298,6 +375,8 @@ const CreatePage = () => {
                   accept="image/*"
                   style={{ display: "none" }}
                   onChange={coverFileChange}
+                  id="office-cover"
+                  name="office-cover"
                 />
                 <Button type="button" onClick={openCover} variant="outline" size="sm">
                   رفع الغلاف
