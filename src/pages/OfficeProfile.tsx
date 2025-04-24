@@ -112,8 +112,8 @@ export default function OfficeProfile() {
             {office.cover_url ? <img src={getStorageUrl(office.cover_url)} alt={`غلاف ${office.name}`} className="w-full h-full object-cover" /> : <div className="w-full h-full bg-gradient-to-r from-gray-100 to-gray-200" />}
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
             
-            <div className="absolute bottom-6 right-4 sm:right-6 left-4 sm:left-6">
-              <div className="flex items-center gap-4 px-0 py-0 mx-0 my-0">
+            <div className="absolute bottom-10 right-4 sm:right-6 left-4 sm:left-6">
+              <div className="flex items-center gap-4">
                 <Avatar className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-white/90 shadow-lg">
                   <AvatarImage src={getStorageUrl(office.logo_url)} alt={office.name} className="object-cover" />
                   <AvatarFallback className="text-xl font-bold bg-primary text-white">
