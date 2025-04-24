@@ -95,16 +95,13 @@ export default function OfficeProfile() {
     );
   }
 
-  // تحسين الدالة لاستخراج الروابط العامة من Supabase Storage
   const getStorageUrl = (path: string | null): string => {
     if (!path) return "/placeholder.svg";
     
-    // التحقق مما إذا كان المسار عبارة عن رابط URL كامل بالفعل
     if (path.startsWith('http://') || path.startsWith('https://')) {
       return path;
     }
     
-    // الحصول على رابط عام من Supabase Storage
     const { data } = supabase.storage
       .from('office-assets')
       .getPublicUrl(path);
@@ -129,34 +126,7 @@ export default function OfficeProfile() {
               </Avatar>
               <div>
                 <h1 className="text-xl font-bold text-gray-900">{office.name}</h1>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-500 flex items-center gap-1">
-                    <MapPin size={14} />
-                    {office.country}
-                  </span>
-                </div>
               </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={handleShare}
-                className="flex items-center gap-1 text-gray-700"
-              >
-                <Share2 size={16} />
-                <span className="hidden sm:inline">مشاركة</span>
-              </Button>
-              <a href={`tel:${office.phone}`}>
-                <Button 
-                  variant="default" 
-                  size="sm"
-                  className="flex items-center gap-1 bg-primary text-white"
-                >
-                  <Phone size={16} />
-                  <span className="hidden sm:inline">اتصال</span>
-                </Button>
-              </a>
             </div>
           </div>
         </div>
@@ -173,7 +143,6 @@ export default function OfficeProfile() {
           <div className="w-full h-full bg-gradient-to-r from-primary/10 to-primary/20 flex items-center justify-center">
             <div className="text-center text-gray-600 p-6 max-w-md">
               <h3 className="text-2xl font-bold mb-2">{office.name}</h3>
-              <p className="text-gray-500">المكتب لم يقم بإضافة صورة غلاف حتى الآن</p>
             </div>
           </div>
         )}
@@ -194,84 +163,20 @@ export default function OfficeProfile() {
               </Avatar>
               <div className="flex-1">
                 <h1 className="text-3xl font-bold text-gray-900 mb-3">{office.name}</h1>
-                <div className="flex flex-wrap gap-4 text-gray-600">
-                  <Badge variant="outline" className="gap-1 px-3 py-1 text-sm font-normal text-gray-700 border-gray-300">
-                    <Star size={14} className="text-amber-500" />
-                    <span>مكتب مميز</span>
-                  </Badge>
-                  <Badge variant="outline" className="gap-1 px-3 py-1 text-sm font-normal text-gray-700 border-gray-300">
-                    <Calendar size={14} className="text-blue-500" />
-                    <span>عضو جديد</span>
-                  </Badge>
-                </div>
-              </div>
-            </div>
-            
-            <div className="flex flex-col sm:flex-row gap-3 mt-4 md:mt-0">
-              <Button variant="outline" className="gap-2">
-                <MessageCircle size={16} />
-                <span>مراسلة</span>
-              </Button>
-              <a href={`tel:${office.phone}`} className="w-full sm:w-auto">
-                <Button className="w-full gap-2">
-                  <Phone size={16} />
-                  <span>{office.phone}</span>
-                </Button>
-              </a>
-            </div>
-          </div>
-          
-          <Separator className="my-6" />
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="flex flex-col">
-              <span className="text-sm text-gray-500 mb-1">المكان</span>
-              <div className="flex items-center gap-2">
-                <MapPin size={18} className="text-gray-400" />
-                <span className="font-medium">{office.country}</span>
-              </div>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-sm text-gray-500 mb-1">للتواصل</span>
-              <div className="flex items-center gap-2">
-                <Phone size={18} className="text-gray-400" />
-                <a href={`tel:${office.phone}`} className="font-medium hover:text-primary transition-colors">
-                  {office.phone}
-                </a>
-              </div>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-sm text-gray-500 mb-1">تاريخ الإنضمام</span>
-              <div className="flex items-center gap-2">
-                <Clock size={18} className="text-gray-400" />
-                <span className="font-medium">حديثاً</span>
               </div>
             </div>
           </div>
-        </div>
-
-        <div className="mt-8 bg-white p-6 rounded-xl shadow-md">
-          <div className="flex items-center mb-4">
-            <Info size={18} className="text-primary ml-2" />
-            <h2 className="text-xl font-bold">عن المكتب</h2>
-          </div>
-          
-          <p className="text-gray-600 leading-relaxed">
-            مكتب متخصص يقدم خدمات مميزة لعملائه في {office.country}. نحن نسعى دائماً لتقديم أفضل الخدمات وتلبية احتياجات عملائنا بأعلى معايير الجودة والاحترافية.
-          </p>
         </div>
 
         <div className="mt-8 mb-16">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center">
-              <Tag size={20} className="text-primary ml-2" />
               <h2 className="text-2xl font-bold text-gray-900">إعلانات المكتب</h2>
             </div>
           </div>
 
           <div className="text-center py-16 bg-white rounded-xl shadow-sm border border-gray-100">
             <div className="max-w-md mx-auto">
-              <Tag size={48} className="mx-auto mb-4 text-gray-300" />
               <h3 className="text-xl font-semibold text-gray-800 mb-2">لا توجد إعلانات حالياً</h3>
               <p className="text-gray-500">لم يقم المكتب بإضافة أي إعلانات بعد. يمكنك العودة لاحقاً للاطلاع على الإعلانات الجديدة.</p>
             </div>
