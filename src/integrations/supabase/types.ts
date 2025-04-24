@@ -53,7 +53,21 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_office_by_slug: {
+        Args: { slug_param: string }
+        Returns: {
+          id: string
+          user_id: string
+          name: string
+          slug: string
+          country: string
+          phone: string
+          logo_url: string
+          cover_url: string
+          created_at: string
+          updated_at: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
