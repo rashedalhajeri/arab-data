@@ -1,10 +1,11 @@
+
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { OfficeHeader } from '@/components/office/OfficeHeader';
 import { OfficeCover } from '@/components/office/OfficeCover';
 import { OfficeInfo } from '@/components/office/OfficeInfo';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Info, Tag, Phone, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
