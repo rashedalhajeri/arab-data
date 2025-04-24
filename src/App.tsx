@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -14,11 +15,7 @@ import AddAdvertisement from "./pages/Advertisements/AddAdvertisement";
 import DashboardLayout from "./components/DashboardLayout";
 import QrCodes from "./pages/QrCodes";
 import Categories from "./pages/Categories";
-import OfficeProfile from "./pages/OfficeProfile";
 import PublicOfficeProfile from "./pages/PublicOfficeProfile";
-
-// في المستقبل، يمكن إضافة صفحات إضافية عند إنشائها
-// import Categories from "./pages/Categories";
 
 const queryClient = new QueryClient();
 
@@ -33,19 +30,10 @@ const App = () => (
           <Route path="/auth" element={<Auth />} />
           <Route path="/create-page" element={<CreatePage />} />
           
-          {/* مسار صفحة المكتب باستخدام المعرف المخصص (صفحة إدارية) */}
-          <Route path="/office/:slug" element={<OfficeProfile />} />
-          
           {/* مسار الصفحة العامة للمكتب */}
-          <Route path="/p/:slug" element={<PublicOfficeProfile />} />
-          
-          {/* مسار مباشر للصفحة العامة باستخدام slug فقط */}
           <Route path="/:slug" element={<PublicOfficeProfile />} />
           
-          {/* مسار لعرض إعلان محدد */}
-          <Route path="/:slug/ad/:adSlug" element={<PublicOfficeProfile />} />
-          
-          {/* Rutas del Dashboard agrupadas bajo el layout compartido */}
+          {/* مسارات لوحة التحكم */}
           <Route path="/dashboard" element={<DashboardLayout><Outlet /></DashboardLayout>}>
             <Route index element={<Dashboard />} />
             <Route path="settings" element={<Settings />} />
