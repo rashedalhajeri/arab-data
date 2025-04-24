@@ -19,7 +19,7 @@ import {
   Save 
 } from "lucide-react";
 
-// Define Office type
+// Define augmented Office type that includes settings
 interface Office {
   id?: string;
   name?: string;
@@ -32,9 +32,10 @@ interface Office {
   cover_url?: string;
   phone?: string;
   settings?: { [key: string]: any };
+  social_settings?: string;
 }
 
-const SocialMediaSettings = ({ office }: { office: any }) => {
+const SocialMediaSettings = ({ office }: { office: Office }) => {
   const [loading, setLoading] = useState(false);
   
   // Initialize social media settings
@@ -65,7 +66,9 @@ const SocialMediaSettings = ({ office }: { office: any }) => {
     setLoading(true);
 
     try {
-      const { error } = await supabase.from("offices").update({
+      // Use type assertion to inform TypeScript that office has settings
+      const updatedOffice = {
+        ...office,
         settings: {
           ...(office?.settings || {}),
           social: {
@@ -73,7 +76,14 @@ const SocialMediaSettings = ({ office }: { office: any }) => {
             updated_at: new Date().toISOString()
           }
         }
-      }).eq("id", office.id);
+      };
+      
+      const { error } = await supabase.from("offices")
+        .update({
+          // Cast explicitly to prevent TypeScript errors
+          settings: updatedOffice.settings
+        } as any)
+        .eq("id", office?.id);
 
       if (error) throw error;
       
