@@ -96,9 +96,17 @@ export default function OfficeProfile() {
     );
   }
 
-  const getImageUrl = (path: string, bucket: 'office-assets') => {
-    if (!path) return null;
-    return `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/${bucket}/${path}`;
+  // تحسين الدالة لاستخراج الروابط الصحيحة من Supabase Storage
+  const getStorageUrl = (path: string | null): string => {
+    if (!path) return "/placeholder.svg";
+    
+    // التحقق مما إذا كان المسار عبارة عن رابط URL كامل بالفعل
+    if (path.startsWith('http://') || path.startsWith('https://')) {
+      return path;
+    }
+    
+    // بناء رابط Supabase Storage الكامل
+    return `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/office-assets/${path}`;
   };
 
   return (
@@ -109,7 +117,7 @@ export default function OfficeProfile() {
             <div className="flex items-center gap-3">
               <Avatar className="w-12 h-12 border-2 border-primary/10">
                 <AvatarImage 
-                  src={getImageUrl(office.logo_url, 'office-assets')}
+                  src={getStorageUrl(office.logo_url)}
                   alt={office.name}
                 />
                 <AvatarFallback className="text-md font-bold bg-primary text-white">
@@ -154,7 +162,7 @@ export default function OfficeProfile() {
       <div className="w-full aspect-[21/9] md:aspect-[3/1] relative overflow-hidden">
         {office.cover_url ? (
           <img 
-            src={getImageUrl(office.cover_url, 'office-assets')}
+            src={getStorageUrl(office.cover_url)}
             alt={`غلاف ${office.name}`}
             className="w-full h-full object-cover"
           />
@@ -174,7 +182,7 @@ export default function OfficeProfile() {
             <div className="flex flex-col sm:flex-row sm:items-center gap-6">
               <Avatar className="w-28 h-28 border-4 border-white shadow-lg">
                 <AvatarImage 
-                  src={getImageUrl(office.logo_url, 'office-assets')}
+                  src={getStorageUrl(office.logo_url)}
                   alt={office.name}
                 />
                 <AvatarFallback className="text-3xl font-bold bg-primary text-white">
@@ -304,4 +312,3 @@ function OfficeProfileSkeleton() {
     </div>
   );
 }
-
