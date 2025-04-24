@@ -7,8 +7,16 @@ interface OfficeCoverProps {
 }
 
 export const OfficeCover = ({ office }: OfficeCoverProps) => {
+  // Updated URL construction to ensure correct path formatting
   const getCoverUrl = (coverPath: string) => {
     if (!coverPath) return null;
+    
+    // Check if path already contains the full URL
+    if (coverPath.startsWith('http')) {
+      return coverPath;
+    }
+    
+    // Construct proper URL to the storage bucket
     return `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/office-assets/${coverPath}`;
   };
 

@@ -12,8 +12,16 @@ interface OfficeHeaderProps {
 }
 
 export const OfficeHeader = ({ office }: OfficeHeaderProps) => {
+  // Updated URL construction to ensure correct path formatting
   const getLogoUrl = (logoPath: string) => {
     if (!logoPath) return null;
+    
+    // Check if path already contains the full URL
+    if (logoPath.startsWith('http')) {
+      return logoPath;
+    }
+    
+    // Construct proper URL to the storage bucket
     return `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/office-assets/${logoPath}`;
   };
 
@@ -27,6 +35,8 @@ export const OfficeHeader = ({ office }: OfficeHeaderProps) => {
             onError={(e) => {
               console.error("Error loading logo image:", e);
               e.currentTarget.onerror = null;
+              // Set a fallback placeholder for the logo
+              e.currentTarget.src = "/placeholder.svg";
             }}
           />
           <AvatarFallback>{office.name?.substring(0, 2) || "?"}</AvatarFallback>

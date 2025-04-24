@@ -39,12 +39,21 @@ export default function PublicOfficeProfile() {
         console.log("Office data received:", data);
         
         if (data && data.length > 0) {
-          setOffice(data[0]);
+          // Process the data to ensure paths are correctly formatted
+          const officeData = {
+            ...data[0],
+            // Ensure logo_url and cover_url are properly set
+            logo_url: data[0].logo_url || '',
+            cover_url: data[0].cover_url || '',
+          };
+          
+          setOffice(officeData);
+          
           // Log the logo and cover URLs for debugging
-          console.log("Logo URL:", data[0].logo_url);
-          console.log("Cover URL:", data[0].cover_url);
-          console.log("Complete Supabase URL for logo:", `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/office-assets/${data[0].logo_url}`);
-          console.log("Complete Supabase URL for cover:", `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/office-assets/${data[0].cover_url}`);
+          console.log("Logo URL:", officeData.logo_url);
+          console.log("Cover URL:", officeData.cover_url);
+          console.log("Complete Supabase URL for logo:", `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/office-assets/${officeData.logo_url}`);
+          console.log("Complete Supabase URL for cover:", `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/office-assets/${officeData.cover_url}`);
         } else {
           setError('لم يتم العثور على المكتب');
         }
