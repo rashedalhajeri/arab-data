@@ -108,25 +108,37 @@ export default function OfficeProfile() {
   return <div className="min-h-screen bg-gray-50">
       <div className="max-w-4xl mx-auto">
         <div className="relative bg-white shadow-sm">
-          <div className="h-64 sm:h-80 relative overflow-hidden rounded-none sm:rounded-2xl">
-            {office.cover_url ? <img src={getStorageUrl(office.cover_url)} alt={`غلاف ${office.name}`} className="w-full h-full object-cover" /> : <div className="w-full h-full bg-gradient-to-r from-gray-100 to-gray-200" />}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+          <div className="h-72 sm:h-96 relative overflow-hidden rounded-none sm:rounded-2xl">
+            {office.cover_url ? (
+              <img 
+                src={getStorageUrl(office.cover_url)} 
+                alt={`غلاف ${office.name}`} 
+                className="w-full h-full object-cover" 
+              /> 
+              ) : (
+              <div className="w-full h-full bg-gradient-to-r from-gray-100 to-gray-200" />
+            )}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent" />
             
             <div className="absolute bottom-10 right-4 sm:right-6 left-4 sm:left-6">
               <div className="flex items-center gap-4">
-                <Avatar className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-white/90 shadow-lg">
-                  <AvatarImage src={getStorageUrl(office.logo_url)} alt={office.name} className="object-cover" />
-                  <AvatarFallback className="text-xl font-bold bg-primary text-white">
+                <Avatar className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-white/90 shadow-lg">
+                  <AvatarImage 
+                    src={getStorageUrl(office.logo_url)} 
+                    alt={office.name} 
+                    className="object-cover w-full h-full" 
+                  />
+                  <AvatarFallback className="text-2xl font-bold bg-primary text-white">
                     {office.name.substring(0, 2)}
                   </AvatarFallback>
                 </Avatar>
                 
                 <div className="flex-1">
-                  <h1 className="text-2xl font-bold text-white mb-1">
+                  <h1 className="text-3xl font-bold text-white mb-2">
                     {office.name}
                   </h1>
                   <div className="flex items-center gap-2 text-sm text-gray-200">
-                    <MapPin className="w-4 h-4" />
+                    <MapPin className="w-5 h-5" />
                     <span>{office.country}</span>
                   </div>
                 </div>
