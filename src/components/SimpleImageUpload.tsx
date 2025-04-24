@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useCallback } from 'react';
 import { UploadCloud, X, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -15,6 +16,7 @@ type SimpleImageUploadProps = {
   minWidth?: number;
   minHeight?: number;
   imageType?: 'logo' | 'cover';
+  aspectRatio?: number; // Added aspectRatio prop
 };
 
 export default function SimpleImageUpload({
@@ -29,6 +31,7 @@ export default function SimpleImageUpload({
   minWidth = 400,
   minHeight = 400,
   imageType = 'logo',
+  aspectRatio, // Make it available in the function body
 }: SimpleImageUploadProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
@@ -153,9 +156,10 @@ export default function SimpleImageUpload({
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  const aspectRatioClass = imageType === 'logo' 
+  // Use aspectRatio prop if provided, otherwise use the default based on imageType
+  const aspectRatioClass = aspectRatio ? '' : (imageType === 'logo' 
     ? 'aspect-square' // 1:1 للشعار
-    : 'aspect-video'; // 16:9 للغلاف
+    : 'aspect-video'); // 16:9 للغلاف
 
   return (
     <div className="relative">
@@ -180,6 +184,7 @@ export default function SimpleImageUpload({
         onDragOver={handleDrag}
         onDragLeave={handleDrag}
         onDrop={handleDrop}
+        style={aspectRatio && !value ? { aspectRatio } : undefined}
       >
         {loading ? (
           <div className="flex flex-col items-center justify-center p-6">
@@ -193,8 +198,9 @@ export default function SimpleImageUpload({
               alt={imageType === 'logo' ? 'الشعار' : 'صورة الغلاف'}
               className={cn(
                 "w-full h-full object-cover rounded-lg",
-                imageType === 'logo' ? 'aspect-square' : 'aspect-video'
+                aspectRatio ? '' : (imageType === 'logo' ? 'aspect-square' : 'aspect-video')
               )}
+              style={aspectRatio ? { aspectRatio } : undefined}
             />
             <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 rounded-lg">
               <Button

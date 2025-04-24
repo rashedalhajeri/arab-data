@@ -61,6 +61,13 @@ export function CreateOfficeForm({ loading, onSubmit, slugAvailable, errors, set
 
   const slugBase = "ad51.me/";
 
+  // Helper to clear errors without using callback function
+  const clearError = (field: string) => {
+    const newErrors = { ...errors };
+    delete newErrors[field];
+    setErrors(newErrors);
+  };
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleFormSubmit)} className="flex flex-col gap-4 mt-2" autoComplete="off" dir="rtl">
@@ -75,7 +82,7 @@ export function CreateOfficeForm({ loading, onSubmit, slugAvailable, errors, set
                   placeholder="مثال: معرض التميز الحديث"
                   onChange={e => {
                     field.onChange(e);
-                    setErrors(prev => ({ ...prev, name: "" }));
+                    clearError("name");
                   }}
                 />
               </FormControl>
@@ -102,7 +109,7 @@ export function CreateOfficeForm({ loading, onSubmit, slugAvailable, errors, set
                     onChange={e => {
                       const value = e.target.value.replace(/[^a-zA-Z0-9\-]/g, "").toLowerCase();
                       field.onChange(value);
-                      setErrors(prev => ({ ...prev, slug: "" }));
+                      clearError("slug");
                     }}
                   />
                 </FormControl>
@@ -126,7 +133,7 @@ export function CreateOfficeForm({ loading, onSubmit, slugAvailable, errors, set
                 value={field.value} 
                 onValueChange={(value) => {
                   field.onChange(value);
-                  setErrors(prev => ({...prev, country:""}));
+                  clearError("country");
                 }}
               >
                 <SelectTrigger>
@@ -165,7 +172,7 @@ export function CreateOfficeForm({ loading, onSubmit, slugAvailable, errors, set
                     onChange={e => {
                       const digits = e.target.value.replace(/\D/g, "");
                       field.onChange(digits);
-                      setErrors(prev => ({ ...prev, phone: "" }));
+                      clearError("phone");
                     }}
                   />
                 </FormControl>
@@ -186,7 +193,7 @@ export function CreateOfficeForm({ loading, onSubmit, slugAvailable, errors, set
                 value={field.value}
                 onChange={(value) => {
                   field.onChange(value);
-                  setErrors(prev => ({ ...prev, logo: "" }));
+                  clearError("logo");
                 }}
                 imageType="logo"
               />
@@ -206,10 +213,9 @@ export function CreateOfficeForm({ loading, onSubmit, slugAvailable, errors, set
                 value={field.value}
                 onChange={(value) => {
                   field.onChange(value);
-                  setErrors(prev => ({ ...prev, cover: "" }));
+                  clearError("cover");
                 }}
                 imageType="cover"
-                aspectRatio={16/9}
               />
               {errors.cover && <div className="text-destructive text-xs font-bold mt-1">{errors.cover}</div>}
             </FormItem>
