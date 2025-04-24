@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
@@ -96,7 +95,7 @@ export default function OfficeProfile() {
     );
   }
 
-  // تحسين الدالة لاستخراج الروابط الصحيحة من Supabase Storage
+  // تحسين الدالة لاستخراج الروابط العامة من Supabase Storage
   const getStorageUrl = (path: string | null): string => {
     if (!path) return "/placeholder.svg";
     
@@ -105,8 +104,12 @@ export default function OfficeProfile() {
       return path;
     }
     
-    // بناء رابط Supabase Storage الكامل
-    return `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/office-assets/${path}`;
+    // الحصول على رابط عام من Supabase Storage
+    const { data } = supabase.storage
+      .from('office-assets')
+      .getPublicUrl(path);
+    
+    return data?.publicUrl || "/placeholder.svg";
   };
 
   return (
