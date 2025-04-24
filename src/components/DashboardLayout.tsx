@@ -45,55 +45,14 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [office, setOffice] = useState<OfficeData | null>(null);
 
-  // الاستماع إلى تغييرات حالة المصادقة
-  useEffect(() => {
-    // تسجيل بداية إنشاء مكون لوحة التحكم
-    console.log("تهيئة لوحة التحكم...");
-    
-    // إعداد مستمع لتغييرات حالة المصادقة
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        console.log("حالة المصادقة تغيرت:", event);
-        
-        // إذا كان الحدث هو تسجيل الخروج، فإعادة توجيه المستخدم إلى صفحة تسجيل الدخول
-        if (event === 'SIGNED_OUT') {
-          toast.info("تم تسجيل الخروج من النظام");
-          navigate('/auth', { replace: true });
-        } else if (event === 'SIGNED_IN') {
-          // إعادة تحميل بيانات المكتب عند تسجيل الدخول
-          fetchOfficeData();
-        }
-      }
-    );
-
-    // التحقق من وجود جلسة عند بدء التشغيل
-    const checkInitialSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        console.log("لا توجد جلسة نشطة، إعادة توجيه إلى صفحة تسجيل الدخول");
-        navigate('/auth', { replace: true });
-      } else {
-        console.log("تم العثور على جلسة نشطة، جاري تحميل بيانات المكتب");
-        fetchOfficeData();
-      }
-    };
-    
-    checkInitialSession();
-
-    // إلغاء الاشتراك عند تفكيك المكون
-    return () => {
-      console.log("تفكيك مكون لوحة التحكم");
-      subscription.unsubscribe();
-    };
-  }, [navigate]);
-
-  // Función para cargar/refrescar datos de la oficina
+  // استدعاء وظيفة تحميل بيانات المكتب
   const fetchOfficeData = async () => {
     try {
       setLoading(true);
       
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user?.id) {
+        console.log("لا توجد جلسة مصادقة، إعادة توجيه إلى صفحة تسجيل الدخول");
         navigate("/auth", { replace: true });
         return;
       }
@@ -106,10 +65,12 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
 
       if (error) {
         console.error("Error al cargar la información de la oficina:", error);
+        toast.error("حدث خطأ أثناء تحميل بيانات المكتب");
         return;
       }
 
       if (!data) {
+        console.log("لم يتم العثور على بيانات المكتب، إعادة توجيه إلى صفحة إنشاء المكتب");
         navigate("/create-page", { replace: true });
         return;
       }
@@ -127,13 +88,59 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
       });
     } catch (error) {
       console.error("Error general:", error);
+      toast.error("حدث خطأ غير متوقع أثناء تحميل البيانات");
     } finally {
       setLoading(false);
     }
   };
 
-  // We no longer need to call fetchOfficeData here as it's now handled by the auth state change listener
-  // This avoids duplicate fetch calls
+  // الاستماع إلى تغييرات حالة المصادقة
+  useEffect(() => {
+    console.log("تهيئة مكون لوحة التحكم...");
+    
+    // إعداد مستمع لتغييرات حالة المصادقة أولاً
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("حدث تغيير في حالة المصادقة:", event);
+      
+      if (event === 'SIGNED_OUT') {
+        // عند تسجيل الخروج، قم بمسح البيانات وإعادة التوجيه
+        setOffice(null);
+        toast.info("تم تسجيل الخروج بنجاح");
+        navigate('/auth', { replace: true });
+      } 
+      else if (event === 'SIGNED_IN') {
+        // عند تسجيل الدخول، قم بتحميل بيانات المكتب
+        console.log("تم تسجيل الدخول، جاري تحميل بيانات المكتب");
+        // استخدام setTimeout لتجنب التسلسل المزدوج للاستدعاءات
+        setTimeout(() => {
+          fetchOfficeData();
+        }, 0);
+      }
+      else if (event === 'TOKEN_REFRESHED') {
+        console.log("تم تحديث رمز المصادقة");
+      }
+    });
+
+    // ثم تحقق من وجود جلسة حالية واحصل على البيانات
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.log("لا توجد جلسة نشطة، إعادة توجيه إلى صفحة تسجيل الدخول");
+        navigate('/auth', { replace: true });
+      } else {
+        console.log("تم العثور على جلسة نشطة، جاري تحميل بيانات المكتب");
+        fetchOfficeData();
+      }
+    };
+    
+    checkSession();
+
+    // إلغاء الاشتراك عند تفكيك المكون
+    return () => {
+      console.log("تفكيك مكون لوحة التحكم");
+      subscription.unsubscribe();
+    };
+  }, [navigate]);
 
   // Si está cargando, mostrar un indicador de carga
   if (loading && !office) {

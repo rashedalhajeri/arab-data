@@ -29,46 +29,53 @@ const GallerySidebar: React.FC<GallerySidebarProps> = ({
   ];
 
   const handleLogout = async () => {
+    // إظهار شريط التحميل أولاً
+    const toastId = toast.loading("جاري تسجيل الخروج...");
+
     try {
-      // تحقق أولاً من وجود جلسة نشطة لتجنب خطأ "Auth session missing"
-      const { data: { session } } = await supabase.auth.getSession();
+      // التحقق من وجود جلسة حالية
+      const { data } = await supabase.auth.getSession();
       
-      // إذا لم تكن هناك جلسة نشطة، انتقل مباشرة إلى صفحة تسجيل الدخول
-      if (!session) {
-        toast.info("لم يتم العثور على جلسة، جاري إعادة توجيهك...");
-        setTimeout(() => {
-          navigate("/auth", { replace: true });
-        }, 300);
+      if (!data.session) {
+        // إذا لم تكن هناك جلسة، قم بإظهار إشعار وتوجيه المستخدم إلى صفحة تسجيل الدخول
+        toast.dismiss(toastId);
+        toast.info("لم يتم العثور على جلسة نشطة، سيتم توجيهك إلى صفحة تسجيل الدخول");
+        setTimeout(() => navigate("/auth", { replace: true }), 500);
         return;
       }
       
-      // إذا كانت هناك جلسة نشطة، قم بتسجيل الخروج
-      const { error } = await supabase.auth.signOut();
+      // تسجيل الخروج إذا كان هناك جلسة
+      await supabase.auth.signOut();
+
+      // حذف أي بيانات تخزين محلية متعلقة بالمصادقة
+      localStorage.removeItem("supabase.auth.token");
       
-      if (error) {
-        console.error("خطأ في تسجيل الخروج:", error.message);
-        // في حالة حدوث خطأ في تسجيل الخروج، قم بمسح البيانات المحلية والانتقال إلى صفحة تسجيل الدخول
-        toast.error("حدث خطأ أثناء تسجيل الخروج، جاري إعادة التوجيه");
-        localStorage.removeItem("supabase.auth.token");
-        setTimeout(() => {
-          navigate("/auth", { replace: true });
-        }, 300);
-        return;
-      }
-      
-      // نجاح تسجيل الخروج
+      // إظهار رسالة نجاح
+      toast.dismiss(toastId);
       toast.success("تم تسجيل الخروج بنجاح");
-      setTimeout(() => {
-        navigate("/auth", { replace: true });
-      }, 300);
+      
+      // التوجيه إلى صفحة تسجيل الدخول
+      setTimeout(() => navigate("/auth", { replace: true }), 500);
       
     } catch (error) {
-      console.error("خطأ غير متوقع أثناء تسجيل الخروج:", error);
+      console.error("خطأ في تسجيل الخروج:", error);
+      
+      // إظهار رسالة خطأ وإعادة توجيه المستخدم
+      toast.dismiss(toastId);
       toast.error("حدث خطأ أثناء تسجيل الخروج");
-      // رغم الخطأ، حاول الانتقال إلى صفحة تسجيل الدخول
+      
+      // رغم الخطأ، قم بإعادة توجيه المستخدم إلى صفحة تسجيل الدخول
       setTimeout(() => {
+        // محاولة مسح بيانات الجلسة قبل التوجيه
+        try {
+          localStorage.removeItem("supabase.auth.token");
+          sessionStorage.clear();
+        } catch (e) {
+          console.error("خطأ في مسح بيانات الجلسة:", e);
+        }
+        
         navigate("/auth", { replace: true });
-      }, 300);
+      }, 1000);
     }
   };
 
