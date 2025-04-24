@@ -1,3 +1,4 @@
+
 import React from "react";
 import { LogOut, LayoutDashboard, Megaphone, QrCode, Folder, Settings } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,10 +30,25 @@ const GallerySidebar: React.FC<GallerySidebarProps> = ({
 
   const handleLogout = async () => {
     try {
-      await supabase.auth.signOut();
+      // تحسين آلية تسجيل الخروج
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error("خطأ في تسجيل الخروج:", error.message);
+        toast.error("حدث خطأ أثناء تسجيل الخروج");
+        return;
+      }
+      
+      // إضافة مهلة قصيرة للتأكد من تنظيف الجلسة قبل الانتقال
       toast.success("تم تسجيل الخروج بنجاح");
-      navigate("/auth");
+      
+      // استخدام التأخير الزمني لضمان انتهاء عملية تسجيل الخروج
+      setTimeout(() => {
+        // إعادة توجيه المستخدم مباشرة إلى صفحة تسجيل الدخول
+        navigate("/auth", { replace: true });
+      }, 300);
     } catch (error) {
+      console.error("خطأ غير متوقع أثناء تسجيل الخروج:", error);
       toast.error("حدث خطأ أثناء تسجيل الخروج");
     }
   };
@@ -110,4 +126,3 @@ const GallerySidebar: React.FC<GallerySidebarProps> = ({
 };
 
 export default GallerySidebar;
-

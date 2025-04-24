@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, createContext, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -43,6 +44,25 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [office, setOffice] = useState<OfficeData | null>(null);
 
+  // الاستماع إلى تغييرات حالة المصادقة
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        console.log("حالة المصادقة تغيرت:", event);
+        
+        // إذا كان الحدث هو تسجيل الخروج، فإعادة توجيه المستخدم إلى صفحة تسجيل الدخول
+        if (event === 'SIGNED_OUT') {
+          navigate('/auth', { replace: true });
+        }
+      }
+    );
+
+    // إلغاء الاشتراك عند تفكيك المكون
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [navigate]);
+
   // Función para cargar/refrescar datos de la oficina
   const fetchOfficeData = async () => {
     try {
@@ -50,7 +70,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
       
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user?.id) {
-        navigate("/auth");
+        navigate("/auth", { replace: true });
         return;
       }
 
@@ -66,7 +86,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
       }
 
       if (!data) {
-        navigate("/create-page");
+        navigate("/create-page", { replace: true });
         return;
       }
 
