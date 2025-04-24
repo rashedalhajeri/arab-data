@@ -9,7 +9,6 @@ import { ExternalLink, Phone, MapPin, Share2, MessageCircle, Clock, Info, Star, 
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
-
 interface Office {
   id: string;
   name: string;
@@ -19,23 +18,26 @@ interface Office {
   logo_url: string;
   cover_url: string;
 }
-
 export default function OfficeProfile() {
-  const { slug } = useParams<{ slug: string }>();
+  const {
+    slug
+  } = useParams<{
+    slug: string;
+  }>();
   const [office, setOffice] = useState<Office | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
   useEffect(() => {
     async function fetchOfficeData() {
       try {
         setLoading(true);
-        
-        const { data, error } = await supabase
-          .rpc('get_office_by_slug', { slug_param: slug });
-        
+        const {
+          data,
+          error
+        } = await supabase.rpc('get_office_by_slug', {
+          slug_param: slug
+        });
         if (error) throw error;
-        
         if (data && data.length > 0) {
           setOffice(data[0]);
         } else {
@@ -48,19 +50,16 @@ export default function OfficeProfile() {
         setLoading(false);
       }
     }
-
     if (slug) {
       fetchOfficeData();
     }
   }, [slug]);
-
   const handleShare = async () => {
     const shareData = {
       title: office?.name,
       text: `تفضل بزيارة صفحة ${office?.name}`,
       url: window.location.href
     };
-
     try {
       if (navigator.share) {
         await navigator.share(shareData);
@@ -72,67 +71,42 @@ export default function OfficeProfile() {
       console.error('خطأ في المشاركة:', error);
     }
   };
-
   const getStorageUrl = (path: string | null): string => {
     if (!path) return "/placeholder.svg";
-    
     if (path.startsWith('http://') || path.startsWith('https://')) {
       return path;
     }
-    
-    const { data } = supabase.storage
-      .from('office-assets')
-      .getPublicUrl(path);
-    
+    const {
+      data
+    } = supabase.storage.from('office-assets').getPublicUrl(path);
     return data?.publicUrl || "/placeholder.svg";
   };
-
   if (loading) {
     return <OfficeProfileSkeleton />;
   }
-
   if (error) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh]">
+    return <div className="flex flex-col items-center justify-center min-h-[60vh]">
         <h2 className="text-2xl font-bold text-red-600 mb-4">خطأ</h2>
         <p className="text-gray-600">{error}</p>
-      </div>
-    );
+      </div>;
   }
-
   if (!office) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh]">
+    return <div className="flex flex-col items-center justify-center min-h-[60vh]">
         <h2 className="text-2xl font-bold text-gray-800 mb-4">لم يتم العثور على المكتب</h2>
         <p className="text-gray-600">تأكد من المعرف المخصص (slug) ثم حاول مرة أخرى</p>
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <div className="min-h-screen bg-gray-50">
+  return <div className="min-h-screen bg-gray-50">
       <div className="max-w-4xl mx-auto">
         <div className="relative bg-white shadow-sm">
           <div className="h-64 sm:h-80 relative overflow-hidden rounded-none sm:rounded-2xl">
-            {office.cover_url ? (
-              <img 
-                src={getStorageUrl(office.cover_url)}
-                alt={`غلاف ${office.name}`}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-r from-gray-100 to-gray-200" />
-            )}
+            {office.cover_url ? <img src={getStorageUrl(office.cover_url)} alt={`غلاف ${office.name}`} className="w-full h-full object-cover" /> : <div className="w-full h-full bg-gradient-to-r from-gray-100 to-gray-200" />}
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
             
             <div className="absolute bottom-12 right-4 sm:right-6 left-4 sm:left-6">
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-4 px-0 py-0 mx-0 my-[-30px]">
                 <Avatar className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-white/90 shadow-lg">
-                  <AvatarImage 
-                    src={getStorageUrl(office.logo_url)}
-                    alt={office.name}
-                    className="object-cover"
-                  />
+                  <AvatarImage src={getStorageUrl(office.logo_url)} alt={office.name} className="object-cover" />
                   <AvatarFallback className="text-xl font-bold bg-primary text-white">
                     {office.name.substring(0, 2)}
                   </AvatarFallback>
@@ -149,12 +123,7 @@ export default function OfficeProfile() {
                 </div>
 
                 <div className="hidden sm:block">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={handleShare}
-                    className="bg-white/10 border-white/20 text-white hover:bg-white/20"
-                  >
+                  <Button variant="outline" size="sm" onClick={handleShare} className="bg-white/10 border-white/20 text-white hover:bg-white/20">
                     <Share2 className="w-4 h-4 ml-2" />
                     مشاركة
                   </Button>
@@ -164,12 +133,7 @@ export default function OfficeProfile() {
           </div>
           
           <div className="sm:hidden p-4">
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={handleShare}
-              className="w-full"
-            >
+            <Button variant="outline" size="sm" onClick={handleShare} className="w-full">
               <Share2 className="w-4 h-4 ml-2" />
               مشاركة
             </Button>
@@ -191,13 +155,10 @@ export default function OfficeProfile() {
           </div>
         </div>
       </div>
-    </div>
-  );
+    </div>;
 }
-
 function OfficeProfileSkeleton() {
-  return (
-    <div className="container mx-auto py-6 px-4">
+  return <div className="container mx-auto py-6 px-4">
       <Skeleton className="w-full h-[300px] rounded-lg mb-6" />
 
       <div className="bg-white rounded-lg shadow-lg p-6 relative">
@@ -225,6 +186,5 @@ function OfficeProfileSkeleton() {
           </div>
         </div>
       </div>
-    </div>
-  );
+    </div>;
 }
