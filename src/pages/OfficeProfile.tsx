@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
@@ -110,7 +109,6 @@ export default function OfficeProfile() {
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-4xl mx-auto">
         <div className="bg-white shadow-sm">
-          {/* Reduced cover image height from h-72 sm:h-96 to h-48 sm:h-64 */}
           <div className="h-48 sm:h-64 relative overflow-hidden">
             {office.cover_url ? (
               <img 
@@ -123,7 +121,7 @@ export default function OfficeProfile() {
             )}
           </div>
 
-          <div className="px-4 sm:px-6 -mt-6">
+          <div className="px-4 sm:px-6 -mt-16 sm:-mt-6">
             <div className="flex items-center gap-6">
               <Avatar className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-white shadow-lg">
                 <AvatarImage 
@@ -136,7 +134,7 @@ export default function OfficeProfile() {
                 </AvatarFallback>
               </Avatar>
               
-              <div className="flex flex-col">
+              <div className="flex flex-col mt-12 sm:mt-0">
                 <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
                   {office.name}
                 </h1>
