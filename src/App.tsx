@@ -15,6 +15,7 @@ import AddAdvertisement from "./pages/Advertisements/AddAdvertisement";
 import DashboardLayout from "./components/DashboardLayout";
 import QrCodes from "./pages/QrCodes";
 import Categories from "./pages/Categories";
+import OfficeProfile from "./pages/OfficeProfile";
 
 const queryClient = new QueryClient();
 
@@ -28,6 +29,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/create-page" element={<CreatePage />} />
+          <Route path="/:slug" element={<OfficeProfile />} />
           
           {/* مسارات لوحة التحكم */}
           <Route path="/dashboard" element={<DashboardLayout><Outlet /></DashboardLayout>}>
@@ -48,3 +50,4 @@ const App = () => (
 );
 
 export default App;
+
