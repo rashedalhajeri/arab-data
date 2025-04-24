@@ -112,7 +112,7 @@ export default function OfficeProfile() {
   return (
     <div className="min-h-screen bg-white">
       <div className="relative">
-        <div className="w-full aspect-[21/9] md:aspect-[3/1] relative overflow-hidden bg-gray-100">
+        <div className="w-full h-[300px] relative overflow-hidden bg-gray-100">
           {office.cover_url ? (
             <img 
               src={getStorageUrl(office.cover_url)}
@@ -122,22 +122,24 @@ export default function OfficeProfile() {
           ) : (
             <div className="w-full h-full bg-gradient-to-r from-gray-100 to-gray-200" />
           )}
+          
+          <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
         </div>
         
         <div className="container mx-auto px-4">
-          <div className="relative -mt-24 sm:-mt-32 flex flex-col sm:flex-row sm:items-end gap-4 mb-6">
-            <Avatar className="w-32 h-32 sm:w-40 sm:h-40 rounded-full border-4 border-white shadow-xl">
+          <div className="relative -mt-20 flex items-end gap-6 mb-8">
+            <Avatar className="w-28 h-28 rounded-full border-4 border-white shadow-lg">
               <AvatarImage 
                 src={getStorageUrl(office.logo_url)}
                 alt={office.name}
                 className="object-cover"
               />
-              <AvatarFallback className="text-4xl font-bold bg-primary text-white">
+              <AvatarFallback className="text-3xl font-bold bg-primary text-white">
                 {office.name.substring(0, 2)}
               </AvatarFallback>
             </Avatar>
-            <div className="flex-1">
-              <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">
+            <div className="flex-1 mb-2">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
                 {office.name}
               </h1>
             </div>
