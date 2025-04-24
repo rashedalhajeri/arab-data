@@ -110,43 +110,42 @@ export default function OfficeProfile() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="w-full aspect-[21/9] md:aspect-[3/1] relative overflow-hidden">
-        {office.cover_url ? (
-          <img 
-            src={getStorageUrl(office.cover_url)}
-            alt={`غلاف ${office.name}`}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="w-full h-full bg-gradient-to-r from-primary/10 to-primary/20 flex items-center justify-center">
-            <div className="text-center text-gray-600 p-6 max-w-md">
-              <h3 className="text-2xl font-bold mb-2">{office.name}</h3>
-            </div>
-          </div>
-        )}
-      </div>
-
-      <div className="container mx-auto px-4">
-        <div className="bg-white rounded-xl shadow-xl p-6 -mt-16 relative z-10 border border-gray-100">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-            <div className="flex flex-col sm:flex-row sm:items-center gap-6">
-              <Avatar className="w-28 h-28 border-4 border-white shadow-lg">
-                <AvatarImage 
-                  src={getStorageUrl(office.logo_url)}
-                  alt={office.name}
-                />
-                <AvatarFallback className="text-3xl font-bold bg-primary text-white">
-                  {office.name.substring(0, 2)}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1">
-                <h1 className="text-3xl font-bold text-gray-900 mb-3">{office.name}</h1>
-              </div>
+    <div className="min-h-screen bg-white">
+      <div className="relative">
+        <div className="w-full aspect-[21/9] md:aspect-[3/1] relative overflow-hidden bg-gray-100">
+          {office.cover_url ? (
+            <img 
+              src={getStorageUrl(office.cover_url)}
+              alt={`غلاف ${office.name}`}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-r from-gray-100 to-gray-200" />
+          )}
+        </div>
+        
+        <div className="container mx-auto px-4">
+          <div className="relative -mt-24 sm:-mt-32 flex flex-col sm:flex-row sm:items-end gap-4 mb-6">
+            <Avatar className="w-32 h-32 sm:w-40 sm:h-40 rounded-full border-4 border-white shadow-xl">
+              <AvatarImage 
+                src={getStorageUrl(office.logo_url)}
+                alt={office.name}
+                className="object-cover"
+              />
+              <AvatarFallback className="text-4xl font-bold bg-primary text-white">
+                {office.name.substring(0, 2)}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1">
+              <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">
+                {office.name}
+              </h1>
             </div>
           </div>
         </div>
+      </div>
 
+      <div className="container mx-auto px-4">
         <div className="mt-8 mb-16">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center">
