@@ -23,7 +23,7 @@ export const OfficeHeader = ({ office, onShare }: OfficeHeaderProps) => {
   return (
     <header className="sticky top-0 z-10 bg-white/95 backdrop-blur-sm border-b border-gray-100 dark:bg-slate-900/95 dark:border-slate-800">
       <div className="container mx-auto px-4">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 mr-auto">
           <Avatar className="w-12 h-12 border-2 border-primary/10">
             <AvatarImage 
               src={getLogoUrl(office.logo_url)}
@@ -35,7 +35,7 @@ export const OfficeHeader = ({ office, onShare }: OfficeHeaderProps) => {
             <h1 className="text-xl font-bold text-gray-900 dark:text-white">{office.name}</h1>
             <p className="text-sm text-gray-500 dark:text-gray-400">{office.country}</p>
           </div>
-          <div className="flex items-center gap-2 mr-auto">
+          <div className="flex items-center gap-2">
             <Button 
               variant="outline" 
               size="sm"
