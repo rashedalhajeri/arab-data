@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
@@ -109,7 +110,8 @@ export default function OfficeProfile() {
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-4xl mx-auto">
         <div className="bg-white shadow-sm">
-          <div className="h-72 sm:h-96 relative overflow-hidden">
+          {/* Reduced cover image height from h-72 sm:h-96 to h-48 sm:h-64 */}
+          <div className="h-48 sm:h-64 relative overflow-hidden">
             {office.cover_url ? (
               <img 
                 src={getStorageUrl(office.cover_url)} 
