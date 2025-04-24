@@ -105,59 +105,51 @@ export default function OfficeProfile() {
       </div>;
   }
 
-  return <div className="min-h-screen bg-gray-50">
+  return (
+    <div className="min-h-screen bg-gray-50">
       <div className="max-w-4xl mx-auto">
-        <div className="relative bg-white shadow-sm">
-          <div className="h-72 sm:h-96 relative overflow-hidden rounded-none sm:rounded-2xl">
+        <div className="bg-white shadow-sm">
+          <div className="h-72 sm:h-96 relative overflow-hidden">
             {office.cover_url ? (
               <img 
                 src={getStorageUrl(office.cover_url)} 
                 alt={`غلاف ${office.name}`} 
                 className="w-full h-full object-cover" 
-              /> 
-              ) : (
+              />
+            ) : (
               <div className="w-full h-full bg-gradient-to-r from-gray-100 to-gray-200" />
             )}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent" />
-            
-            <div className="absolute bottom-10 right-4 sm:right-6 left-4 sm:left-6">
-              <div className="flex items-center gap-4">
-                <Avatar className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-white/90 shadow-lg">
-                  <AvatarImage 
-                    src={getStorageUrl(office.logo_url)} 
-                    alt={office.name} 
-                    className="object-cover w-full h-full" 
-                  />
-                  <AvatarFallback className="text-2xl font-bold bg-primary text-white">
-                    {office.name.substring(0, 2)}
-                  </AvatarFallback>
-                </Avatar>
-                
-                <div className="flex-1">
-                  <h1 className="text-3xl font-bold text-white mb-2">
-                    {office.name}
-                  </h1>
-                  <div className="flex items-center gap-2 text-sm text-gray-200">
-                    <MapPin className="w-5 h-5" />
-                    <span>{office.country}</span>
-                  </div>
-                </div>
+          </div>
 
-                <div className="hidden sm:block">
-                  <Button variant="outline" size="sm" onClick={handleShare} className="bg-white/10 border-white/20 text-white hover:bg-white/20">
-                    <Share2 className="w-4 h-4 ml-2" />
-                    مشاركة
-                  </Button>
-                </div>
+          <div className="px-4 sm:px-6 -mt-6">
+            <div className="flex flex-col items-center text-center">
+              <Avatar className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-white shadow-lg">
+                <AvatarImage 
+                  src={getStorageUrl(office.logo_url)} 
+                  alt={office.name} 
+                  className="object-cover" 
+                />
+                <AvatarFallback className="text-2xl font-bold bg-primary text-white">
+                  {office.name.substring(0, 2)}
+                </AvatarFallback>
+              </Avatar>
+              
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mt-4 mb-2">
+                {office.name}
+              </h1>
+              
+              <div className="flex items-center gap-2 text-gray-600 mb-6">
+                <MapPin className="w-5 h-5" />
+                <span>{office.country}</span>
+              </div>
+
+              <div className="flex items-center gap-4 mb-6">
+                <Button variant="outline" size="sm" onClick={handleShare}>
+                  <Share2 className="w-4 h-4 ml-2" />
+                  مشاركة
+                </Button>
               </div>
             </div>
-          </div>
-          
-          <div className="sm:hidden p-4">
-            <Button variant="outline" size="sm" onClick={handleShare} className="w-full">
-              <Share2 className="w-4 h-4 ml-2" />
-              مشاركة
-            </Button>
           </div>
         </div>
 
@@ -176,7 +168,8 @@ export default function OfficeProfile() {
           </div>
         </div>
       </div>
-    </div>;
+    </div>
+  );
 }
 
 function OfficeProfileSkeleton() {
