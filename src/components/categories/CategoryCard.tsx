@@ -5,28 +5,26 @@ import { Switch } from "@/components/ui/switch";
 import { Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Category } from "@/hooks/useCategories";
+import { getStorageUrl } from "@/lib/storage-utils";
 
 interface CategoryCardProps {
   category: Category;
   onEdit?: (category: Category) => void;
   onToggleActive?: (category: Category) => void;
-  imageProcessor?: (url: string) => string;
   readOnly?: boolean;
 }
 
 export function CategoryCard({ 
   category, 
   onEdit, 
-  onToggleActive, 
-  imageProcessor,
+  onToggleActive,
   readOnly = false
 }: CategoryCardProps) {
-  // Process the image URL if a processor function is provided
-  const imageUrl = imageProcessor ? imageProcessor(category.image_url) : category.image_url;
+  const imageUrl = getStorageUrl(category.image_url);
   
   return (
-    <Card className="overflow-hidden h-[200px]">
-      <div className="relative h-24">
+    <Card className="overflow-hidden">
+      <div className="relative h-32">
         <img
           src={imageUrl}
           alt={category.name}

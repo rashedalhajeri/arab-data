@@ -5,20 +5,19 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PlusCircle, Search, Loader2 } from "lucide-react";
-import { useCategories, Category } from "@/hooks/useCategories";
+import { useCategories } from "@/hooks/useCategories";
 import { useDashboard } from "@/components/DashboardLayout";
 import { CategoryForm } from "@/components/categories/CategoryForm";
 import { CategoryCard } from "@/components/categories/CategoryCard";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/lib/supabase";
 
-const Categories = () => {
+export default function Categories() {
   const { office } = useDashboard();
   const { toast } = useToast();
   const { categories, loading, fetchCategories, addCategory, updateCategory } = useCategories();
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
 
   useEffect(() => {
     if (office?.id) {
@@ -27,67 +26,8 @@ const Categories = () => {
   }, [office?.id]);
 
   const filteredCategories = categories.filter(category =>
-    searchQuery === "" ||
     category.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
-
-  const handleSubmit = async (formData: Partial<Category>) => {
-    if (!office?.id) {
-      toast({
-        title: "خطأ",
-        description: "لا يمكن العثور على معلومات المكتب",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user?.id) {
-        throw new Error("يرجى تسجيل الدخول مرة أخرى");
-      }
-
-      if (selectedCategory) {
-        await updateCategory(selectedCategory.id, formData);
-        toast({
-          title: "تم تحديث الفئة",
-          description: "تم تحديث الفئة بنجاح"
-        });
-      } else {
-        await addCategory({
-          ...formData as Omit<Category, 'id' | 'created_at'>,
-          office_id: office.id,
-          user_id: session.user.id,
-        });
-        toast({
-          title: "تم إضافة الفئة",
-          description: "تمت إضافة الفئة الجديدة بنجاح"
-        });
-      }
-
-      setIsDialogOpen(false);
-      setSelectedCategory(null);
-    } catch (error) {
-      console.error("Error handling category:", error);
-    }
-  };
-
-  const handleEdit = (category: Category) => {
-    setSelectedCategory(category);
-    setIsDialogOpen(true);
-  };
-
-  const handleToggleActive = async (category: Category) => {
-    try {
-      await updateCategory(category.id, { is_active: !category.is_active });
-      toast({
-        title: category.is_active ? "تم تعطيل الفئة" : "تم تنشيط الفئة",
-        description: `تم ${category.is_active ? 'تعطيل' : 'تنشيط'} الفئة بنجاح`
-      });
-    } catch (error) {
-      console.error("Error toggling category status:", error);
-    }
-  };
 
   return (
     <div className="space-y-4">
@@ -125,36 +65,51 @@ const Categories = () => {
             <CategoryCard
               key={category.id}
               category={category}
-              onEdit={handleEdit}
-              onToggleActive={handleToggleActive}
+              onEdit={() => {
+                setIsDialogOpen(true);
+              }}
+              onToggleActive={updateCategory}
             />
           ))}
         </div>
       )}
 
-      <Dialog open={isDialogOpen} onOpenChange={(open) => {
-        setIsDialogOpen(open);
-        if (!open) setSelectedCategory(null);
-      }}>
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>{selectedCategory ? 'تعديل الفئة' : 'إضافة فئة جديدة'}</DialogTitle>
+            <DialogTitle>إضافة فئة جديدة</DialogTitle>
             <DialogDescription>
-              {selectedCategory ? 'قم بتعديل معلومات الفئة' : 'أضف فئة جديدة لتنظيم الإعلانات على صفحتك'}
+              أضف فئة جديدة لتنظيم الإعلانات على صفحتك
             </DialogDescription>
           </DialogHeader>
           <CategoryForm
-            onSubmit={handleSubmit}
-            onCancel={() => {
-              setIsDialogOpen(false);
-              setSelectedCategory(null);
+            onSubmit={async (formData) => {
+              try {
+                if (!office?.id) {
+                  throw new Error("معرف المكتب غير متوفر");
+                }
+                await addCategory({
+                  ...formData,
+                  office_id: office.id,
+                  user_id: (await supabase.auth.getUser()).data.user?.id || '',
+                });
+                setIsDialogOpen(false);
+                toast({
+                  title: "تم إضافة الفئة",
+                  description: "تمت إضافة الفئة بنجاح"
+                });
+              } catch (error: any) {
+                toast({
+                  title: "خطأ في حفظ الفئة",
+                  description: error.message,
+                  variant: "destructive"
+                });
+              }
             }}
-            initialData={selectedCategory || undefined}
+            onCancel={() => setIsDialogOpen(false)}
           />
         </DialogContent>
       </Dialog>
     </div>
   );
-};
-
-export default Categories;
+}
