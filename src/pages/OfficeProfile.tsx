@@ -11,6 +11,7 @@ import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import DOMPurify from 'dompurify';
 import { CategoryCard } from '@/components/categories/CategoryCard';
+import { Category as FullCategory } from '@/hooks/useCategories';
 
 interface Office {
   id: string;
@@ -22,12 +23,7 @@ interface Office {
   cover_url: string;
 }
 
-interface Category {
-  id: string;
-  name: string;
-  image_url: string;
-  is_active: boolean;
-}
+interface Category extends FullCategory {}
 
 export default function OfficeProfile() {
   const { slug } = useParams<{ slug: string; }>();
@@ -54,7 +50,6 @@ export default function OfficeProfile() {
         if (officeData && officeData.length > 0) {
           setOffice(officeData[0]);
           
-          // Fetch categories for this office
           const { data: categoriesData, error: categoriesError } = await supabase
             .from('categories')
             .select('*')
@@ -83,7 +78,6 @@ export default function OfficeProfile() {
   const handleShare = async () => {
     if (!office) return;
     
-    // Sanitize data for sharing
     const safeTitle = DOMPurify.sanitize(office.name);
     
     const shareData = {
@@ -107,17 +101,14 @@ export default function OfficeProfile() {
   const getStorageUrl = (path: string | null): string => {
     if (!path) return "/placeholder.svg";
     
-    // Security check: validate path format before processing
     if (typeof path !== 'string') return "/placeholder.svg";
     
-    // Prevent path traversal attacks
     if (path.includes('..') || path.startsWith('/')) {
       console.error('محاولة غير آمنة للوصول للملف:', path);
       return "/placeholder.svg";
     }
     
     if (path.startsWith('http://') || path.startsWith('https://')) {
-      // For external URLs, validate that they are from trusted domains
       const url = new URL(path);
       const trustedDomains = ['rkiukoeankeojpntfhvv.supabase.co', 'supabase.co'];
       if (!trustedDomains.some(domain => url.hostname.includes(domain))) {
@@ -195,7 +186,6 @@ export default function OfficeProfile() {
         </div>
 
         <div className="mt-6 px-4 sm:px-6">
-          {/* Categories Section */}
           {categories.length > 0 && (
             <div className="mb-8">
               <div className="flex items-center justify-between mb-4">
@@ -214,7 +204,6 @@ export default function OfficeProfile() {
             </div>
           )}
 
-          {/* Advertisements Section */}
           <div className="mb-16">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-gray-900">إعلانات المكتب</h2>
