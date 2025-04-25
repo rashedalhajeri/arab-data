@@ -54,9 +54,10 @@ const Categories = () => {
       }
 
       const { data: categoriesData, error } = await supabase
-        .from("categories")
-        .select("*")
-        .eq("office_id", office.id);
+        .from('categories')
+        .select('*')
+        .eq('office_id', office.id)
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
 
@@ -132,7 +133,7 @@ const Categories = () => {
       }
 
       const { data, error } = await supabase
-        .from("categories")
+        .from('categories')
         .insert({
           name: formData.name,
           image_url: imageUrl,
@@ -145,7 +146,7 @@ const Categories = () => {
 
       if (error) throw error;
 
-      setCategories([...categories, data as Category]);
+      setCategories([data as Category, ...categories]);
       setIsCreating(false);
       setFormData({ name: "", image_url: "", is_active: true });
       setImageFile(null);
