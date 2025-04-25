@@ -587,17 +587,6 @@ const Categories = () => {
         </CardContent>
       </Card>
 
-      {process.env.NODE_ENV === 'development' && (
-        <div className="mb-4 p-4 bg-yellow-50 border border-yellow-300 rounded-md">
-          <h3 className="font-bold text-yellow-800 mb-2">معلومات التصحيح:</h3>
-          <p className="text-yellow-800">
-            المكتب: {office?.id ? office.id : 'غير متاح'}<br />
-            جاري التحميل: {loading ? 'نعم' : 'لا'}<br />
-            عدد الفئات: {categories.length}
-          </p>
-        </div>
-      )}
-
       {loading ? (
         <div className="flex flex-col justify-center items-center py-20">
           <Loader2 className="animate-spin text-primary h-8 w-8 mb-4" />
