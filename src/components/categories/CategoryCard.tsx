@@ -12,15 +12,17 @@ interface CategoryCardProps {
   onEdit?: (category: Category) => void;
   onToggleActive?: (category: Category) => void;
   readOnly?: boolean;
+  imageProcessor?: (path: string | null) => string;
 }
 
 export function CategoryCard({ 
   category, 
   onEdit, 
   onToggleActive,
-  readOnly = false
+  readOnly = false,
+  imageProcessor = getStorageUrl
 }: CategoryCardProps) {
-  const imageUrl = getStorageUrl(category.image_url);
+  const imageUrl = imageProcessor(category.image_url);
   
   return (
     <Card className="overflow-hidden">

@@ -262,7 +262,6 @@ export default function OfficeProfile() {
                   <CategoryCard 
                     key={category.id} 
                     category={category}
-                    imageProcessor={getStorageUrl}
                     readOnly={true}
                   />
                 ))}

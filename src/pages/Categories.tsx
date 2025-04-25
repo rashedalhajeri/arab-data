@@ -29,6 +29,11 @@ export default function Categories() {
     category.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // Handler function to adapt the updateCategory function to match expected interface
+  const handleToggleActive = (category: Category) => {
+    updateCategory(category.id, { is_active: !category.is_active });
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
@@ -68,7 +73,7 @@ export default function Categories() {
               onEdit={() => {
                 setIsDialogOpen(true);
               }}
-              onToggleActive={updateCategory}
+              onToggleActive={handleToggleActive}
             />
           ))}
         </div>
@@ -90,6 +95,7 @@ export default function Categories() {
                 }
                 await addCategory({
                   ...formData,
+                  image_url: formData.image_url || "/placeholder.svg", // Ensure image_url is never undefined
                   office_id: office.id,
                   user_id: (await supabase.auth.getUser()).data.user?.id || '',
                 });
