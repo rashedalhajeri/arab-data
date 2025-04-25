@@ -1,3 +1,4 @@
+
 -- Create categories table
 CREATE TABLE IF NOT EXISTS public.categories (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,

@@ -11,46 +11,36 @@ export type Database = {
     Tables: {
       categories: {
         Row: {
+          category_type: string | null
+          created_at: string | null
           id: string
-          created_at: string
+          image_url: string | null
           name: string
-          image_url: string
-          is_active: boolean
+          status: string | null
+          updated_at: string | null
           user_id: string
-          office_id: string
         }
         Insert: {
+          category_type?: string | null
+          created_at?: string | null
           id?: string
-          created_at?: string
+          image_url?: string | null
           name: string
-          image_url: string
-          is_active?: boolean
+          status?: string | null
+          updated_at?: string | null
           user_id: string
-          office_id: string
         }
         Update: {
+          category_type?: string | null
+          created_at?: string | null
           id?: string
-          created_at?: string
+          image_url?: string | null
           name?: string
-          image_url?: string
-          is_active?: boolean
+          status?: string | null
+          updated_at?: string | null
           user_id?: string
-          office_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "categories_user_id_fkey"
-            columns: ["user_id"]
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "categories_office_id_fkey"
-            columns: ["office_id"]
-            referencedRelation: "offices"
-            referencedColumns: ["id"]
-          }
-        ]
+        Relationships: []
       }
       offices: {
         Row: {

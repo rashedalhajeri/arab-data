@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,7 +23,7 @@ interface Category {
   name: string;
   image_url: string;
   user_id: string;
-  office_id?: string;
+  office_id: string;
   category_type?: string;
   status?: string;
   is_active: boolean;
@@ -61,11 +62,16 @@ const Categories = () => {
         throw new Error("معرف المستخدم غير متوفر");
       }
       
-      // Fetch categories for the current user
+      if (!office?.id) {
+        throw new Error("معرف المكتب غير متوفر");
+      }
+      
+      // Fetch categories for the current user and office
       const { data: categoriesData, error } = await supabase
         .from('categories')
         .select('*')
-        .eq('user_id', user.id);
+        .eq('user_id', user.id)
+        .eq('office_id', office.id);
       
       if (error) {
         console.error("Supabase error:", error);
@@ -104,8 +110,10 @@ const Categories = () => {
   };
   
   useEffect(() => {
-    fetchCategories();
-  }, [user?.id]);
+    if (user?.id && office?.id) {
+      fetchCategories();
+    }
+  }, [user?.id, office?.id]);
 
   // Filter categories based on active tab and search query
   const filteredCategories = categories
@@ -317,6 +325,15 @@ const Categories = () => {
       return;
     }
     
+    if (!office?.id) {
+      toast({
+        title: "خطأ في المعرض",
+        description: "لا يمكن العثور على معلومات المكتب",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     try {
       let imageUrl = formData.image_url;
       
@@ -339,7 +356,7 @@ const Categories = () => {
         image_url: imageUrl,
         is_active: formData.is_active,
         user_id: user.id,
-        office_id: office?.id || null,
+        office_id: office.id,
         // Map is_active to status for compatibility
         status: formData.is_active ? "active" : "inactive",
         category_type: "general" // default value
@@ -605,6 +622,7 @@ const Categories = () => {
           <h3 className="font-bold text-yellow-800 mb-2">معلومات التصحيح:</h3>
           <p className="text-yellow-800">
             المستخدم: {user?.id ? user.id : 'غير متاح'}<br />
+            المكتب: {office?.id ? office.id : 'غير متاح'}<br />
             جاري التحميل: {loading ? 'نعم' : 'لا'}<br />
             عدد الفئات: {categories.length}
           </p>
