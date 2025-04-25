@@ -1,7 +1,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
+import { supabase } from '@/lib/supabase';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import DOMPurify from 'dompurify';
+import { CategoryCard } from '@/components/categories/CategoryCard';
 
 interface Office {
   id: string;
@@ -22,30 +23,48 @@ interface Office {
   cover_url: string;
 }
 
+interface Category {
+  id: string;
+  name: string;
+  image_url: string;
+  is_active: boolean;
+}
+
 export default function OfficeProfile() {
   const { slug } = useParams<{ slug: string; }>();
   const [office, setOffice] = useState<Office | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchOfficeData() {
       try {
-        // Input validation for slug
-        if (!slug || slug.length > 100 || /[<>'"\/\\]/.test(slug)) {
+        if (!slug) {
           setError('معرف المكتب غير صالح');
           setLoading(false);
           return;
         }
 
         setLoading(true);
-        const { data, error } = await supabase.rpc('get_office_by_slug', {
+        const { data: officeData, error: officeError } = await supabase.rpc('get_office_by_slug', {
           slug_param: slug
         });
         
-        if (error) throw error;
-        if (data && data.length > 0) {
-          setOffice(data[0]);
+        if (officeError) throw officeError;
+        if (officeData && officeData.length > 0) {
+          setOffice(officeData[0]);
+          
+          // Fetch categories for this office
+          const { data: categoriesData, error: categoriesError } = await supabase
+            .from('categories')
+            .select('*')
+            .eq('office_id', officeData[0].id)
+            .eq('is_active', true)
+            .order('created_at', { ascending: false });
+
+          if (categoriesError) throw categoriesError;
+          setCategories(categoriesData || []);
         } else {
           setError('لم يتم العثور على المكتب');
         }
@@ -119,19 +138,18 @@ export default function OfficeProfile() {
 
   if (error) {
     return <div className="flex flex-col items-center justify-center min-h-[60vh]">
-        <h2 className="text-2xl font-bold text-red-600 mb-4">خطأ</h2>
-        <p className="text-gray-600">{error}</p>
-      </div>;
+      <h2 className="text-2xl font-bold text-red-600 mb-4">خطأ</h2>
+      <p className="text-gray-600">{error}</p>
+    </div>;
   }
 
   if (!office) {
     return <div className="flex flex-col items-center justify-center min-h-[60vh]">
-        <h2 className="text-2xl font-bold text-gray-800 mb-4">لم يتم العثور على المكتب</h2>
-        <p className="text-gray-600">تأكد من المعرف المخصص (slug) ثم حاول مرة أخرى</p>
-      </div>;
+      <h2 className="text-2xl font-bold text-gray-800 mb-4">لم يتم العثور على المكتب</h2>
+      <p className="text-gray-600">تأكد من المعرف المخصص (slug) ثم حاول مرة أخرى</p>
+    </div>;
   }
 
-  // Safely sanitize any data that might be rendered
   const safeName = DOMPurify.sanitize(office.name);
   const safeCountry = DOMPurify.sanitize(office.country);
 
@@ -178,6 +196,32 @@ export default function OfficeProfile() {
         </div>
 
         <div className="mt-6 px-4 sm:px-6">
+          {/* Categories Section */}
+          {categories.length > 0 && (
+            <div className="mb-8">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-bold text-gray-900">الفئات</h2>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                {categories.map((category) => (
+                  <Card key={category.id} className="overflow-hidden h-[200px]">
+                    <div className="relative h-24">
+                      <img
+                        src={getStorageUrl(category.image_url)}
+                        alt={category.name}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <CardContent className="p-3">
+                      <h3 className="font-semibold text-sm line-clamp-2">{category.name}</h3>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Advertisements Section */}
           <div className="mb-16">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-gray-900">إعلانات المكتب</h2>
