@@ -90,8 +90,8 @@ const Categories = () => {
   };
 
   return (
-    <>
-      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
+    <div className="space-y-4">
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
         <div className="relative w-full sm:w-64">
           <Search className="h-4 w-4 absolute right-3 top-3 text-gray-500" />
           <Input
@@ -111,16 +111,16 @@ const Categories = () => {
       {loading ? (
         <div className="flex items-center justify-center py-8">
           <Loader2 className="animate-spin text-primary h-8 w-8" />
-          <p className="mr-2">جاري تحميل الفئات...</p>
+          <p className="mr-2 text-sm">جاري تحميل الفئات...</p>
         </div>
       ) : filteredCategories.length === 0 ? (
         <Card>
-          <CardContent className="p-6 text-center text-gray-500">
+          <CardContent className="p-4 text-center text-gray-500 text-sm">
             لا توجد فئات لعرضها
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
           {filteredCategories.map((category) => (
             <CategoryCard
               key={category.id}
@@ -153,7 +153,7 @@ const Categories = () => {
           />
         </DialogContent>
       </Dialog>
-    </>
+    </div>
   );
 };
 

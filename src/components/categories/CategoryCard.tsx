@@ -14,23 +14,23 @@ interface CategoryCardProps {
 
 export function CategoryCard({ category, onEdit, onToggleActive }: CategoryCardProps) {
   return (
-    <Card className="overflow-hidden">
-      <div className="relative aspect-square">
+    <Card className="overflow-hidden h-[280px]">
+      <div className="relative h-36">
         <img
           src={category.image_url}
           alt={category.name}
           className="w-full h-full object-cover"
         />
       </div>
-      <CardContent className="p-4">
+      <CardContent className="p-3">
         <div className="flex items-center justify-between mb-2">
-          <h3 className="font-semibold">{category.name}</h3>
-          <Button variant="ghost" size="icon" onClick={() => onEdit(category)}>
+          <h3 className="font-semibold text-sm">{category.name}</h3>
+          <Button variant="ghost" size="sm" onClick={() => onEdit(category)}>
             <Pencil className="h-4 w-4" />
           </Button>
         </div>
         <div className="flex items-center justify-between">
-          <span className="text-sm text-gray-500">الحالة</span>
+          <span className="text-xs text-gray-500">الحالة</span>
           <Switch
             checked={category.is_active}
             onCheckedChange={() => onToggleActive(category)}
