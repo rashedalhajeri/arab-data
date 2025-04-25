@@ -88,30 +88,20 @@ const Advertisements = () => {
         return;
       }
       
-      const supabaseUrl = "https://rkiukoeankeojpntfhvv.supabase.co";
-      const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJraXVrb2Vhbmtlb2pwbnRmaHZ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDUzNTI5MDQsImV4cCI6MjA2MDkyODkwNH0.-V81gAim0WSdyXAnhx4Fio6PuWwd2WM7fkttAdrqBV8";
-      
       console.log("Fetching advertisements for office:", office.id);
       
-      const adsResponse = await fetch(
-        `${supabaseUrl}/rest/v1/advertisements?office_id=eq.${office.id}&order=created_at.desc`,
-        {
-          headers: {
-            'apikey': supabaseKey,
-            'Authorization': `Bearer ${supabaseKey}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
+      const { data: adsData, error: adsError } = await supabase
+        .from('advertisements')
+        .select('*')
+        .eq('office_id', office.id)
+        .order('created_at', { ascending: false });
       
-      if (!adsResponse.ok) {
-        const errorText = await adsResponse.text();
-        setLoadError(`فشل في جلب الإعلانات: ${adsResponse.status} ${errorText}`);
-        console.error("Error fetching advertisements:", errorText);
+      if (adsError) {
+        setLoadError(`فشل في جلب الإعلانات: ${adsError.message}`);
+        console.error("Error fetching advertisements:", adsError);
         return;
       }
       
-      const adsData = await adsResponse.json();
       console.log("Fetched advertisements:", adsData);
       
       if (!adsData || adsData.length === 0) {
@@ -125,33 +115,21 @@ const Advertisements = () => {
         try {
           console.log(`Fetching images for ad ${ad.id}`);
           
-          const imagesResponse = await fetch(
-            `${supabaseUrl}/rest/v1/advertisement_images?advertisement_id=eq.${ad.id}`,
-            {
-              headers: {
-                'apikey': supabaseKey,
-                'Authorization': `Bearer ${supabaseKey}`,
-                'Content-Type': 'application/json'
-              }
-            }
-          );
+          const { data: imagesData, error: imagesError } = await supabase
+            .from('advertisement_images')
+            .select('*')
+            .eq('advertisement_id', ad.id);
           
-          if (!imagesResponse.ok) {
-            console.error(`Error fetching images for ad ${ad.id}:`, await imagesResponse.text());
+          if (imagesError) {
+            console.error(`Error fetching images for ad ${ad.id}:`, imagesError);
             return { ...ad, images: [] };
           }
           
-          const imagesData = await imagesResponse.json();
           console.log(`Images for ad ${ad.id}:`, imagesData);
           
           return { 
             ...ad, 
-            images: imagesData.map((img: any) => ({
-              id: img.id,
-              image_url: img.image_url,
-              is_main: img.is_main || false,
-              order: img.order || 0
-            }))
+            images: imagesData || []
           };
         } catch (err) {
           console.error(`Error processing images for ad ${ad.id}:`, err);

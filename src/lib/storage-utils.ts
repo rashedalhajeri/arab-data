@@ -9,17 +9,23 @@ export function getStorageUrl(path: string | null, bucket: string = 'office-asse
     return path;
   }
   
+  // تحديد اسم الخزان المناسب بناءً على مسار الصورة
+  let actualBucket = bucket;
+  if (path.startsWith('advertisements/')) {
+    actualBucket = 'advertisements';
+  }
+  
   // تنظيف المسار إذا كان يحتوي على اسم bucket
   let cleanPath = path;
-  if (path.startsWith(`${bucket}/`)) {
-    cleanPath = path.slice(`${bucket}/`.length);
+  if (path.startsWith(`${actualBucket}/`)) {
+    cleanPath = path.slice(`${actualBucket}/`.length);
   }
   
   // الحصول على الرابط العام للصورة
-  const { data } = supabase.storage.from(bucket).getPublicUrl(cleanPath);
+  const { data } = supabase.storage.from(actualBucket).getPublicUrl(cleanPath);
   
   // تسجيل المعلومات للتصحيح
-  console.log(`Generated URL for ${path} in bucket ${bucket}:`, data?.publicUrl);
+  console.log(`Generated URL for ${path} in bucket ${actualBucket}:`, data?.publicUrl);
   
   return data?.publicUrl || "/placeholder.svg";
 }
