@@ -34,25 +34,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { getStorageUrl } from "@/lib/storage-utils";
-
-interface Advertisement {
-  id: string;
-  title: string;
-  category: string;
-  status: "active" | "pending" | "expired";
-  created_at: string;
-  views: number;
-  ad_type?: string;
-  description?: string;
-  price?: string;
-  images?: { 
-    id: string;
-    image_url: string;
-    is_main: boolean;
-    order?: number;
-    storage_path?: string;
-  }[];
-}
+import { Advertisement } from "@/types/advertisement";
 
 const Advertisements = () => {
   const navigate = useNavigate();
@@ -78,84 +60,28 @@ const Advertisements = () => {
       
       if (!session?.user) {
         setLoadError("لم يتم العثور على جلسة نشطة. الرجاء تسجيل الدخول");
-        console.error("No active session found");
         return;
       }
       
       if (!office?.id) {
         setLoadError("لم يتم العثور على بيانات المكتب. تأكد من اختيار مكتب");
-        console.error("No office data found");
         return;
       }
       
-      console.log("Fetching advertisements for office:", office.id);
-      
       const { data: adsData, error: adsError } = await supabase
-        .from('advertisements')
-        .select('*')
+        .from("advertisements")
+        .select(`
+          *,
+          advertisement_images (*)
+        `)
         .eq('office_id', office.id)
         .order('created_at', { ascending: false });
       
-      if (adsError) {
-        setLoadError(`فشل في جلب الإعلانات: ${adsError.message}`);
-        console.error("Error fetching advertisements:", adsError);
-        return;
-      }
+      if (adsError) throw adsError;
       
-      console.log("Fetched advertisements:", adsData);
-      
-      if (!adsData || adsData.length === 0) {
-        console.log("No advertisements found");
-        setAdvertisements([]);
-        setIsLoading(false);
-        return;
-      }
-      
-      const adsWithImages = await Promise.all(adsData.map(async (ad: any) => {
-        try {
-          console.log(`Fetching images for ad ${ad.id}`);
-          
-          const { data: imagesData, error: imagesError } = await supabase
-            .from('advertisement_images')
-            .select('*')
-            .eq('advertisement_id', ad.id);
-          
-          if (imagesError) {
-            console.error(`Error fetching images for ad ${ad.id}:`, imagesError);
-            return { ...ad, images: [] };
-          }
-          
-          console.log(`Images for ad ${ad.id}:`, imagesData);
-          
-          return { 
-            ...ad, 
-            images: imagesData || []
-          };
-        } catch (err) {
-          console.error(`Error processing images for ad ${ad.id}:`, err);
-          return { ...ad, images: [] };
-        }
-      }));
-      
-      const formattedAds = adsWithImages.map((ad: any) => ({
-        id: ad.id,
-        title: ad.title || "بدون عنوان",
-        category: ad.category_type || "others",
-        status: ad.is_active ? "active" as const : "pending" as const,
-        created_at: ad.created_at || new Date().toISOString(),
-        views: 0,
-        ad_type: ad.ad_type,
-        description: ad.description,
-        price: ad.price?.toString() || "",
-        images: ad.images || []
-      }));
-      
-      console.log("Formatted advertisements:", formattedAds);
-      setAdvertisements(formattedAds);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : String(err);
-      setLoadError(`حدث خطأ غير متوقع: ${errorMessage}`);
-      console.error("Failed to fetch advertisements:", err);
+      setAdvertisements(adsData || []);
+    } catch (error: any) {
+      setLoadError(error.message);
     } finally {
       setIsLoading(false);
     }

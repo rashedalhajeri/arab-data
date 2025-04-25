@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,18 +24,8 @@ import {
 } from "@/components/ui/alert-dialog"
 import { supabase } from "@/lib/supabase";
 import { Category } from "@/hooks/useCategories";
+import { Advertisement, AdvertisementImage } from "@/types/advertisement";
 import { TablesInsert } from "@/integrations/supabase/types";
-
-type AdvertisementImage = {
-  id?: string;
-  image_url: string;
-  is_main?: boolean;
-  advertisement_id?: string;
-  storage_path?: string;
-  order_num?: number;
-};
-
-type Advertisement = TablesInsert<'advertisements'>;
 
 const defaultAd: Advertisement = {
   title: "",
@@ -151,40 +140,34 @@ export default function AddAdvertisement() {
         throw new Error("Office ID is missing");
       }
 
-      // Ensure all required fields are present for the advertisement
-      const adData: TablesInsert<'advertisements'> = {
+      const adData = {
         ...advertisement,
         office_id: office.id,
         user_id: (await supabase.auth.getUser()).data.user?.id || "",
-        status: "active" // Ensure status is set
-      };
+        status: "active"
+      } as TablesInsert<"advertisements">;
 
       const { data: adResult, error: adError } = await supabase
-        .from('advertisements')
+        .from("advertisements")
         .insert(adData)
-        .select('id')
+        .select()
         .single();
 
-      if (adError) {
-        throw new Error(`Failed to create advertisement: ${adError.message}`);
-      }
+      if (adError) throw adError;
 
-      // Prepare images with all required fields
-      const imagesWithAdId: TablesInsert<'advertisement_images'>[] = images.map((img, index) => ({
+      const imagesData = images.map((img, index) => ({
         advertisement_id: adResult.id,
         image_url: img.image_url,
         is_main: img.is_main ?? (index === 0),
-        storage_path: img.storage_path || img.image_url, // Use image_url as storage_path if not provided
-        order_num: img.order_num || (index + 1) // Use index+1 as order_num if not provided
-      }));
+        storage_path: img.storage_path || img.image_url,
+        order_num: index + 1
+      })) as TablesInsert<"advertisement_images">[];
 
       const { error: imagesError } = await supabase
-        .from('advertisement_images')
-        .insert(imagesWithAdId);
+        .from("advertisement_images")
+        .insert(imagesData);
 
-      if (imagesError) {
-        throw new Error(`Failed to save images: ${imagesError.message}`);
-      }
+      if (imagesError) throw imagesError;
 
       toast({
         title: "تم إنشاء الإعلان بنجاح",

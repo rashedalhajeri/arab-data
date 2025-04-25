@@ -9,6 +9,97 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      advertisement_images: {
+        Row: {
+          advertisement_id: string
+          created_at: string
+          id: string
+          image_url: string
+          is_main: boolean
+          order_num: number | null
+          storage_path: string | null
+        }
+        Insert: {
+          advertisement_id: string
+          created_at?: string
+          id?: string
+          image_url: string
+          is_main?: boolean
+          order_num?: number | null
+          storage_path?: string | null
+        }
+        Update: {
+          advertisement_id?: string
+          created_at?: string
+          id?: string
+          image_url?: string
+          is_main?: boolean
+          order_num?: number | null
+          storage_path?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "advertisement_images_advertisement_id_fkey"
+            columns: ["advertisement_id"]
+            isOneToOne: false
+            referencedRelation: "advertisements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      advertisements: {
+        Row: {
+          ad_type: string
+          category_type: string
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          office_id: string
+          price: string | null
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ad_type: string
+          category_type: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          office_id: string
+          price?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ad_type?: string
+          category_type?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          office_id?: string
+          price?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "advertisements_office_id_fkey"
+            columns: ["office_id"]
+            isOneToOne: false
+            referencedRelation: "offices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       categories: {
         Row: {
           created_at: string

@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import DOMPurify from 'dompurify';
 import { CategoryCard } from '@/components/categories/CategoryCard';
 import { Category as FullCategory } from '@/hooks/useCategories';
+import { Advertisement } from "@/types/advertisement";
 
 interface Office {
   id: string;
@@ -78,21 +79,10 @@ export default function OfficeProfile() {
           setCategories(categoriesData || []);
           
           const { data: adsData, error: adsError } = await supabase
-            .from('advertisements')
+            .from("advertisements")
             .select(`
-              id,
-              title,
-              category_type,
-              ad_type,
-              price,
-              description,
-              is_active,
-              created_at,
-              advertisement_images (
-                id,
-                image_url,
-                is_main
-              )
+              *,
+              advertisement_images (*)
             `)
             .eq('office_id', officeData[0].id)
             .eq('is_active', true)
@@ -107,7 +97,7 @@ export default function OfficeProfile() {
         }
       } catch (error: any) {
         console.error('خطأ في جلب بيانات المكتب:', error);
-        setError(error.message || 'حدث خطأ أثناء جلب بيانات المكتب');
+        setError(error.message);
       } finally {
         setLoading(false);
       }
