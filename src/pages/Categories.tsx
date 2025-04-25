@@ -9,7 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { PlusCircle, Search, Loader2 } from "lucide-react";
 import { useDashboard } from "@/components/DashboardLayout";
 import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase";
 import SimpleImageUpload from "@/components/SimpleImageUpload";
 import {
   Table,
@@ -20,6 +20,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
+// Define our Category interface which matches the database table
 interface Category {
   id: string;
   name: string;
@@ -53,14 +54,16 @@ const Categories = () => {
         throw new Error("معرف المكتب غير متوفر");
       }
 
-      const { data: categoriesData, error } = await supabase
-        .from('categories')
+      // Using 'as any' to bypass TypeScript limitations since we can't modify the generated types
+      const { data: categoriesData, error } = await (supabase
+        .from('categories') as any)
         .select('*')
         .eq('office_id', office.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
+      // Type assertion to cast the result to Category[]
       setCategories(categoriesData as Category[]);
     } catch (error: any) {
       console.error("Error loading categories:", error);
@@ -132,8 +135,9 @@ const Categories = () => {
         throw new Error("يرجى تسجيل الدخول مرة أخرى");
       }
 
-      const { data, error } = await supabase
-        .from('categories')
+      // Using 'as any' to bypass TypeScript limitations
+      const { data, error } = await (supabase
+        .from('categories') as any)
         .insert({
           name: formData.name,
           image_url: imageUrl,
@@ -146,6 +150,7 @@ const Categories = () => {
 
       if (error) throw error;
 
+      // Add the new category to the state with type assertion
       setCategories([data as Category, ...categories]);
       setIsCreating(false);
       setFormData({ name: "", image_url: "", is_active: true });
