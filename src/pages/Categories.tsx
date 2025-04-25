@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from 'uuid';
+import SimpleImageUpload from "@/components/SimpleImageUpload";
 
 interface Category {
   id: string;
@@ -451,8 +452,8 @@ const Categories = () => {
     });
     
     return (
-      <Card className="overflow-hidden">
-        <div className="w-full h-40 overflow-hidden bg-gray-100 dark:bg-gray-800 relative">
+      <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-200">
+        <div className="w-full h-32 overflow-hidden bg-gray-100 dark:bg-gray-800 relative">
           <img 
             src={category.image_url || "/placeholder.svg"} 
             alt={category.name}
@@ -465,20 +466,19 @@ const Categories = () => {
           />
           <div className="absolute top-2 right-2 flex gap-1">
             <Badge 
-              className={`${category.is_active ? "bg-green-500" : "bg-gray-500"}`} 
-              variant="default"
+              variant={category.is_active ? "default" : "secondary"}
+              className={category.is_active ? "bg-green-500" : ""}
             >
               {category.is_active ? "نشط" : "غير نشط"}
             </Badge>
-            <Badge variant="outline" className="bg-white/80">{category.ad_count || 0} إعلان</Badge>
           </div>
         </div>
-        <CardHeader className="pb-3">
+        <CardHeader className="p-3">
           <div className="flex justify-between items-start">
-            <CardTitle className="text-xl">{category.name}</CardTitle>
+            <CardTitle className="text-lg font-semibold">{category.name}</CardTitle>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
+                <Button variant="ghost" size="icon" className="h-8 w-8">
                   <MoreVertical className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
@@ -502,7 +502,7 @@ const Categories = () => {
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   onClick={() => handleDeleteCategory(category.id)}
-                  className="text-destructive"
+                  className="text-red-600"
                   disabled={(category.ad_count || 0) > 0}
                 >
                   <Trash2 className="h-4 w-4 ml-2" />
@@ -512,19 +512,8 @@ const Categories = () => {
             </DropdownMenu>
           </div>
         </CardHeader>
-        <CardFooter className="bg-gray-50 dark:bg-gray-800/50 p-3 border-t">
-          <div className="w-full flex justify-between text-sm text-gray-500">
-            <div>{formattedDate}</div>
-            <Button 
-              size="sm" 
-              variant="outline" 
-              className="px-2"
-              onClick={() => window.location.href = `/dashboard/advertisements?category=${category.id}`}
-              disabled={!category.is_active}
-            >
-              عرض الإعلانات
-            </Button>
-          </div>
+        <CardFooter className="p-3 bg-gray-50 dark:bg-gray-800/50 text-sm text-gray-500">
+          {formattedDate}
         </CardFooter>
       </Card>
     );
@@ -597,114 +586,61 @@ const Categories = () => {
       ) : filteredCategories.length === 0 ? (
         <EmptyState />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {filteredCategories.map(category => (
             <CategoryCard key={category.id} category={category} />
           ))}
         </div>
       )}
 
-      <Dialog 
-        open={isCreating || isEditing} 
-        onOpenChange={(open) => {
-          if (!open) {
-            setIsCreating(false);
-            setIsEditing(false);
-            setSelectedCategory(null);
-            setImageFile(null);
-            setImagePreview("");
-          }
-        }}
-      >
-        <DialogContent className="sm:max-w-lg">
+      <Dialog open={isCreating || isEditing} onOpenChange={(open) => {
+        if (!open) {
+          setIsCreating(false);
+          setIsEditing(false);
+          setSelectedCategory(null);
+          setImageFile(null);
+          setImagePreview("");
+        }
+      }}>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>{isCreating ? "إضافة فئة جديدة" : "تعديل الفئة"}</DialogTitle>
+            <DialogTitle>
+              {isCreating ? "إضافة فئة جديدة" : "تعديل الفئة"}
+            </DialogTitle>
             <DialogDescription>
               {isCreating 
                 ? "أضف فئة جديدة لتنظيم الإعلانات على صفحتك" 
-                : "قم بتعديل معلومات الفئة"
-              }
+                : "قم بتعديل معلومات الفئة"}
             </DialogDescription>
           </DialogHeader>
           
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">اسم الفئة *</Label>
+              <Label htmlFor="name">اسم الفئة</Label>
               <Input 
                 id="name"
                 value={formData.name}
                 onChange={(e) => setFormData({...formData, name: e.target.value})}
                 placeholder="مثال: سيارات"
+                className="w-full"
                 required
               />
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="image">صورة الفئة *</Label>
-              <div className="border border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-4">
-                {imagePreview ? (
-                  <div className="relative mb-4">
-                    <img 
-                      src={imagePreview} 
-                      alt="معاينة الصورة" 
-                      className="w-full h-40 object-cover rounded-md" 
-                    />
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="sm"
-                      className="absolute top-2 left-2"
-                      onClick={() => {
-                        setImageFile(null);
-                        setImagePreview("");
-                        setFormData({...formData, image_url: ""});
-                      }}
-                    >
-                      حذف
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center h-40 bg-gray-50 dark:bg-gray-800 rounded-md mb-4">
-                    <div className="text-center">
-                      <Upload className="mx-auto h-8 w-8 text-gray-400 mb-2" />
-                      <p className="text-gray-500 dark:text-gray-400 text-sm">اختر صورة للفئة</p>
-                    </div>
-                  </div>
-                )}
-                
-                <div className="flex items-center gap-4">
-                  <Input
-                    id="image"
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleImageChange}
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => document.getElementById('image')?.click()}
-                    className="w-full"
-                    disabled={uploading}
-                  >
-                    {uploading ? (
-                      <>
-                        <Loader2 className="h-4 w-4 ml-2 animate-spin" />
-                        جاري الرفع...
-                      </>
-                    ) : (
-                      <>
-                        <Upload className="h-4 w-4 ml-2" />
-                        اختيار صورة
-                      </>
-                    )}
-                  </Button>
-                </div>
-                <div className="mt-2 flex items-center text-xs text-gray-500">
-                  <Info className="h-3 w-3 ml-1" />
-                  <span>الحد الأقصى لحجم الصورة 2 ميجابايت</span>
-                </div>
-              </div>
+              <Label>صورة الفئة</Label>
+              <SimpleImageUpload
+                value={imagePreview || formData.image_url}
+                onChange={setImagePreview}
+                onBlob={setImageFile}
+                title="اختر صورة للفئة"
+                subtitle="اسحب وأفلت الصورة هنا أو اضغط للتحميل"
+                maxSizeInMB={2}
+                minWidth={200}
+                minHeight={200}
+                aspectRatio={1.5}
+                imageType="cover"
+              />
             </div>
             
             <div className="flex items-center space-x-2 space-x-reverse">
@@ -715,15 +651,34 @@ const Categories = () => {
                   setFormData({...formData, is_active: checked as boolean})
                 }
               />
-              <Label htmlFor="is_active">فئة نشطة (ستظهر للمستخدمين)</Label>
+              <Label htmlFor="is_active">فئة نشطة</Label>
             </div>
             
-            <DialogFooter className="pt-4">
+            <DialogFooter className="gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setIsCreating(false);
+                  setIsEditing(false);
+                }}
+              >
+                إلغاء
+              </Button>
               <Button 
                 type="submit" 
-                disabled={uploading || (!imageFile && !formData.image_url)}
+                disabled={!formData.name.trim() || (!imageFile && !formData.image_url) || uploading}
               >
-                {isCreating ? "إضافة الفئة" : "حفظ التغييرات"}
+                {uploading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 ml-2 animate-spin" />
+                    جاري الحفظ...
+                  </>
+                ) : isCreating ? (
+                  "إضافة الفئة"
+                ) : (
+                  "حفظ التغييرات"
+                )}
               </Button>
             </DialogFooter>
           </form>
