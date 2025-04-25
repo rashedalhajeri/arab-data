@@ -4,11 +4,10 @@ import { supabase } from '@/lib/supabase';
 import { useDashboard } from '@/components/DashboardLayout';
 import { useToast } from '@/components/ui/use-toast';
 
-// Update the Category interface to match the database schema
 export interface Category {
   id: string;
   name: string;
-  image_url: string;
+  image_url: string | null;
   is_active: boolean;
   created_at: string;
   user_id: string;
@@ -36,7 +35,7 @@ export const useCategories = () => {
 
       if (error) throw error;
 
-      setCategories(data as Category[]);
+      setCategories(data || []);
     } catch (error: any) {
       console.error("Error loading categories:", error);
       toast({
@@ -53,16 +52,13 @@ export const useCategories = () => {
     try {
       const { data, error } = await supabase
         .from('categories')
-        .insert({
-          ...categoryData,
-          user_id: (await supabase.auth.getUser()).data.user?.id || ''
-        })
+        .insert([categoryData])
         .select()
         .single();
 
       if (error) throw error;
 
-      setCategories([data, ...categories]);
+      setCategories([data as Category, ...categories]);
       return data;
     } catch (error: any) {
       console.error("Error saving category:", error);
@@ -87,7 +83,7 @@ export const useCategories = () => {
       if (error) throw error;
 
       setCategories(categories.map(cat => 
-        cat.id === id ? { ...cat, ...data } : cat
+        cat.id === id ? { ...cat, ...data } as Category : cat
       ));
 
       return data;
