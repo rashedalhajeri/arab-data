@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
@@ -177,17 +178,39 @@ export default function AddAdvertisement() {
         })
       );
 
-      const { error } = await supabase
+      // First, insert the advertisement without the images
+      const { data: adData, error: adError } = await supabase
         .from('advertisements')
         .insert({
-          ...advertisement,
+          title: advertisement.title,
+          category_type: advertisement.category_type,
+          ad_type: advertisement.ad_type,
+          price: advertisement.price,
+          description: advertisement.description,
+          is_active: true,
           office_id: office.id,
-          images: uploadedImages,
-          is_active: true
-        });
+          user_id: (await supabase.auth.getUser()).data.user?.id
+        })
+        .select('id')
+        .single();
 
-      if (error) {
-        throw new Error(`Failed to create advertisement: ${error.message}`);
+      if (adError) {
+        throw new Error(`Failed to create advertisement: ${adError.message}`);
+      }
+
+      // Then, insert the images with reference to the advertisement
+      const imagesWithAdId = uploadedImages.map(img => ({
+        advertisement_id: adData.id,
+        image_url: img.image_url,
+        is_main: img.is_main
+      }));
+
+      const { error: imagesError } = await supabase
+        .from('advertisement_images')
+        .insert(imagesWithAdId);
+
+      if (imagesError) {
+        throw new Error(`Failed to save images: ${imagesError.message}`);
       }
 
       toast({

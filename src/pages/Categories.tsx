@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PlusCircle, Search, Loader2 } from "lucide-react";
-import { useCategories } from "@/hooks/useCategories";
+import { useCategories, Category } from "@/hooks/useCategories";
 import { useDashboard } from "@/components/DashboardLayout";
 import { CategoryForm } from "@/components/categories/CategoryForm";
 import { CategoryCard } from "@/components/categories/CategoryCard";
@@ -94,10 +94,11 @@ export default function Categories() {
                   throw new Error("معرف المكتب غير متوفر");
                 }
                 await addCategory({
-                  ...formData,
+                  name: formData.name,  // Ensure name is provided 
                   image_url: formData.image_url || "/placeholder.svg", // Ensure image_url is never undefined
                   office_id: office.id,
                   user_id: (await supabase.auth.getUser()).data.user?.id || '',
+                  is_active: true
                 });
                 setIsDialogOpen(false);
                 toast({
