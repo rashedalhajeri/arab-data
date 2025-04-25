@@ -16,6 +16,7 @@ export type Database = {
           id: string
           image_url: string | null
           name: string
+          office_id: string | null
           status: string | null
           updated_at: string | null
           user_id: string
@@ -26,6 +27,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           name: string
+          office_id?: string | null
           status?: string | null
           updated_at?: string | null
           user_id: string
@@ -36,11 +38,20 @@ export type Database = {
           id?: string
           image_url?: string | null
           name?: string
+          office_id?: string | null
           status?: string | null
           updated_at?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "categories_office_id_fkey"
+            columns: ["office_id"]
+            isOneToOne: false
+            referencedRelation: "offices"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       offices: {
         Row: {

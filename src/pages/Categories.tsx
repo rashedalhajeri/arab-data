@@ -1,12 +1,10 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { PlusCircle, Edit, Trash2, MoreVertical, Loader2, Tag, Search, Upload, Info } from "lucide-react";
@@ -16,7 +14,6 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from 'uuid';
 
-// Define the correct Category interface to match both database structure and component needs
 interface Category {
   id: string;
   created_at: string;
@@ -51,7 +48,6 @@ const Categories = () => {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
 
-  // Fetch categories from Supabase
   const fetchCategories = async () => {
     setLoading(true);
     setError(null);
@@ -63,7 +59,6 @@ const Categories = () => {
         throw new Error("معرف المكتب غير متوفر");
       }
       
-      // Fetch categories for the current office
       const { data: categoriesData, error } = await supabase
         .from('categories')
         .select('*')
@@ -76,18 +71,15 @@ const Categories = () => {
       
       console.log("Categories data received:", categoriesData);
       
-      // Map database fields to our Category interface
-      const categoriesWithCounts = categoriesData?.map(category => ({
+      const categoriesWithCounts = (categoriesData || []).map(category => ({
         ...category,
-        // Map status field to is_active boolean
         is_active: category.status === "active",
         ad_count: 0,
-        office_id: office.id // Ensure office_id is included
-      })) || [];
+        office_id: office.id
+      })) as Category[];
       
       setCategories(categoriesWithCounts);
       
-      // If there are no categories and not loading, show an empty state
       if (categoriesWithCounts.length === 0) {
         console.log("No categories found for the office");
       }
@@ -99,7 +91,6 @@ const Categories = () => {
         description: "حدث خطأ أثناء تحميل الفئات، يرجى المحاولة مرة أخرى",
         variant: "destructive"
       });
-      // Set empty categories array to show empty state
       setCategories([]);
     } finally {
       setLoading(false);
@@ -112,7 +103,6 @@ const Categories = () => {
     }
   }, [office?.id]);
 
-  // Filter categories based on active tab and search query
   const filteredCategories = categories
     .filter(category => {
       if (activeTab === "all") return true;
@@ -125,7 +115,6 @@ const Categories = () => {
       category.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
-  // Handle image selection
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) {
@@ -135,7 +124,6 @@ const Categories = () => {
     }
 
     const file = files[0];
-    // Check if file is an image
     if (!file.type.startsWith('image/')) {
       toast({
         title: "نوع ملف غير صالح",
@@ -145,7 +133,6 @@ const Categories = () => {
       return;
     }
 
-    // Check file size (max 2MB)
     if (file.size > 2 * 1024 * 1024) {
       toast({
         title: "حجم الصورة كبير جدًا",
@@ -163,7 +150,6 @@ const Categories = () => {
     reader.readAsDataURL(file);
   };
 
-  // Upload image to Supabase Storage
   const uploadCategoryImage = async (file: File): Promise<string> => {
     setUploading(true);
     
@@ -178,7 +164,6 @@ const Categories = () => {
         
       if (uploadError) throw uploadError;
       
-      // Get public URL
       const { data } = supabase.storage
         .from('uploads')
         .getPublicUrl(filePath);
@@ -192,7 +177,6 @@ const Categories = () => {
     }
   };
 
-  // Initialize form data for creating a new category
   const handleCreateCategory = () => {
     setFormData({
       name: "",
@@ -204,7 +188,6 @@ const Categories = () => {
     setIsCreating(true);
   };
 
-  // Initialize form data for editing an existing category
   const handleEditCategory = (category: Category) => {
     setSelectedCategory(category);
     setFormData({
@@ -217,7 +200,6 @@ const Categories = () => {
     setIsEditing(true);
   };
 
-  // Delete a category
   const handleDeleteCategory = async (categoryId: string) => {
     const categoryToDelete = categories.find(c => c.id === categoryId);
     
@@ -254,7 +236,6 @@ const Categories = () => {
     }
   };
 
-  // Toggle category active state
   const handleToggleActive = async (categoryId: string) => {
     const category = categories.find(c => c.id === categoryId);
     if (!category) return;
@@ -299,7 +280,6 @@ const Categories = () => {
     }
   };
 
-  // Form submission handler for creating or updating a category
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -324,11 +304,9 @@ const Categories = () => {
     try {
       let imageUrl = formData.image_url;
       
-      // If there's a new image file, upload it
       if (imageFile) {
         imageUrl = await uploadCategoryImage(imageFile);
       } else if (isCreating && !imageUrl) {
-        // If creating a new category with no image
         toast({
           title: "الصورة مطلوبة",
           description: "يرجى اختيار صورة للفئة",
@@ -336,18 +314,27 @@ const Categories = () => {
         });
         return;
       }
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user?.id) {
+        toast({
+          title: "خطأ في المصادقة",
+          description: "يرجى تسجيل الدخول مرة أخرى",
+          variant: "destructive"
+        });
+        return;
+      }
       
-      // Prepare data for database
       const categoryData = {
         name: formData.name,
         image_url: imageUrl,
         office_id: office.id,
+        user_id: session.user.id,
         status: formData.is_active ? "active" : "inactive",
-        category_type: "general" // default value
+        category_type: "general"
       };
       
       if (isCreating) {
-        // Create new category
         const { data, error } = await supabase
           .from('categories')
           .insert(categoryData)
@@ -356,12 +343,12 @@ const Categories = () => {
         if (error) throw error;
         
         if (data && data[0]) {
-          // Create a fully-typed Category object from the response
           const newCategory: Category = {
             ...data[0],
             is_active: data[0].status === "active",
             ad_count: 0,
-            office_id: office.id
+            office_id: office.id,
+            user_id: session.user.id
           };
           
           setCategories([...categories, newCategory]);
@@ -372,7 +359,6 @@ const Categories = () => {
           });
         }
       } else if (isEditing && selectedCategory) {
-        // Update existing category
         const { error } = await supabase
           .from('categories')
           .update({
@@ -404,7 +390,6 @@ const Categories = () => {
         });
       }
       
-      // Reset form and close dialogs
       setIsCreating(false);
       setIsEditing(false);
       setSelectedCategory(null);
@@ -420,7 +405,6 @@ const Categories = () => {
     }
   };
 
-  // Component for the empty state
   const EmptyState = () => (
     <div className="text-center py-12 border border-dashed border-gray-300 dark:border-gray-700 rounded-lg bg-gray-50/50 dark:bg-slate-800/30">
       <Tag className="mx-auto h-12 w-12 text-gray-400 mb-4" />
@@ -437,7 +421,6 @@ const Categories = () => {
     </div>
   );
 
-  // Error state component
   const ErrorState = () => (
     <div className="text-center py-12 border border-dashed border-red-300 dark:border-red-700 rounded-lg bg-red-50/50 dark:bg-red-900/10">
       <div className="mx-auto h-12 w-12 text-red-500 mb-4">
@@ -460,7 +443,6 @@ const Categories = () => {
     </div>
   );
 
-  // Component for category card
   const CategoryCard = ({ category }: { category: Category }) => {
     const formattedDate = new Date(category.created_at).toLocaleDateString('ar-SA', {
       year: 'numeric',
@@ -550,7 +532,6 @@ const Categories = () => {
 
   return (
     <>
-      {/* Page header */}
       <header className="flex justify-between items-center mb-8">
         <div className="relative w-64">
           <Search className="h-4 w-4 absolute right-3 top-3 text-gray-500" />
@@ -568,7 +549,6 @@ const Categories = () => {
         </div>
       </header>
 
-      {/* Filter tabs and add category button */}
       <Card className="bg-white/80 dark:bg-slate-800/60 backdrop-blur-sm border-none shadow-lg mb-6">
         <CardContent className="p-4 flex justify-between items-center">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -607,7 +587,6 @@ const Categories = () => {
         </CardContent>
       </Card>
 
-      {/* Debug info in development mode */}
       {process.env.NODE_ENV === 'development' && (
         <div className="mb-4 p-4 bg-yellow-50 border border-yellow-300 rounded-md">
           <h3 className="font-bold text-yellow-800 mb-2">معلومات التصحيح:</h3>
@@ -619,7 +598,6 @@ const Categories = () => {
         </div>
       )}
 
-      {/* Categories grid */}
       {loading ? (
         <div className="flex flex-col justify-center items-center py-20">
           <Loader2 className="animate-spin text-primary h-8 w-8 mb-4" />
@@ -637,7 +615,6 @@ const Categories = () => {
         </div>
       )}
 
-      {/* Create/Edit category dialog */}
       <Dialog 
         open={isCreating || isEditing} 
         onOpenChange={(open) => {
@@ -767,4 +744,4 @@ const Categories = () => {
   );
 };
 
-export default Categories; 
+export default Categories;
