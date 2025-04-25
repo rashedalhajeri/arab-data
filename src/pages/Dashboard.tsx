@@ -17,20 +17,18 @@ const Dashboard = () => {
 
   return (
     <>
-      {/* ترويسة الصفحة */}
-      <header className="flex justify-between items-center mb-10">
-        <div>
-          <Button 
-            className="flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-md"
-            onClick={handleViewProfile}
-          >
-            <Eye size={16} />
-            <span>عرض الصفحة</span>
-          </Button>
-        </div>
-        <div className="space-y-2 text-right">
-          <h1 className="text-3xl font-bold bg-gradient-to-l from-purple-800 to-indigo-700 text-transparent bg-clip-text">مرحباً بك في لوحة التحكم</h1>
-          <p className="text-gray-600 dark:text-gray-400">هذه هي نظرة عامة عن أداء صفحتك</p>
+      {/* تحسين الترويسة للشاشات الصغيرة وال RTL */}
+      <header className="flex flex-col-reverse gap-4 md:flex-row md:justify-between md:items-center mb-6 md:mb-10">
+        <Button 
+          className="flex items-center gap-2 bg-gradient-to-l from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-md w-full md:w-auto justify-center"
+          onClick={handleViewProfile}
+        >
+          <Eye size={16} />
+          <span>عرض الصفحة</span>
+        </Button>
+        <div className="space-y-1 text-right">
+          <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-purple-800 to-indigo-700 text-transparent bg-clip-text">مرحباً بك في لوحة التحكم</h1>
+          <p className="text-sm md:text-base text-gray-600 dark:text-gray-400">هذه هي نظرة عامة عن أداء صفحتك</p>
         </div>
       </header>
 
