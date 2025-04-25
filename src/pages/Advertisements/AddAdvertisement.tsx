@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
@@ -155,7 +154,6 @@ export default function AddAdvertisement() {
         throw new Error("Office ID is missing");
       }
 
-      // Upload images first
       const uploadedImages = await Promise.all(
         images.map(async (image, index) => {
           if (!image.image_url.startsWith('http')) {
@@ -178,7 +176,6 @@ export default function AddAdvertisement() {
         })
       );
 
-      // First, insert the advertisement without the images
       const { data: adData, error: adError } = await supabase
         .from('advertisements')
         .insert({
@@ -198,7 +195,6 @@ export default function AddAdvertisement() {
         throw new Error(`Failed to create advertisement: ${adError.message}`);
       }
 
-      // Then, insert the images with reference to the advertisement
       const imagesWithAdId = uploadedImages.map(img => ({
         advertisement_id: adData.id,
         image_url: img.image_url,

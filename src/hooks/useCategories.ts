@@ -1,8 +1,10 @@
+
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useDashboard } from '@/components/DashboardLayout';
 import { useToast } from '@/components/ui/use-toast';
 
+// Update the Category interface to match the database schema
 export interface Category {
   id: string;
   name: string;
@@ -26,7 +28,7 @@ export const useCategories = () => {
         throw new Error("معرف المكتب غير متوفر");
       }
 
-      const { data: categoriesData, error } = await supabase
+      const { data, error } = await supabase
         .from('categories')
         .select('*')
         .eq('office_id', office.id)
@@ -34,7 +36,7 @@ export const useCategories = () => {
 
       if (error) throw error;
 
-      setCategories(categoriesData as Category[]);
+      setCategories(data as Category[]);
     } catch (error: any) {
       console.error("Error loading categories:", error);
       toast({
@@ -51,7 +53,10 @@ export const useCategories = () => {
     try {
       const { data, error } = await supabase
         .from('categories')
-        .insert(categoryData)
+        .insert({
+          ...categoryData,
+          user_id: (await supabase.auth.getUser()).data.user?.id || ''
+        })
         .select()
         .single();
 
