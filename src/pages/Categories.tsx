@@ -7,10 +7,11 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { PlusCircle, Search, Loader2 } from "lucide-react";
+import { useCategories, Category } from "@/hooks/useCategories";
 import { useDashboard } from "@/components/DashboardLayout";
-import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import SimpleImageUpload from "@/components/SimpleImageUpload";
+import { useToast } from "@/components/ui/use-toast";
 import {
   Table,
   TableBody,
@@ -20,25 +21,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-// Define our Category interface which matches the database table
-interface Category {
-  id: string;
-  name: string;
-  image_url: string;
-  is_active: boolean;
-  created_at: string;
-  user_id: string;
-  office_id: string;
-}
-
-// Type for Supabase Client - using this to bypass TypeScript limitations
-type SupabaseClient = typeof supabase;
-
 const Categories = () => {
   const { office } = useDashboard();
   const { toast } = useToast();
-  const [loading, setLoading] = useState(true);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const { categories, loading, fetchCategories, addCategory } = useCategories();
   const [searchQuery, setSearchQuery] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -49,37 +35,6 @@ const Categories = () => {
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
-
-  const fetchCategories = async () => {
-    setLoading(true);
-    try {
-      if (!office?.id) {
-        throw new Error("معرف المكتب غير متوفر");
-      }
-
-      // Using dynamic access with type assertion to bypass TypeScript limitations
-      const client = supabase as any;
-      const { data: categoriesData, error } = await client
-        .from('categories')
-        .select('*')
-        .eq('office_id', office.id)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      // Type assertion to cast the result to Category[]
-      setCategories(categoriesData as Category[]);
-    } catch (error: any) {
-      console.error("Error loading categories:", error);
-      toast({
-        title: "خطأ في تحميل الفئات",
-        description: error.message || "حدث خطأ أثناء تحميل الفئات",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   useEffect(() => {
     if (office?.id) {
@@ -139,24 +94,14 @@ const Categories = () => {
         throw new Error("يرجى تسجيل الدخول مرة أخرى");
       }
 
-      // Using dynamic access with type assertion to bypass TypeScript limitations
-      const client = supabase as any;
-      const { data, error } = await client
-        .from('categories')
-        .insert({
-          name: formData.name,
-          image_url: imageUrl,
-          office_id: office.id,
-          user_id: session.user.id,
-          is_active: formData.is_active
-        })
-        .select()
-        .single();
+      await addCategory({
+        name: formData.name,
+        image_url: imageUrl,
+        office_id: office.id,
+        user_id: session.user.id,
+        is_active: formData.is_active
+      });
 
-      if (error) throw error;
-
-      // Add the new category to the state with type assertion
-      setCategories([data as Category, ...categories]);
       setIsCreating(false);
       setFormData({ name: "", image_url: "", is_active: true });
       setImageFile(null);
