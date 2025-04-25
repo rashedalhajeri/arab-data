@@ -31,6 +31,9 @@ interface Category {
   office_id: string;
 }
 
+// Type for Supabase Client - using this to bypass TypeScript limitations
+type SupabaseClient = typeof supabase;
+
 const Categories = () => {
   const { office } = useDashboard();
   const { toast } = useToast();
@@ -54,9 +57,10 @@ const Categories = () => {
         throw new Error("معرف المكتب غير متوفر");
       }
 
-      // Using 'as any' to bypass TypeScript limitations since we can't modify the generated types
-      const { data: categoriesData, error } = await (supabase
-        .from('categories') as any)
+      // Using dynamic access with type assertion to bypass TypeScript limitations
+      const client = supabase as any;
+      const { data: categoriesData, error } = await client
+        .from('categories')
         .select('*')
         .eq('office_id', office.id)
         .order('created_at', { ascending: false });
@@ -135,9 +139,10 @@ const Categories = () => {
         throw new Error("يرجى تسجيل الدخول مرة أخرى");
       }
 
-      // Using 'as any' to bypass TypeScript limitations
-      const { data, error } = await (supabase
-        .from('categories') as any)
+      // Using dynamic access with type assertion to bypass TypeScript limitations
+      const client = supabase as any;
+      const { data, error } = await client
+        .from('categories')
         .insert({
           name: formData.name,
           image_url: imageUrl,
