@@ -24,33 +24,29 @@ import {
 } from "@/components/ui/alert-dialog"
 import { supabase } from "@/lib/supabase";
 import { Category } from "@/hooks/useCategories";
+import { TablesInsert } from "@/integrations/supabase/types";
 
-interface AdvertisementImage {
+type AdvertisementImage = {
   id?: string;
   image_url: string;
-  is_main: boolean;
-}
+  is_main?: boolean;
+  advertisement_id?: string;
+  storage_path?: string;
+  order_num?: number;
+};
 
-interface Advertisement {
-  id?: string;
-  title: string;
-  category_type: string;
-  ad_type: string;
-  price?: string;
-  description?: string;
-  is_active: boolean;
-  images: AdvertisementImage[];
-  office_id?: string;
-}
+type Advertisement = TablesInsert<'advertisements'>;
 
 const defaultAd: Advertisement = {
   title: "",
   category_type: "real-estate",
   ad_type: "sale",
-  price: "",
   description: "",
   is_active: true,
-  images: [],
+  status: "active",
+  office_id: "",
+  user_id: "",
+  price: ""
 };
 
 export default function AddAdvertisement() {
@@ -154,40 +150,16 @@ export default function AddAdvertisement() {
         throw new Error("Office ID is missing");
       }
 
-      const uploadedImages = await Promise.all(
-        images.map(async (image, index) => {
-          if (!image.image_url.startsWith('http')) {
-            const { data, error } = await supabase
-              .storage
-              .from('advertisements')
-              .upload(`${office.id}/${Date.now()}-${index}.png`, dataURLtoBlob(image.image_url)!, {
-                contentType: 'image/png',
-                upsert: false
-              });
+      const adData: TablesInsert<'advertisements'> = {
+        ...advertisement,
+        office_id: office.id,
+        user_id: (await supabase.auth.getUser()).data.user?.id || "",
+        status: "active"
+      };
 
-            if (error) {
-              throw new Error(`Failed to upload image: ${error.message}`);
-            }
-
-            return { image_url: data.path, is_main: image.is_main };
-          } else {
-            return image;
-          }
-        })
-      );
-
-      const { data: adData, error: adError } = await supabase
+      const { data: adResult, error: adError } = await supabase
         .from('advertisements')
-        .insert({
-          title: advertisement.title,
-          category_type: advertisement.category_type,
-          ad_type: advertisement.ad_type,
-          price: advertisement.price,
-          description: advertisement.description,
-          is_active: true,
-          office_id: office.id,
-          user_id: (await supabase.auth.getUser()).data.user?.id
-        })
+        .insert(adData)
         .select('id')
         .single();
 
@@ -195,10 +167,12 @@ export default function AddAdvertisement() {
         throw new Error(`Failed to create advertisement: ${adError.message}`);
       }
 
-      const imagesWithAdId = uploadedImages.map(img => ({
-        advertisement_id: adData.id,
+      const imagesWithAdId: TablesInsert<'advertisement_images'>[] = images.map((img, index) => ({
+        advertisement_id: adResult.id,
         image_url: img.image_url,
-        is_main: img.is_main
+        is_main: img.is_main ?? (index === 0),
+        storage_path: img.image_url,
+        order_num: index + 1
       }));
 
       const { error: imagesError } = await supabase
