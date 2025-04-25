@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
@@ -204,18 +203,12 @@ export default function OfficeProfile() {
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                 {categories.map((category) => (
-                  <Card key={category.id} className="overflow-hidden h-[200px]">
-                    <div className="relative h-24">
-                      <img
-                        src={getStorageUrl(category.image_url)}
-                        alt={category.name}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <CardContent className="p-3">
-                      <h3 className="font-semibold text-sm line-clamp-2">{category.name}</h3>
-                    </CardContent>
-                  </Card>
+                  <CategoryCard 
+                    key={category.id} 
+                    category={category}
+                    imageProcessor={getStorageUrl}
+                    readOnly={true}
+                  />
                 ))}
               </div>
             </div>
