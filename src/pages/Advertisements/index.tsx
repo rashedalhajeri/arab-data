@@ -16,7 +16,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase";
 import {
   Dialog,
   DialogContent,
@@ -33,6 +33,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { getStorageUrl } from "@/lib/storage-utils";
 
 interface Advertisement {
   id: string;
@@ -68,7 +69,6 @@ const Advertisements = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
-  // تعديل الكود لاستخدام fetch API بشكل مباشر مع ثوابت Supabase
   const fetchAdvertisements = async () => {
     setIsLoading(true);
     setLoadError(null);
@@ -88,13 +88,11 @@ const Advertisements = () => {
         return;
       }
       
-      // استخدام fetch API مباشرة مع ثوابت Supabase
       const supabaseUrl = "https://rkiukoeankeojpntfhvv.supabase.co";
       const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJraXVrb2Vhbmtlb2pwbnRmaHZ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDUzNTI5MDQsImV4cCI6MjA2MDkyODkwNH0.-V81gAim0WSdyXAnhx4Fio6PuWwd2WM7fkttAdrqBV8";
       
       console.log("Fetching advertisements for office:", office.id);
       
-      // 1. جلب الإعلانات
       const adsResponse = await fetch(
         `${supabaseUrl}/rest/v1/advertisements?office_id=eq.${office.id}&order=created_at.desc`,
         {
@@ -123,7 +121,6 @@ const Advertisements = () => {
         return;
       }
       
-      // 2. جلب الصور لكل إعلان
       const adsWithImages = await Promise.all(adsData.map(async (ad: any) => {
         try {
           console.log(`Fetching images for ad ${ad.id}`);
@@ -147,7 +144,6 @@ const Advertisements = () => {
           const imagesData = await imagesResponse.json();
           console.log(`Images for ad ${ad.id}:`, imagesData);
           
-          // تكوين كائن الصور بالشكل المطلوب
           return { 
             ...ad, 
             images: imagesData.map((img: any) => ({
@@ -163,7 +159,6 @@ const Advertisements = () => {
         }
       }));
       
-      // 3. تنسيق البيانات للعرض
       const formattedAds = adsWithImages.map((ad: any) => ({
         id: ad.id,
         title: ad.title || "بدون عنوان",
@@ -188,20 +183,17 @@ const Advertisements = () => {
     }
   };
 
-  // Hook لجلب الإعلانات
   useEffect(() => {
     if (office?.id) {
       fetchAdvertisements();
     }
   }, [office?.id]);
 
-  // Filtrar anuncios basado en búsqueda, categoría y estado
   const filteredAdvertisements = advertisements
     .filter(ad => ad.title.toLowerCase().includes(searchQuery.toLowerCase()))
     .filter(ad => selectedCategory === "all" || ad.category === selectedCategory)
     .filter(ad => selectedStatus === "all" || ad.status === selectedStatus);
 
-  // Ordenar anuncios
   const sortedAdvertisements = [...filteredAdvertisements].sort((a, b) => {
     switch (sortBy) {
       case "oldest":
@@ -218,12 +210,10 @@ const Advertisements = () => {
     }
   });
 
-  // توجيه المستخدم مباشرة إلى صفحة إضافة إعلان
   const handleAddAdvertisement = () => {
     navigate(`/dashboard/advertisements/add`);
   };
 
-  // Función para obtener el icono de la categoría
   const getCategoryIcon = (category: string) => {
     switch (category) {
       case "vehicles":
@@ -235,7 +225,6 @@ const Advertisements = () => {
     }
   };
 
-  // Función para obtener el color del badge según el estado
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
       case "active":
@@ -249,7 +238,6 @@ const Advertisements = () => {
     }
   };
 
-  // Función para obtener el texto del estado en árabe
   const getStatusText = (status: string) => {
     switch (status) {
       case "active":
@@ -263,20 +251,17 @@ const Advertisements = () => {
     }
   };
 
-  // الدالة المسؤولة عن فتح نافذة التأكيد للحذف
   const handleDeleteClick = (adId: string) => {
     setAdToDelete(adId);
     setIsDeleteDialogOpen(true);
   };
 
-  // استبدال دالة confirmDelete بنسخة تستخدم fetch API مباشرة
   const confirmDelete = async () => {
     if (!adToDelete) return;
     
     try {
       setIsDeleting(true);
       
-      // استخدام fetch API مباشرة لتجنب مشاكل أنواع البيانات
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
       
@@ -284,7 +269,6 @@ const Advertisements = () => {
         throw new Error("بيانات الاتصال بـ Supabase غير متوفرة");
       }
       
-      // 1. جلب صور الإعلان
       const imagesResponse = await fetch(
         `${supabaseUrl}/rest/v1/advertisement_images?advertisement_id=eq.${adToDelete}&select=id,image_url`,
         {
@@ -298,11 +282,9 @@ const Advertisements = () => {
       if (imagesResponse.ok) {
         const images = await imagesResponse.json();
         
-        // 2. حذف ملفات الصور من التخزين
         for (const img of images) {
           if (img.image_url && !img.image_url.startsWith('http')) {
             try {
-              // حذف الملف من bucket التخزين
               await fetch(
                 `${supabaseUrl}/storage/v1/object/advertisements/${img.image_url}`,
                 {
@@ -319,7 +301,6 @@ const Advertisements = () => {
           }
         }
         
-        // 3. حذف سجلات الصور من قاعدة البيانات
         await fetch(
           `${supabaseUrl}/rest/v1/advertisement_images?advertisement_id=eq.${adToDelete}`,
           {
@@ -333,7 +314,6 @@ const Advertisements = () => {
         );
       }
       
-      // 4. حذف الإعلان نفسه
       const deleteResponse = await fetch(
         `${supabaseUrl}/rest/v1/advertisements?id=eq.${adToDelete}`,
         {
@@ -350,7 +330,6 @@ const Advertisements = () => {
         throw new Error(`فشل في حذف الإعلان: ${deleteResponse.statusText}`);
       }
       
-      // تحديث القائمة المحلية بعد الحذف
       setAdvertisements(ads => ads.filter(ad => ad.id !== adToDelete));
       
       toast({
@@ -372,13 +351,11 @@ const Advertisements = () => {
     }
   };
 
-  // تحسين دالة الحصول على الصورة الرئيسية بشكل جذري
   const getMainImageUrl = (ad: Advertisement): string => {
     if (!ad.images || ad.images.length === 0) {
       return "/placeholder.svg";
     }
     
-    // اختيار الصورة الرئيسية أو الأولى
     const mainImage = ad.images.find(img => img.is_main);
     const imageToUse = mainImage || ad.images[0];
     
@@ -386,21 +363,7 @@ const Advertisements = () => {
       return "/placeholder.svg";
     }
     
-    // إذا كان الرابط URL كامل
-    if (imageToUse.image_url.startsWith('http')) {
-      return imageToUse.image_url;
-    }
-    
-    // إنشاء رابط عام للصورة
-    const supabaseUrl = "https://rkiukoeankeojpntfhvv.supabase.co";
-    let imagePath = imageToUse.image_url;
-    
-    // تنظيف المسار
-    if (imagePath.startsWith('advertisements/')) {
-      imagePath = imagePath.slice('advertisements/'.length);
-    }
-    
-    return `${supabaseUrl}/storage/v1/object/public/advertisements/${imagePath}`;
+    return getStorageUrl(imageToUse.image_url, 'advertisements');
   };
 
   const EmptyState = () => (
@@ -420,7 +383,6 @@ const Advertisements = () => {
 
   return (
     <>
-      {/* ترويسة الصفحة - متجاوبة */}
       <header className="flex flex-col-reverse md:flex-row justify-between items-start md:items-center gap-4 mb-8">
         <div className="w-full md:w-auto">
           <Button 
@@ -437,7 +399,6 @@ const Advertisements = () => {
         </div>
       </header>
 
-      {/* فلاتر البحث - متجاوبة */}
       <Card className="border-none bg-white/80 dark:bg-slate-800/60 backdrop-blur-sm shadow-lg overflow-hidden mb-6">
         <CardContent className="p-4 space-y-4">
           <div className="flex flex-col gap-4">
@@ -497,7 +458,6 @@ const Advertisements = () => {
         </CardContent>
       </Card>
 
-      {/* عرض الإعلانات - عرض القائمة أو الجدول حسب الشاشة */}
       <div className="bg-white/80 dark:bg-slate-800/60 rounded-lg overflow-hidden shadow-lg backdrop-blur-sm">
         <Tabs defaultValue="table" value={activeTab} onValueChange={setActiveTab} className="w-full">
           <div className="px-4 pt-4 border-b border-gray-100 dark:border-gray-800">
@@ -511,7 +471,6 @@ const Advertisements = () => {
             </TabsList>
           </div>
           
-          {/* عرض جدول */}
           <TabsContent value="table" className="p-4 overflow-x-auto">
             {isLoading ? (
               <div className="flex justify-center items-center p-12">
@@ -639,7 +598,6 @@ const Advertisements = () => {
             )}
           </TabsContent>
           
-          {/* عرض بطاقات - أفضل للجوال */}
           <TabsContent value="grid" className="p-4">
             {isLoading ? (
               <div className="flex justify-center items-center p-12">
@@ -751,7 +709,6 @@ const Advertisements = () => {
         </Tabs>
       </div>
 
-      {/* نافذة تأكيد الحذف */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent className="max-w-md mx-auto" dir="rtl">
           <DialogHeader>
@@ -787,4 +744,4 @@ const Advertisements = () => {
   );
 };
 
-export default Advertisements; 
+export default Advertisements;
