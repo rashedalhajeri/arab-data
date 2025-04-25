@@ -16,6 +16,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from 'uuid';
 
+// Define the correct Category interface to match both database structure and component needs
 interface Category {
   id: string;
   created_at: string;
@@ -31,7 +32,7 @@ interface Category {
 }
 
 const Categories = () => {
-  const { office, user } = useDashboard();
+  const { office } = useDashboard();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -56,21 +57,16 @@ const Categories = () => {
     setError(null);
     
     try {
-      console.log("Fetching categories for user", user?.id);
-      
-      if (!user?.id) {
-        throw new Error("معرف المستخدم غير متوفر");
-      }
+      console.log("Fetching categories for office", office?.id);
       
       if (!office?.id) {
         throw new Error("معرف المكتب غير متوفر");
       }
       
-      // Fetch categories for the current user and office
+      // Fetch categories for the current office
       const { data: categoriesData, error } = await supabase
         .from('categories')
         .select('*')
-        .eq('user_id', user.id)
         .eq('office_id', office.id);
       
       if (error) {
@@ -80,19 +76,20 @@ const Categories = () => {
       
       console.log("Categories data received:", categoriesData);
       
-      // Map status to is_active if needed
+      // Map database fields to our Category interface
       const categoriesWithCounts = categoriesData?.map(category => ({
         ...category,
-        // If is_active is not defined, use status field (assuming "active" means active)
-        is_active: category.is_active !== undefined ? category.is_active : (category.status === "active"),
-        ad_count: 0
+        // Map status field to is_active boolean
+        is_active: category.status === "active",
+        ad_count: 0,
+        office_id: office.id // Ensure office_id is included
       })) || [];
       
       setCategories(categoriesWithCounts);
       
       // If there are no categories and not loading, show an empty state
       if (categoriesWithCounts.length === 0) {
-        console.log("No categories found for the user");
+        console.log("No categories found for the office");
       }
     } catch (error: any) {
       console.error("Error loading categories:", error);
@@ -110,10 +107,10 @@ const Categories = () => {
   };
   
   useEffect(() => {
-    if (user?.id && office?.id) {
+    if (office?.id) {
       fetchCategories();
     }
-  }, [user?.id, office?.id]);
+  }, [office?.id]);
 
   // Filter categories based on active tab and search query
   const filteredCategories = categories
@@ -268,7 +265,6 @@ const Categories = () => {
       const { error } = await supabase
         .from('categories')
         .update({ 
-          is_active: newStatus,
           status: newStatus ? "active" : "inactive" 
         })
         .eq('id', categoryId);
@@ -316,15 +312,6 @@ const Categories = () => {
       return;
     }
     
-    if (!user?.id) {
-      toast({
-        title: "خطأ في المعرض",
-        description: "لا يمكن العثور على معلومات المستخدم",
-        variant: "destructive"
-      });
-      return;
-    }
-    
     if (!office?.id) {
       toast({
         title: "خطأ في المعرض",
@@ -354,10 +341,7 @@ const Categories = () => {
       const categoryData = {
         name: formData.name,
         image_url: imageUrl,
-        is_active: formData.is_active,
-        user_id: user.id,
         office_id: office.id,
-        // Map is_active to status for compatibility
         status: formData.is_active ? "active" : "inactive",
         category_type: "general" // default value
       };
@@ -372,7 +356,15 @@ const Categories = () => {
         if (error) throw error;
         
         if (data && data[0]) {
-          setCategories([...categories, { ...data[0], ad_count: 0 }]);
+          // Create a fully-typed Category object from the response
+          const newCategory: Category = {
+            ...data[0],
+            is_active: data[0].status === "active",
+            ad_count: 0,
+            office_id: office.id
+          };
+          
+          setCategories([...categories, newCategory]);
           
           toast({
             title: "تمت إضافة الفئة",
@@ -386,7 +378,6 @@ const Categories = () => {
           .update({
             name: formData.name,
             image_url: imageUrl,
-            is_active: formData.is_active,
             status: formData.is_active ? "active" : "inactive"
           })
           .eq('id', selectedCategory.id);
@@ -621,7 +612,6 @@ const Categories = () => {
         <div className="mb-4 p-4 bg-yellow-50 border border-yellow-300 rounded-md">
           <h3 className="font-bold text-yellow-800 mb-2">معلومات التصحيح:</h3>
           <p className="text-yellow-800">
-            المستخدم: {user?.id ? user.id : 'غير متاح'}<br />
             المكتب: {office?.id ? office.id : 'غير متاح'}<br />
             جاري التحميل: {loading ? 'نعم' : 'لا'}<br />
             عدد الفئات: {categories.length}
