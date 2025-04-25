@@ -9,6 +9,7 @@ import { useCategories, Category } from "@/hooks/useCategories";
 import { useDashboard } from "@/components/DashboardLayout";
 import { CategoryForm } from "@/components/categories/CategoryForm";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/lib/supabase"; // Import supabase client
 import {
   Table,
   TableBody,
