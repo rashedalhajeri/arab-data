@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
@@ -43,7 +44,7 @@ const defaultAd: Advertisement = {
   ad_type: "sale",
   description: "",
   is_active: true,
-  status: "active",
+  status: "active", // Added the required status field
   office_id: "",
   user_id: "",
   price: ""
@@ -150,11 +151,12 @@ export default function AddAdvertisement() {
         throw new Error("Office ID is missing");
       }
 
+      // Ensure all required fields are present for the advertisement
       const adData: TablesInsert<'advertisements'> = {
         ...advertisement,
         office_id: office.id,
         user_id: (await supabase.auth.getUser()).data.user?.id || "",
-        status: "active"
+        status: "active" // Ensure status is set
       };
 
       const { data: adResult, error: adError } = await supabase
@@ -167,12 +169,13 @@ export default function AddAdvertisement() {
         throw new Error(`Failed to create advertisement: ${adError.message}`);
       }
 
+      // Prepare images with all required fields
       const imagesWithAdId: TablesInsert<'advertisement_images'>[] = images.map((img, index) => ({
         advertisement_id: adResult.id,
         image_url: img.image_url,
         is_main: img.is_main ?? (index === 0),
-        storage_path: img.image_url,
-        order_num: index + 1
+        storage_path: img.storage_path || img.image_url, // Use image_url as storage_path if not provided
+        order_num: img.order_num || (index + 1) // Use index+1 as order_num if not provided
       }));
 
       const { error: imagesError } = await supabase
