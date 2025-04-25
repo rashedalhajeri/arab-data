@@ -1,34 +1,33 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import SimpleImageUpload from "@/components/SimpleImageUpload";
 import { Loader2 } from "lucide-react";
 import { DialogFooter } from "@/components/ui/dialog";
+import { Category } from "@/hooks/useCategories";
 
 interface CategoryFormProps {
-  onSubmit: (formData: {
-    name: string;
-    image_url: string;
-    is_active: boolean;
-  }) => Promise<void>;
+  onSubmit: (formData: Partial<Category>) => Promise<void>;
   onCancel: () => void;
+  initialData?: Category;
 }
 
 export const CategoryForm: React.FC<CategoryFormProps> = ({
   onSubmit,
   onCancel,
+  initialData,
 }) => {
-  const [uploading, setUploading] = useState(false);
-  const [formData, setFormData] = useState({
-    name: "",
-    image_url: "",
-    is_active: true
+  const [uploading, setUploading] = React.useState(false);
+  const [formData, setFormData] = React.useState({
+    name: initialData?.name || "",
+    image_url: initialData?.image_url || "",
+    is_active: initialData?.is_active ?? true
   });
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string>("");
+  const [imageFile, setImageFile] = React.useState<File | null>(null);
+  const [imagePreview, setImagePreview] = React.useState<string>(initialData?.image_url || "");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,7 +64,7 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
           onBlob={setImageFile}
           title="اختر صورة للفئة"
           subtitle="اسحب وأفلت الصورة هنا أو اضغط للتحميل"
-          maxSizeInMB={1}
+          maxSizeInMB={3}
           minWidth={100}
           minHeight={100}
           aspectRatio={1}
@@ -75,11 +74,11 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
       </div>
 
       <div className="flex items-center space-x-2 space-x-reverse">
-        <Checkbox
+        <Switch
           id="is_active"
           checked={formData.is_active}
           onCheckedChange={(checked) =>
-            setFormData({ ...formData, is_active: checked as boolean })
+            setFormData({ ...formData, is_active: checked })
           }
         />
         <Label htmlFor="is_active">فئة نشطة</Label>
@@ -105,6 +104,8 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
                 <Loader2 className="h-4 w-4 ml-2 animate-spin" />
                 جاري الحفظ...
               </>
+            ) : initialData ? (
+              "حفظ التغييرات"
             ) : (
               "إضافة الفئة"
             )}

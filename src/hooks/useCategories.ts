@@ -1,6 +1,5 @@
-
 import { useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 import { useDashboard } from '@/components/DashboardLayout';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -71,10 +70,38 @@ export const useCategories = () => {
     }
   };
 
+  const updateCategory = async (id: string, updates: Partial<Category>) => {
+    try {
+      const { data, error } = await supabase
+        .from('categories')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setCategories(categories.map(cat => 
+        cat.id === id ? { ...cat, ...data } : cat
+      ));
+
+      return data;
+    } catch (error: any) {
+      console.error("Error updating category:", error);
+      toast({
+        title: "خطأ في تحديث الفئة",
+        description: error.message || "حدث خطأ أثناء تحديث الفئة",
+        variant: "destructive"
+      });
+      throw error;
+    }
+  };
+
   return {
     categories,
     loading,
     fetchCategories,
     addCategory,
+    updateCategory,
   };
 };

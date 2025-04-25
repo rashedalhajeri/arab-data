@@ -8,23 +8,17 @@ import { PlusCircle, Search, Loader2 } from "lucide-react";
 import { useCategories, Category } from "@/hooks/useCategories";
 import { useDashboard } from "@/components/DashboardLayout";
 import { CategoryForm } from "@/components/categories/CategoryForm";
+import { CategoryCard } from "@/components/categories/CategoryCard";
 import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "@/lib/supabase"; // Import supabase client
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { supabase } from "@/lib/supabase";
 
 const Categories = () => {
   const { office } = useDashboard();
   const { toast } = useToast();
-  const { categories, loading, fetchCategories, addCategory } = useCategories();
+  const { categories, loading, fetchCategories, addCategory, updateCategory } = useCategories();
   const [searchQuery, setSearchQuery] = useState("");
-  const [isCreating, setIsCreating] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
 
   useEffect(() => {
     if (office?.id) {
@@ -37,7 +31,7 @@ const Categories = () => {
     category.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleSubmit = async (formData: { name: string; image_url: string; is_active: boolean }) => {
+  const handleSubmit = async (formData: Partial<Category>) => {
     if (!office?.id) {
       toast({
         title: "خطأ",
@@ -47,22 +41,52 @@ const Categories = () => {
       return;
     }
 
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user?.id) {
-      throw new Error("يرجى تسجيل الدخول مرة أخرى");
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user?.id) {
+        throw new Error("يرجى تسجيل الدخول مرة أخرى");
+      }
+
+      if (selectedCategory) {
+        await updateCategory(selectedCategory.id, formData);
+        toast({
+          title: "تم تحديث الفئة",
+          description: "تم تحديث الفئة بنجاح"
+        });
+      } else {
+        await addCategory({
+          ...formData as Omit<Category, 'id' | 'created_at'>,
+          office_id: office.id,
+          user_id: session.user.id,
+        });
+        toast({
+          title: "تم إضافة الفئة",
+          description: "تمت إضافة الفئة الجديدة بنجاح"
+        });
+      }
+
+      setIsDialogOpen(false);
+      setSelectedCategory(null);
+    } catch (error) {
+      console.error("Error handling category:", error);
     }
+  };
 
-    await addCategory({
-      ...formData,
-      office_id: office.id,
-      user_id: session.user.id,
-    });
+  const handleEdit = (category: Category) => {
+    setSelectedCategory(category);
+    setIsDialogOpen(true);
+  };
 
-    setIsCreating(false);
-    toast({
-      title: "تم إضافة الفئة",
-      description: "تمت إضافة الفئة الجديدة بنجاح"
-    });
+  const handleToggleActive = async (category: Category) => {
+    try {
+      await updateCategory(category.id, { is_active: !category.is_active });
+      toast({
+        title: category.is_active ? "تم تعطيل الفئة" : "تم تنشيط الفئة",
+        description: `تم ${category.is_active ? 'تعطيل' : 'تنشيط'} الفئة بنجاح`
+      });
+    } catch (error) {
+      console.error("Error toggling category status:", error);
+    }
   };
 
   return (
@@ -78,83 +102,54 @@ const Categories = () => {
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
-        <Button onClick={() => setIsCreating(true)} className="w-full sm:w-auto">
+        <Button onClick={() => setIsDialogOpen(true)} className="w-full sm:w-auto">
           <PlusCircle className="h-4 w-4 ml-2" />
           إضافة فئة
         </Button>
       </div>
 
-      <Card>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-20">الصورة</TableHead>
-                  <TableHead>اسم الفئة</TableHead>
-                  <TableHead>الحالة</TableHead>
-                  <TableHead className="hidden sm:table-cell">تاريخ الإنشاء</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {loading ? (
-                  <TableRow>
-                    <TableCell colSpan={4} className="text-center py-8">
-                      <div className="flex flex-col items-center justify-center">
-                        <Loader2 className="animate-spin text-primary h-8 w-8 mb-4" />
-                        <p className="text-gray-500">جاري تحميل الفئات...</p>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ) : filteredCategories.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={4} className="text-center py-8">
-                      <p className="text-gray-500">لا توجد فئات لعرضها</p>
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredCategories.map((category) => (
-                    <TableRow key={category.id}>
-                      <TableCell>
-                        <img
-                          src={category.image_url}
-                          alt={category.name}
-                          className="w-10 h-10 object-cover rounded-lg"
-                        />
-                      </TableCell>
-                      <TableCell className="font-medium">{category.name}</TableCell>
-                      <TableCell>
-                        <span className={`px-2 py-1 rounded-full text-xs ${
-                          category.is_active
-                            ? "bg-green-100 text-green-700"
-                            : "bg-gray-100 text-gray-700"
-                        }`}>
-                          {category.is_active ? "نشط" : "غير نشط"}
-                        </span>
-                      </TableCell>
-                      <TableCell className="hidden sm:table-cell">
-                        {new Date(category.created_at).toLocaleDateString('ar-SA')}
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
+      {loading ? (
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="animate-spin text-primary h-8 w-8" />
+          <p className="mr-2">جاري تحميل الفئات...</p>
+        </div>
+      ) : filteredCategories.length === 0 ? (
+        <Card>
+          <CardContent className="p-6 text-center text-gray-500">
+            لا توجد فئات لعرضها
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {filteredCategories.map((category) => (
+            <CategoryCard
+              key={category.id}
+              category={category}
+              onEdit={handleEdit}
+              onToggleActive={handleToggleActive}
+            />
+          ))}
+        </div>
+      )}
 
-      <Dialog open={isCreating} onOpenChange={setIsCreating}>
+      <Dialog open={isDialogOpen} onOpenChange={(open) => {
+        setIsDialogOpen(open);
+        if (!open) setSelectedCategory(null);
+      }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>إضافة فئة جديدة</DialogTitle>
+            <DialogTitle>{selectedCategory ? 'تعديل الفئة' : 'إضافة فئة جديدة'}</DialogTitle>
             <DialogDescription>
-              أضف فئة جديدة لتنظيم الإعلانات على صفحتك
+              {selectedCategory ? 'قم بتعديل معلومات الفئة' : 'أضف فئة جديدة لتنظيم الإعلانات على صفحتك'}
             </DialogDescription>
           </DialogHeader>
           <CategoryForm
             onSubmit={handleSubmit}
-            onCancel={() => setIsCreating(false)}
+            onCancel={() => {
+              setIsDialogOpen(false);
+              setSelectedCategory(null);
+            }}
+            initialData={selectedCategory || undefined}
           />
         </DialogContent>
       </Dialog>
