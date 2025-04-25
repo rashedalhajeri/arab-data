@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { supabase } from '@/lib/supabase';
+import { useParams, Link } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { ExternalLink, Phone, MapPin, Share2, MessageCircle, Clock, Info, Star, Calendar, Tag } from 'lucide-react';
+import { ExternalLink, Phone, MapPin, Share2, MessageCircle, Clock, Info, Star, Calendar, Tag, MoreHorizontal } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
@@ -25,10 +25,27 @@ interface Office {
 
 interface Category extends FullCategory {}
 
+interface Advertisement {
+  id: string;
+  title: string;
+  created_at: string;
+  category_type: string;
+  ad_type: string;
+  price?: string;
+  description?: string;
+  is_active: boolean;
+  images?: {
+    id: string;
+    image_url: string;
+    is_main: boolean;
+  }[];
+}
+
 export default function OfficeProfile() {
   const { slug } = useParams<{ slug: string; }>();
   const [office, setOffice] = useState<Office | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [advertisements, setAdvertisements] = useState<Advertisement[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -59,6 +76,32 @@ export default function OfficeProfile() {
 
           if (categoriesError) throw categoriesError;
           setCategories(categoriesData || []);
+          
+          const { data: adsData, error: adsError } = await supabase
+            .from('advertisements')
+            .select(`
+              id,
+              title,
+              category_type,
+              ad_type,
+              price,
+              description,
+              is_active,
+              created_at,
+              advertisement_images (
+                id,
+                image_url,
+                is_main
+              )
+            `)
+            .eq('office_id', officeData[0].id)
+            .eq('is_active', true)
+            .order('created_at', { ascending: false });
+            
+          if (adsError) throw adsError;
+          
+          console.log("Fetched advertisements for public profile:", adsData);
+          setAdvertisements(adsData || []);
         } else {
           setError('لم يتم العثور على المكتب');
         }
@@ -120,6 +163,29 @@ export default function OfficeProfile() {
     
     const { data } = supabase.storage.from('office-assets').getPublicUrl(path);
     return data?.publicUrl || "/placeholder.svg";
+  };
+
+  const getImageUrl = (ad: Advertisement): string => {
+    const mainImage = ad.images?.find(img => img.is_main);
+    
+    const imageUrl = mainImage?.image_url || ad.images?.[0]?.image_url;
+    
+    if (!imageUrl) return "/placeholder.svg";
+    
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+      return imageUrl;
+    }
+    
+    const { data } = supabase.storage.from('advertisements').getPublicUrl(imageUrl);
+    return data?.publicUrl || "/placeholder.svg";
+  };
+
+  const getAdTypeLabel = (adType: string): string => {
+    switch (adType) {
+      case 'sale': return 'للبيع';
+      case 'rent': return 'للإيجار';
+      default: return adType;
+    }
   };
 
   if (loading) {
@@ -209,12 +275,53 @@ export default function OfficeProfile() {
               <h2 className="text-xl font-bold text-gray-900">إعلانات المكتب</h2>
             </div>
 
-            <div className="text-center py-16 bg-white rounded-xl shadow-sm border border-gray-100">
-              <div className="max-w-md mx-auto">
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">لا توجد إعلانات حالياً</h3>
-                <p className="text-sm text-gray-500">لم يقم المكتب بإضافة أي إعلانات بعد. يمكنك العودة لاحقاً للاطلاع على الإعلانات الجديدة.</p>
+            {advertisements.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {advertisements.map((ad) => (
+                  <Card key={ad.id} className="overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                    <div className="relative h-44 bg-gray-100">
+                      <img 
+                        src={getImageUrl(ad)} 
+                        alt={ad.title} 
+                        className="w-full h-full object-cover" 
+                      />
+                      <Badge 
+                        className={`absolute top-2 right-2 ${
+                          ad.ad_type === 'sale' ? 'bg-amber-100 text-amber-800' : 'bg-teal-100 text-teal-800'
+                        }`}
+                      >
+                        {getAdTypeLabel(ad.ad_type)}
+                      </Badge>
+                    </div>
+                    <CardContent className="p-4">
+                      <h3 className="font-semibold text-lg mb-2 line-clamp-1">{ad.title}</h3>
+                      {ad.price && (
+                        <div className="text-primary font-bold mb-2">{ad.price} د.ك</div>
+                      )}
+                      {ad.description && (
+                        <p className="text-gray-600 text-sm line-clamp-2 mb-3">{ad.description}</p>
+                      )}
+                      <div className="flex justify-between items-center">
+                        <Badge variant="outline" className="text-xs">
+                          {ad.category_type === 'vehicles' ? 'مركبات' : 
+                           ad.category_type === 'real-estate' ? 'عقارات' : 'أخرى'}
+                        </Badge>
+                        <Button variant="ghost" size="sm" className="text-gray-500">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
-            </div>
+            ) : (
+              <div className="text-center py-16 bg-white rounded-xl shadow-sm border border-gray-100">
+                <div className="max-w-md mx-auto">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-2">لا توجد إعلانات حالياً</h3>
+                  <p className="text-sm text-gray-500">لم يقم المكتب بإضافة أي إعلانات بعد. يمكنك العودة لاحقاً للاطلاع على الإعلانات الجديدة.</p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

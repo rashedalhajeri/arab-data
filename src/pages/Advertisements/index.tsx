@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Car, Home, Package, Search, Filter, ArrowUpDown, Edit, Trash2, Eye } from "lucide-react";
+import { Plus, Car, Home, Package, Search, Filter, ArrowUpDown, Edit, Trash2, Eye, MoreVertical } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -16,7 +16,23 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { AlertCircle } from 'lucide-react';
+import { toast } from "@/components/ui/use-toast";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface Advertisement {
   id: string;
@@ -25,25 +41,159 @@ interface Advertisement {
   status: "active" | "pending" | "expired";
   created_at: string;
   views: number;
+  ad_type?: string;
+  description?: string;
+  price?: string;
+  images?: { 
+    id: string;
+    image_url: string;
+    is_main: boolean;
+    order?: number;
+    storage_path?: string;
+  }[];
 }
 
 const Advertisements = () => {
   const navigate = useNavigate();
   const { office } = useDashboard();
-  const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [advertisements, setAdvertisements] = useState<Advertisement[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("newest");
   const [activeTab, setActiveTab] = useState("table");
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [adToDelete, setAdToDelete] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
-  // Cargar datos de anuncios
+  // تعديل الكود لاستخدام fetch API بشكل مباشر مع ثوابت Supabase
+  const fetchAdvertisements = async () => {
+    setIsLoading(true);
+    setLoadError(null);
+    
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session?.user) {
+        setLoadError("لم يتم العثور على جلسة نشطة. الرجاء تسجيل الدخول");
+        console.error("No active session found");
+        return;
+      }
+      
+      if (!office?.id) {
+        setLoadError("لم يتم العثور على بيانات المكتب. تأكد من اختيار مكتب");
+        console.error("No office data found");
+        return;
+      }
+      
+      // استخدام fetch API مباشرة مع ثوابت Supabase
+      const supabaseUrl = "https://rkiukoeankeojpntfhvv.supabase.co";
+      const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJraXVrb2Vhbmtlb2pwbnRmaHZ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDUzNTI5MDQsImV4cCI6MjA2MDkyODkwNH0.-V81gAim0WSdyXAnhx4Fio6PuWwd2WM7fkttAdrqBV8";
+      
+      console.log("Fetching advertisements for office:", office.id);
+      
+      // 1. جلب الإعلانات
+      const adsResponse = await fetch(
+        `${supabaseUrl}/rest/v1/advertisements?office_id=eq.${office.id}&order=created_at.desc`,
+        {
+          headers: {
+            'apikey': supabaseKey,
+            'Authorization': `Bearer ${supabaseKey}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      
+      if (!adsResponse.ok) {
+        const errorText = await adsResponse.text();
+        setLoadError(`فشل في جلب الإعلانات: ${adsResponse.status} ${errorText}`);
+        console.error("Error fetching advertisements:", errorText);
+        return;
+      }
+      
+      const adsData = await adsResponse.json();
+      console.log("Fetched advertisements:", adsData);
+      
+      if (!adsData || adsData.length === 0) {
+        console.log("No advertisements found");
+        setAdvertisements([]);
+        setIsLoading(false);
+        return;
+      }
+      
+      // 2. جلب الصور لكل إعلان
+      const adsWithImages = await Promise.all(adsData.map(async (ad: any) => {
+        try {
+          console.log(`Fetching images for ad ${ad.id}`);
+          
+          const imagesResponse = await fetch(
+            `${supabaseUrl}/rest/v1/advertisement_images?advertisement_id=eq.${ad.id}`,
+            {
+              headers: {
+                'apikey': supabaseKey,
+                'Authorization': `Bearer ${supabaseKey}`,
+                'Content-Type': 'application/json'
+              }
+            }
+          );
+          
+          if (!imagesResponse.ok) {
+            console.error(`Error fetching images for ad ${ad.id}:`, await imagesResponse.text());
+            return { ...ad, images: [] };
+          }
+          
+          const imagesData = await imagesResponse.json();
+          console.log(`Images for ad ${ad.id}:`, imagesData);
+          
+          // تكوين كائن الصور بالشكل المطلوب
+          return { 
+            ...ad, 
+            images: imagesData.map((img: any) => ({
+              id: img.id,
+              image_url: img.image_url,
+              is_main: img.is_main || false,
+              order: img.order || 0
+            }))
+          };
+        } catch (err) {
+          console.error(`Error processing images for ad ${ad.id}:`, err);
+          return { ...ad, images: [] };
+        }
+      }));
+      
+      // 3. تنسيق البيانات للعرض
+      const formattedAds = adsWithImages.map((ad: any) => ({
+        id: ad.id,
+        title: ad.title || "بدون عنوان",
+        category: ad.category_type || "others",
+        status: ad.is_active ? "active" as const : "pending" as const,
+        created_at: ad.created_at || new Date().toISOString(),
+        views: 0,
+        ad_type: ad.ad_type,
+        description: ad.description,
+        price: ad.price?.toString() || "",
+        images: ad.images || []
+      }));
+      
+      console.log("Formatted advertisements:", formattedAds);
+      setAdvertisements(formattedAds);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      setLoadError(`حدث خطأ غير متوقع: ${errorMessage}`);
+      console.error("Failed to fetch advertisements:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Hook لجلب الإعلانات
   useEffect(() => {
-    // Aquí se cargarían los anuncios desde la API
-    // Por ahora dejamos un array vacío como ejemplo
-    setAdvertisements([]);
-  }, []);
+    if (office?.id) {
+      fetchAdvertisements();
+    }
+  }, [office?.id]);
 
   // Filtrar anuncios basado en búsqueda, categoría y estado
   const filteredAdvertisements = advertisements
@@ -68,10 +218,9 @@ const Advertisements = () => {
     }
   });
 
-  // توجيه المستخدم إلى صفحة إضافة إعلان
-  const handleAddAdvertisement = (category: string) => {
-    navigate(`/dashboard/advertisements/add/${category}`);
-    setShowCategoryModal(false);
+  // توجيه المستخدم مباشرة إلى صفحة إضافة إعلان
+  const handleAddAdvertisement = () => {
+    navigate(`/dashboard/advertisements/add`);
   };
 
   // Función para obtener el icono de la categoría
@@ -114,13 +263,153 @@ const Advertisements = () => {
     }
   };
 
+  // الدالة المسؤولة عن فتح نافذة التأكيد للحذف
+  const handleDeleteClick = (adId: string) => {
+    setAdToDelete(adId);
+    setIsDeleteDialogOpen(true);
+  };
+
+  // استبدال دالة confirmDelete بنسخة تستخدم fetch API مباشرة
+  const confirmDelete = async () => {
+    if (!adToDelete) return;
+    
+    try {
+      setIsDeleting(true);
+      
+      // استخدام fetch API مباشرة لتجنب مشاكل أنواع البيانات
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      
+      if (!supabaseUrl || !supabaseKey) {
+        throw new Error("بيانات الاتصال بـ Supabase غير متوفرة");
+      }
+      
+      // 1. جلب صور الإعلان
+      const imagesResponse = await fetch(
+        `${supabaseUrl}/rest/v1/advertisement_images?advertisement_id=eq.${adToDelete}&select=id,image_url`,
+        {
+          headers: {
+            'apikey': supabaseKey,
+            'Authorization': `Bearer ${supabaseKey}`,
+          }
+        }
+      );
+      
+      if (imagesResponse.ok) {
+        const images = await imagesResponse.json();
+        
+        // 2. حذف ملفات الصور من التخزين
+        for (const img of images) {
+          if (img.image_url && !img.image_url.startsWith('http')) {
+            try {
+              // حذف الملف من bucket التخزين
+              await fetch(
+                `${supabaseUrl}/storage/v1/object/advertisements/${img.image_url}`,
+                {
+                  method: 'DELETE',
+                  headers: {
+                    'apikey': supabaseKey,
+                    'Authorization': `Bearer ${supabaseKey}`,
+                  }
+                }
+              );
+            } catch (err) {
+              console.error(`فشل في حذف الصورة ${img.image_url}:`, err);
+            }
+          }
+        }
+        
+        // 3. حذف سجلات الصور من قاعدة البيانات
+        await fetch(
+          `${supabaseUrl}/rest/v1/advertisement_images?advertisement_id=eq.${adToDelete}`,
+          {
+            method: 'DELETE',
+            headers: {
+              'apikey': supabaseKey,
+              'Authorization': `Bearer ${supabaseKey}`,
+              'Prefer': 'return=minimal'
+            }
+          }
+        );
+      }
+      
+      // 4. حذف الإعلان نفسه
+      const deleteResponse = await fetch(
+        `${supabaseUrl}/rest/v1/advertisements?id=eq.${adToDelete}`,
+        {
+          method: 'DELETE',
+          headers: {
+            'apikey': supabaseKey,
+            'Authorization': `Bearer ${supabaseKey}`,
+            'Prefer': 'return=minimal'
+          }
+        }
+      );
+      
+      if (!deleteResponse.ok) {
+        throw new Error(`فشل في حذف الإعلان: ${deleteResponse.statusText}`);
+      }
+      
+      // تحديث القائمة المحلية بعد الحذف
+      setAdvertisements(ads => ads.filter(ad => ad.id !== adToDelete));
+      
+      toast({
+        title: "تم حذف الإعلان",
+        description: "تم حذف الإعلان بنجاح",
+        variant: "default",
+      });
+    } catch (error) {
+      console.error("Error deleting advertisement:", error);
+      toast({
+        title: "حدث خطأ",
+        description: "لم نتمكن من حذف الإعلان. الرجاء المحاولة مرة أخرى.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
+      setIsDeleteDialogOpen(false);
+      setAdToDelete(null);
+    }
+  };
+
+  // تحسين دالة الحصول على الصورة الرئيسية بشكل جذري
+  const getMainImageUrl = (ad: Advertisement): string => {
+    if (!ad.images || ad.images.length === 0) {
+      return "/placeholder.svg";
+    }
+    
+    // اختيار الصورة الرئيسية أو الأولى
+    const mainImage = ad.images.find(img => img.is_main);
+    const imageToUse = mainImage || ad.images[0];
+    
+    if (!imageToUse.image_url) {
+      return "/placeholder.svg";
+    }
+    
+    // إذا كان الرابط URL كامل
+    if (imageToUse.image_url.startsWith('http')) {
+      return imageToUse.image_url;
+    }
+    
+    // إنشاء رابط عام للصورة
+    const supabaseUrl = "https://rkiukoeankeojpntfhvv.supabase.co";
+    let imagePath = imageToUse.image_url;
+    
+    // تنظيف المسار
+    if (imagePath.startsWith('advertisements/')) {
+      imagePath = imagePath.slice('advertisements/'.length);
+    }
+    
+    return `${supabaseUrl}/storage/v1/object/public/advertisements/${imagePath}`;
+  };
+
   const EmptyState = () => (
     <div className="text-center py-12 border border-dashed border-gray-300 dark:border-gray-700 rounded-lg bg-gray-50/50 dark:bg-slate-800/30">
       <Package className="mx-auto h-12 w-12 text-gray-400 mb-4" />
       <p className="text-gray-500 dark:text-gray-400 mb-5">لا توجد إعلانات حالياً</p>
       <Button 
         variant="default"
-        onClick={() => setShowCategoryModal(true)}
+        onClick={handleAddAdvertisement}
         className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
       >
         <Plus className="ml-2 h-4 w-4" />
@@ -129,58 +418,13 @@ const Advertisements = () => {
     </div>
   );
 
-  // مكون نافذة اختيار الفئة
-  const CategorySelectionModal = () => (
-    <Dialog open={showCategoryModal} onOpenChange={setShowCategoryModal}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="text-center text-xl mb-2">اختر فئة الإعلان</DialogTitle>
-          <DialogDescription className="text-center">
-            حدد نوع الإعلان الذي ترغب في إضافته
-          </DialogDescription>
-        </DialogHeader>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4">
-          <div 
-            className="flex flex-col items-center gap-2 p-6 rounded-lg bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 hover:shadow-md transition-all cursor-pointer border border-blue-200 dark:border-blue-800"
-            onClick={() => handleAddAdvertisement("vehicles")}
-          >
-            <div className="w-16 h-16 rounded-full bg-blue-500 flex items-center justify-center mb-2">
-              <Car className="h-8 w-8 text-white" />
-            </div>
-            <span className="text-sm font-medium">مركبات</span>
-          </div>
-          
-          <div 
-            className="flex flex-col items-center gap-2 p-6 rounded-lg bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 hover:shadow-md transition-all cursor-pointer border border-green-200 dark:border-green-800"
-            onClick={() => handleAddAdvertisement("real-estate")}
-          >
-            <div className="w-16 h-16 rounded-full bg-green-500 flex items-center justify-center mb-2">
-              <Home className="h-8 w-8 text-white" />
-            </div>
-            <span className="text-sm font-medium">عقارات</span>
-          </div>
-          
-          <div 
-            className="flex flex-col items-center gap-2 p-6 rounded-lg bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 hover:shadow-md transition-all cursor-pointer border border-purple-200 dark:border-purple-800"
-            onClick={() => handleAddAdvertisement("other")}
-          >
-            <div className="w-16 h-16 rounded-full bg-purple-500 flex items-center justify-center mb-2">
-              <Package className="h-8 w-8 text-white" />
-            </div>
-            <span className="text-sm font-medium">أخرى</span>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-
   return (
     <>
       {/* ترويسة الصفحة - متجاوبة */}
       <header className="flex flex-col-reverse md:flex-row justify-between items-start md:items-center gap-4 mb-8">
         <div className="w-full md:w-auto">
           <Button 
-            onClick={() => setShowCategoryModal(true)}
+            onClick={handleAddAdvertisement}
             className="w-full md:w-auto bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
           >
             <Plus className="ml-2 h-4 w-4" />
@@ -269,47 +513,120 @@ const Advertisements = () => {
           
           {/* عرض جدول */}
           <TabsContent value="table" className="p-4 overflow-x-auto">
-            {advertisements.length > 0 ? (
+            {isLoading ? (
+              <div className="flex justify-center items-center p-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
+              </div>
+            ) : loadError ? (
+              <div className="text-center py-12 border border-dashed border-red-300 dark:border-red-700 rounded-lg bg-red-50/50 dark:bg-red-900/10">
+                <AlertCircle className="mx-auto h-12 w-12 text-red-400 mb-4" />
+                <p className="text-red-500 dark:text-red-400 mb-5">{loadError}</p>
+                <Button 
+                  variant="outline"
+                  onClick={() => fetchAdvertisements()}
+                  className="border-red-200 dark:border-red-800 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                >
+                  إعادة المحاولة
+                </Button>
+              </div>
+            ) : advertisements.length > 0 ? (
               <div className="rounded-md border border-gray-200 dark:border-gray-700 overflow-hidden">
-                <Table>
+                <Table dir="rtl">
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="text-center">الصورة</TableHead>
                       <TableHead className="text-right">العنوان</TableHead>
                       <TableHead className="text-right">الفئة</TableHead>
                       <TableHead className="text-right">الحالة</TableHead>
-                      <TableHead className="text-right">المشاهدات</TableHead>
-                      <TableHead className="text-right">تاريخ الإنشاء</TableHead>
-                      <TableHead className="text-right">الإجراءات</TableHead>
+                      <TableHead className="text-center">الإجراءات</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {sortedAdvertisements.map((ad) => (
-                      <TableRow key={ad.id}>
-                        <TableCell className="font-medium">{ad.title}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1">
-                            {getCategoryIcon(ad.category)}
-                            <span>{ad.category === "vehicles" ? "مركبات" : ad.category === "real-estate" ? "عقارات" : "أخرى"}</span>
+                      <TableRow key={ad.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                        <TableCell className="text-center">
+                          <div className="flex justify-center">
+                            <div className="w-16 h-16 rounded-md overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+                              <img
+                                src={getMainImageUrl(ad)}
+                                alt={ad.title}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  console.error(`[${ad.id}] فشل تحميل الصورة:`, (e.target as HTMLImageElement).src);
+                                  (e.target as HTMLImageElement).onerror = null;
+                                  (e.target as HTMLImageElement).src = "/placeholder.svg";
+                                }}
+                              />
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          <div className="flex flex-col items-start gap-1 text-right">
+                            <span className="line-clamp-1">{ad.title}</span>
+                            <div className="flex items-center gap-2 mt-1">
+                              {ad.price && (
+                                <Badge variant="outline" className="font-mono text-xs">
+                                  {ad.price} د.ك
+                                </Badge>
+                              )}
+                              {ad.ad_type && (
+                                <span className="text-xs text-gray-500">
+                                  {ad.ad_type === 'sale' ? 'للبيع' : ad.ad_type === 'rent' ? 'للإيجار' : ad.ad_type}
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </TableCell>
                         <TableCell>
+                          <div className="flex items-center gap-2 justify-start">
+                            {getCategoryIcon(ad.category)}
+                            <span>
+                              {ad.category === "vehicles" ? "مركبات" : 
+                               ad.category === "real-estate" ? "عقارات" : 
+                               ad.category === "others" ? "أخرى" : "-"}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">
                           <Badge className={getStatusBadgeColor(ad.status)}>{getStatusText(ad.status)}</Badge>
                         </TableCell>
-                        <TableCell>{ad.views}</TableCell>
-                        <TableCell dir="ltr" className="text-right">
-                          {new Date(ad.created_at).toLocaleDateString("ar-SA")}
-                        </TableCell>
                         <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-purple-600">
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600">
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600">
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                          <div className="flex justify-center">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  className="h-8 w-8 p-0 rounded-full"
+                                >
+                                  <MoreVertical className="h-4 w-4" />
+                                  <span className="sr-only">فتح القائمة</span>
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-36">
+                                <DropdownMenuItem 
+                                  className="flex items-center gap-2 cursor-pointer text-blue-600 focus:text-blue-600 focus:bg-blue-50 dark:focus:bg-blue-900/20"
+                                  onClick={() => navigate(`/dashboard/advertisements/edit/${ad.id}`)}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                  <span>تعديل</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem 
+                                  className="flex items-center gap-2 cursor-pointer text-purple-600 focus:text-purple-600 focus:bg-purple-50 dark:focus:bg-purple-900/20"
+                                  onClick={() => navigate(`/dashboard/advertisements/view/${ad.id}`)}
+                                >
+                                  <Eye className="h-4 w-4" />
+                                  <span>عرض</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem 
+                                  className="flex items-center gap-2 cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-900/20"
+                                  onClick={() => handleDeleteClick(ad.id)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                  <span>حذف</span>
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -324,39 +641,104 @@ const Advertisements = () => {
           
           {/* عرض بطاقات - أفضل للجوال */}
           <TabsContent value="grid" className="p-4">
-            {advertisements.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {isLoading ? (
+              <div className="flex justify-center items-center p-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
+              </div>
+            ) : loadError ? (
+              <div className="text-center py-12 border border-dashed border-red-300 dark:border-red-700 rounded-lg bg-red-50/50 dark:bg-red-900/10">
+                <AlertCircle className="mx-auto h-12 w-12 text-red-400 mb-4" />
+                <p className="text-red-500 dark:text-red-400 mb-5">{loadError}</p>
+                <Button 
+                  variant="outline"
+                  onClick={() => fetchAdvertisements()}
+                  className="border-red-200 dark:border-red-800 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                >
+                  إعادة المحاولة
+                </Button>
+              </div>
+            ) : advertisements.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" dir="rtl">
                 {sortedAdvertisements.map((ad) => (
-                  <Card key={ad.id} className="border border-gray-200 dark:border-gray-700">
-                    <CardContent className="p-4">
-                      <div className="flex justify-between items-start mb-2">
-                        <h3 className="font-semibold truncate">{ad.title}</h3>
+                  <Card key={ad.id} className="border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-md transition-shadow">
+                    <div className="relative aspect-[16/9] bg-gray-100 dark:bg-gray-800">
+                      <img 
+                        src={getMainImageUrl(ad)} 
+                        alt={ad.title} 
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          console.error(`[${ad.id}] فشل تحميل الصورة في البطاقة:`, (e.target as HTMLImageElement).src);
+                          (e.target as HTMLImageElement).onerror = null;
+                          (e.target as HTMLImageElement).src = "/placeholder.svg";
+                        }}
+                      />
+                      {ad.ad_type && (
+                        <Badge 
+                          className={`absolute top-2 right-2 ${
+                            ad.ad_type === 'sale' ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400' : 
+                            'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-400'
+                          }`}
+                        >
+                          {ad.ad_type === 'sale' ? 'للبيع' : ad.ad_type === 'rent' ? 'للإيجار' : ad.ad_type}
+                        </Badge>
+                      )}
+                    </div>
+                    <CardContent className="p-4 text-right">
+                      <div className="flex justify-between items-start mb-3">
                         <Badge className={getStatusBadgeColor(ad.status)}>{getStatusText(ad.status)}</Badge>
+                        <h3 className="font-semibold truncate ml-2">{ad.title}</h3>
                       </div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400 flex flex-col gap-1 mb-4">
-                        <div className="flex items-center gap-1">
+                      <div className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                        <div className="flex items-center gap-2 mb-2 justify-end">
+                          <span>
+                            {ad.category === "vehicles" ? "مركبات" : 
+                             ad.category === "real-estate" ? "عقارات" : 
+                             ad.category === "others" ? "أخرى" : "-"}
+                          </span>
                           {getCategoryIcon(ad.category)}
-                          <span>{ad.category === "vehicles" ? "مركبات" : ad.category === "real-estate" ? "عقارات" : "أخرى"}</span>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <span>المشاهدات: {ad.views}</span>
-                          <span>•</span>
-                          <span dir="ltr">{new Date(ad.created_at).toLocaleDateString("ar-SA")}</span>
-                        </div>
+                        {ad.price && (
+                          <div className="text-primary font-bold mt-2 text-left">
+                            {ad.price} د.ك
+                          </div>
+                        )}
                       </div>
-                      <div className="flex justify-between">
-                        <Button variant="outline" size="sm" className="text-purple-600">
-                          <Eye className="h-4 w-4 ml-1" />
-                          عرض
-                        </Button>
-                        <div className="flex gap-1">
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600">
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600">
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
+                      <div className="absolute top-2 left-2 z-10">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button 
+                              variant="outline" 
+                              size="icon" 
+                              className="h-8 w-8 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border border-gray-200 dark:border-gray-700 shadow-sm"
+                            >
+                              <MoreVertical className="h-4 w-4" />
+                              <span className="sr-only">فتح القائمة</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-36">
+                            <DropdownMenuItem 
+                              className="flex items-center gap-2 cursor-pointer text-blue-600 focus:text-blue-600 focus:bg-blue-50 dark:focus:bg-blue-900/20"
+                              onClick={() => navigate(`/dashboard/advertisements/edit/${ad.id}`)}
+                            >
+                              <Edit className="h-4 w-4" />
+                              <span>تعديل</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              className="flex items-center gap-2 cursor-pointer text-purple-600 focus:text-purple-600 focus:bg-purple-50 dark:focus:bg-purple-900/20"
+                              onClick={() => navigate(`/dashboard/advertisements/view/${ad.id}`)}
+                            >
+                              <Eye className="h-4 w-4" />
+                              <span>عرض</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              className="flex items-center gap-2 cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-900/20"
+                              onClick={() => handleDeleteClick(ad.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                              <span>حذف</span>
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </CardContent>
                   </Card>
@@ -369,8 +751,38 @@ const Advertisements = () => {
         </Tabs>
       </div>
 
-      {/* نافذة اختيار الفئة */}
-      <CategorySelectionModal />
+      {/* نافذة تأكيد الحذف */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent className="max-w-md mx-auto" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <AlertCircle className="h-5 w-5" />
+              تأكيد الحذف
+            </DialogTitle>
+            <DialogDescription>
+              هل أنت متأكد من رغبتك في حذف هذا الإعلان؟ لا يمكن التراجع عن هذا الإجراء.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex flex-row-reverse sm:justify-start gap-2 mt-4">
+            <Button
+              variant="destructive"
+              onClick={confirmDelete}
+              disabled={isDeleting}
+              className="flex-1 sm:flex-none"
+            >
+              {isDeleting ? "جاري الحذف..." : "تأكيد الحذف"}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+              className="flex-1 sm:flex-none"
+            >
+              إلغاء
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
