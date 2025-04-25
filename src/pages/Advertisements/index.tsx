@@ -139,7 +139,7 @@ const Advertisements = () => {
             حدد نوع الإعلان الذي ترغب في إضافته
           </DialogDescription>
         </DialogHeader>
-        <div className="grid grid-cols-3 gap-4 p-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4">
           <div 
             className="flex flex-col items-center gap-2 p-6 rounded-lg bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 hover:shadow-md transition-all cursor-pointer border border-blue-200 dark:border-blue-800"
             onClick={() => handleAddAdvertisement("vehicles")}
@@ -176,41 +176,41 @@ const Advertisements = () => {
 
   return (
     <>
-      {/* ترويسة الصفحة */}
-      <header className="flex justify-between items-center mb-8">
-        <div className="relative">
+      {/* ترويسة الصفحة - متجاوبة */}
+      <header className="flex flex-col-reverse md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+        <div className="w-full md:w-auto">
           <Button 
             onClick={() => setShowCategoryModal(true)}
-            className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
+            className="w-full md:w-auto bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
           >
             <Plus className="ml-2 h-4 w-4" />
             إضافة إعلان
           </Button>
         </div>
-        <div className="space-y-2 text-right">
-          <h1 className="text-3xl font-bold bg-gradient-to-l from-purple-800 to-indigo-700 text-transparent bg-clip-text">إعلاناتي</h1>
+        <div className="space-y-2 text-right w-full md:w-auto">
+          <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-l from-purple-800 to-indigo-700 text-transparent bg-clip-text">إعلاناتي</h1>
           <p className="text-gray-600 dark:text-gray-400">إدارة جميع الإعلانات الخاصة بك</p>
         </div>
       </header>
 
-      {/* فلاتر البحث */}
-      <Card className="border-none bg-white/80 dark:bg-slate-800/60 backdrop-blur-sm shadow-lg overflow-hidden">
+      {/* فلاتر البحث - متجاوبة */}
+      <Card className="border-none bg-white/80 dark:bg-slate-800/60 backdrop-blur-sm shadow-lg overflow-hidden mb-6">
         <CardContent className="p-4 space-y-4">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="relative flex-grow">
+          <div className="flex flex-col gap-4">
+            <div className="relative w-full">
               <Search className="absolute right-3 top-2.5 h-4 w-4 text-gray-500" />
               <Input
                 placeholder="بحث في الإعلانات..."
-                className="pr-10"
+                className="pr-10 w-full"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 id="search-ads"
                 name="search-ads"
               />
             </div>
-            <div className="flex flex-col sm:flex-row gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger className="w-full sm:w-[140px]" id="category-filter" name="category-filter">
+                <SelectTrigger className="w-full" id="category-filter" name="category-filter">
                   <Filter className="h-4 w-4 ml-2" />
                   <SelectValue placeholder="جميع الفئات" />
                 </SelectTrigger>
@@ -223,7 +223,7 @@ const Advertisements = () => {
               </Select>
               
               <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                <SelectTrigger className="w-full sm:w-[140px]" id="status-filter" name="status-filter">
+                <SelectTrigger className="w-full" id="status-filter" name="status-filter">
                   <Filter className="h-4 w-4 ml-2" />
                   <SelectValue placeholder="جميع الحالات" />
                 </SelectTrigger>
@@ -236,7 +236,7 @@ const Advertisements = () => {
               </Select>
               
               <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-full sm:w-[140px]" id="sort-by" name="sort-by">
+                <SelectTrigger className="w-full" id="sort-by" name="sort-by">
                   <ArrowUpDown className="h-4 w-4 ml-2" />
                   <SelectValue placeholder="الأحدث" />
                 </SelectTrigger>
@@ -253,118 +253,123 @@ const Advertisements = () => {
         </CardContent>
       </Card>
 
-      {/* خيارات عرض y قائمة الإعلانات */}
-      <Card className="border-none bg-white/80 dark:bg-slate-800/60 backdrop-blur-sm shadow-lg overflow-hidden">
-        <CardContent className="p-4 lg:p-6">
-          {advertisements.length === 0 ? (
-            <EmptyState />
-          ) : (
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid grid-cols-2 w-60 mb-4">
-                <TabsTrigger value="table" id="tab-table" name="tab-view">جدول</TabsTrigger>
-                <TabsTrigger value="grid" id="tab-grid" name="tab-view">بطاقات</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="table" className="m-0">
-                <div className="rounded-md border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="text-right">العنوان</TableHead>
-                        <TableHead className="text-right">الفئة</TableHead>
-                        <TableHead className="text-right">الحالة</TableHead>
-                        <TableHead className="text-right">تاريخ النشر</TableHead>
-                        <TableHead className="text-right">المشاهدات</TableHead>
-                        <TableHead className="text-right">الإجراءات</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {sortedAdvertisements.map((ad) => (
-                        <TableRow key={ad.id}>
-                          <TableCell className="font-medium">{ad.title}</TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-1">
-                              {getCategoryIcon(ad.category)}
-                              <span>{ad.category === "vehicles" ? "مركبات" : ad.category === "real-estate" ? "عقارات" : "أخرى"}</span>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline" className={getStatusBadgeColor(ad.status)}>
-                              {getStatusText(ad.status)}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>{new Date(ad.created_at).toLocaleDateString("ar-SA")}</TableCell>
-                          <TableCell>{ad.views}</TableCell>
-                          <TableCell>
-                            <div className="flex gap-1">
-                              <Button variant="ghost" size="icon">
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                              <Button variant="ghost" size="icon">
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button variant="ghost" size="icon">
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </TabsContent>
-              
-              <TabsContent value="grid" className="m-0">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {sortedAdvertisements.map((ad) => (
-                    <Card key={ad.id} className="overflow-hidden">
-                      <div className="aspect-video bg-gray-100 dark:bg-gray-800 relative">
-                        <div className="absolute top-2 left-2">
-                          <Badge variant="outline" className={getStatusBadgeColor(ad.status)}>
-                            {getStatusText(ad.status)}
-                          </Badge>
-                        </div>
-                      </div>
-                      <CardContent className="p-4">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <h3 className="font-semibold text-lg">{ad.title}</h3>
-                            <div className="flex items-center gap-1 text-sm text-gray-500">
-                              {getCategoryIcon(ad.category)}
-                              <span>{ad.category === "vehicles" ? "مركبات" : ad.category === "real-estate" ? "عقارات" : "أخرى"}</span>
-                            </div>
+      {/* عرض الإعلانات - عرض القائمة أو الجدول حسب الشاشة */}
+      <div className="bg-white/80 dark:bg-slate-800/60 rounded-lg overflow-hidden shadow-lg backdrop-blur-sm">
+        <Tabs defaultValue="table" value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <div className="px-4 pt-4 border-b border-gray-100 dark:border-gray-800">
+            <TabsList className="bg-gray-100 dark:bg-gray-800/50 p-1 rounded-lg">
+              <TabsTrigger value="table" className="flex-1 py-1.5 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-900">
+                جدول
+              </TabsTrigger>
+              <TabsTrigger value="grid" className="flex-1 py-1.5 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-900">
+                بطاقات
+              </TabsTrigger>
+            </TabsList>
+          </div>
+          
+          {/* عرض جدول */}
+          <TabsContent value="table" className="p-4 overflow-x-auto">
+            {advertisements.length > 0 ? (
+              <div className="rounded-md border border-gray-200 dark:border-gray-700 overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-right">العنوان</TableHead>
+                      <TableHead className="text-right">الفئة</TableHead>
+                      <TableHead className="text-right">الحالة</TableHead>
+                      <TableHead className="text-right">المشاهدات</TableHead>
+                      <TableHead className="text-right">تاريخ الإنشاء</TableHead>
+                      <TableHead className="text-right">الإجراءات</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {sortedAdvertisements.map((ad) => (
+                      <TableRow key={ad.id}>
+                        <TableCell className="font-medium">{ad.title}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            {getCategoryIcon(ad.category)}
+                            <span>{ad.category === "vehicles" ? "مركبات" : ad.category === "real-estate" ? "عقارات" : "أخرى"}</span>
                           </div>
-                          <div className="flex items-center gap-1 text-sm text-gray-500">
-                            <Eye className="h-3 w-3" />
-                            <span>{ad.views}</span>
-                          </div>
-                        </div>
-                        <div className="mt-4 flex justify-between items-center">
-                          <span className="text-xs text-gray-500">{new Date(ad.created_at).toLocaleDateString("ar-SA")}</span>
-                          <div className="flex gap-1">
-                            <Button variant="ghost" size="icon">
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={getStatusBadgeColor(ad.status)}>{getStatusText(ad.status)}</Badge>
+                        </TableCell>
+                        <TableCell>{ad.views}</TableCell>
+                        <TableCell dir="ltr" className="text-right">
+                          {new Date(ad.created_at).toLocaleDateString("ar-SA")}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-purple-600">
                               <Eye className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="icon">
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600">
                               <Edit className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="icon">
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600">
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            ) : (
+              <EmptyState />
+            )}
+          </TabsContent>
+          
+          {/* عرض بطاقات - أفضل للجوال */}
+          <TabsContent value="grid" className="p-4">
+            {advertisements.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {sortedAdvertisements.map((ad) => (
+                  <Card key={ad.id} className="border border-gray-200 dark:border-gray-700">
+                    <CardContent className="p-4">
+                      <div className="flex justify-between items-start mb-2">
+                        <h3 className="font-semibold truncate">{ad.title}</h3>
+                        <Badge className={getStatusBadgeColor(ad.status)}>{getStatusText(ad.status)}</Badge>
+                      </div>
+                      <div className="text-sm text-gray-500 dark:text-gray-400 flex flex-col gap-1 mb-4">
+                        <div className="flex items-center gap-1">
+                          {getCategoryIcon(ad.category)}
+                          <span>{ad.category === "vehicles" ? "مركبات" : ad.category === "real-estate" ? "عقارات" : "أخرى"}</span>
                         </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </TabsContent>
-            </Tabs>
-          )}
-        </CardContent>
-      </Card>
+                        <div className="flex items-center gap-2">
+                          <span>المشاهدات: {ad.views}</span>
+                          <span>•</span>
+                          <span dir="ltr">{new Date(ad.created_at).toLocaleDateString("ar-SA")}</span>
+                        </div>
+                      </div>
+                      <div className="flex justify-between">
+                        <Button variant="outline" size="sm" className="text-purple-600">
+                          <Eye className="h-4 w-4 ml-1" />
+                          عرض
+                        </Button>
+                        <div className="flex gap-1">
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600">
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <EmptyState />
+            )}
+          </TabsContent>
+        </Tabs>
+      </div>
 
-      {/* Modal de selección de categoría */}
+      {/* نافذة اختيار الفئة */}
       <CategorySelectionModal />
     </>
   );

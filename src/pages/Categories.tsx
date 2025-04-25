@@ -8,24 +8,29 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { PlusCircle, Edit, Trash2, MoreVertical, Loader2, Tag, Search } from "lucide-react";
+import { PlusCircle, Edit, Trash2, MoreVertical, Loader2, Tag, Search, Upload, Info } from "lucide-react";
 import { useDashboard } from "@/components/DashboardLayout";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { v4 as uuidv4 } from 'uuid';
 
 interface Category {
   id: string;
+  created_at: string;
+  updated_at?: string;
   name: string;
-  description?: string;
-  icon?: string;
-  slug: string;
-  isActive: boolean;
-  adCount: number;
-  createdAt: string;
+  image_url: string;
+  user_id: string;
+  office_id?: string;
+  category_type?: string;
+  status?: string;
+  is_active: boolean;
+  ad_count?: number;
 }
 
 const Categories = () => {
-  const { office } = useDashboard();
+  const { office, user } = useDashboard();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -34,163 +39,264 @@ const Categories = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: "",
-    description: "",
-    icon: "",
-    isActive: true
+    image_url: "",
+    is_active: true
   });
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>("");
 
-  useEffect(() => {
-    const fetchCategories = async () => {
-      setLoading(true);
-      
-      try {
-        // Simulated delay for network request
-        await new Promise(resolve => setTimeout(resolve, 800));
-        
-        // Example data
-        const exampleCategories: Category[] = [
-          {
-            id: "1",
-            name: "سيارات",
-            description: "كل أنواع السيارات والمركبات",
-            icon: "car",
-            slug: "vehicles",
-            isActive: true,
-            adCount: 24,
-            createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
-          },
-          {
-            id: "2",
-            name: "عقارات",
-            description: "شقق، فلل، أراضي وعقارات تجارية",
-            icon: "building",
-            slug: "real-estate",
-            isActive: true,
-            adCount: 18,
-            createdAt: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000).toISOString()
-          },
-          {
-            id: "3",
-            name: "إلكترونيات",
-            description: "هواتف، أجهزة كمبيوتر وإلكترونيات أخرى",
-            icon: "smartphone",
-            slug: "electronics",
-            isActive: true,
-            adCount: 12,
-            createdAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString()
-          },
-          {
-            id: "4",
-            name: "وظائف",
-            description: "فرص عمل وتوظيف",
-            icon: "briefcase",
-            slug: "jobs",
-            isActive: false,
-            adCount: 0,
-            createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString()
-          },
-          {
-            id: "5",
-            name: "خدمات",
-            description: "خدمات متنوعة للأفراد والشركات",
-            icon: "tool",
-            slug: "services",
-            isActive: true,
-            adCount: 8,
-            createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString()
-          }
-        ];
-        
-        setCategories(exampleCategories);
-      } catch (error) {
-        console.error("Error loading categories:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  // Fetch categories from Supabase
+  const fetchCategories = async () => {
+    setLoading(true);
+    setError(null);
     
+    try {
+      console.log("Fetching categories for user", user?.id);
+      
+      if (!user?.id) {
+        throw new Error("معرف المستخدم غير متوفر");
+      }
+      
+      // Fetch categories for the current user
+      const { data: categoriesData, error } = await supabase
+        .from('categories')
+        .select('*')
+        .eq('user_id', user.id);
+      
+      if (error) {
+        console.error("Supabase error:", error);
+        throw error;
+      }
+      
+      console.log("Categories data received:", categoriesData);
+      
+      // Map status to is_active if needed
+      const categoriesWithCounts = categoriesData?.map(category => ({
+        ...category,
+        // If is_active is not defined, use status field (assuming "active" means active)
+        is_active: category.is_active !== undefined ? category.is_active : (category.status === "active"),
+        ad_count: 0
+      })) || [];
+      
+      setCategories(categoriesWithCounts);
+      
+      // If there are no categories and not loading, show an empty state
+      if (categoriesWithCounts.length === 0) {
+        console.log("No categories found for the user");
+      }
+    } catch (error: any) {
+      console.error("Error loading categories:", error);
+      setError(error.message || "حدث خطأ أثناء تحميل الفئات");
+      toast({
+        title: "خطأ في تحميل الفئات",
+        description: "حدث خطأ أثناء تحميل الفئات، يرجى المحاولة مرة أخرى",
+        variant: "destructive"
+      });
+      // Set empty categories array to show empty state
+      setCategories([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  useEffect(() => {
     fetchCategories();
-  }, []);
+  }, [user?.id]);
 
   // Filter categories based on active tab and search query
   const filteredCategories = categories
     .filter(category => {
       if (activeTab === "all") return true;
-      if (activeTab === "active") return category.isActive;
-      if (activeTab === "inactive") return !category.isActive;
+      if (activeTab === "active") return category.is_active;
+      if (activeTab === "inactive") return !category.is_active;
       return true;
     })
     .filter(category => 
       searchQuery === "" || 
-      category.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      category.description?.toLowerCase().includes(searchQuery.toLowerCase())
+      category.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
+  // Handle image selection
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) {
+      setImageFile(null);
+      setImagePreview("");
+      return;
+    }
+
+    const file = files[0];
+    // Check if file is an image
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "نوع ملف غير صالح",
+        description: "يرجى اختيار صورة صالحة",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Check file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast({
+        title: "حجم الصورة كبير جدًا",
+        description: "يجب أن يكون حجم الصورة أقل من 2 ميجابايت",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setImageFile(file);
+    const reader = new FileReader();
+    reader.onload = () => {
+      setImagePreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Upload image to Supabase Storage
+  const uploadCategoryImage = async (file: File): Promise<string> => {
+    setUploading(true);
+    
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${uuidv4()}.${fileExt}`;
+      const filePath = `public/${fileName}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('uploads')
+        .upload(filePath, file);
+        
+      if (uploadError) throw uploadError;
+      
+      // Get public URL
+      const { data } = supabase.storage
+        .from('uploads')
+        .getPublicUrl(filePath);
+        
+      return data.publicUrl;
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      throw error;
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // Initialize form data for creating a new category
   const handleCreateCategory = () => {
     setFormData({
       name: "",
-      description: "",
-      icon: "",
-      isActive: true
+      image_url: "",
+      is_active: true
     });
+    setImageFile(null);
+    setImagePreview("");
     setIsCreating(true);
   };
 
+  // Initialize form data for editing an existing category
   const handleEditCategory = (category: Category) => {
     setSelectedCategory(category);
     setFormData({
       name: category.name,
-      description: category.description || "",
-      icon: category.icon || "",
-      isActive: category.isActive
+      image_url: category.image_url,
+      is_active: category.is_active
     });
+    setImageFile(null);
+    setImagePreview(category.image_url);
     setIsEditing(true);
   };
 
-  const handleDeleteCategory = (categoryId: string) => {
-    // In a real application, this would make an API call to delete the category
+  // Delete a category
+  const handleDeleteCategory = async (categoryId: string) => {
     const categoryToDelete = categories.find(c => c.id === categoryId);
     
-    if (categoryToDelete?.adCount && categoryToDelete.adCount > 0) {
+    if (categoryToDelete?.ad_count && categoryToDelete.ad_count > 0) {
       toast({
         title: "لا يمكن حذف الفئة",
-        description: `لا يمكن حذف هذه الفئة لأنها تحتوي على ${categoryToDelete.adCount} إعلانات. قم بنقل الإعلانات أو تعطيل الفئة بدلاً من ذلك.`,
+        description: `لا يمكن حذف هذه الفئة لأنها تحتوي على ${categoryToDelete.ad_count} إعلانات. قم بنقل الإعلانات أو تعطيل الفئة بدلاً من ذلك.`,
         variant: "destructive"
       });
       return;
     }
     
-    setCategories(categories.filter(category => category.id !== categoryId));
-    
-    toast({
-      title: "تم حذف الفئة",
-      description: "تم حذف الفئة بنجاح"
-    });
+    try {
+      const { error } = await supabase
+        .from('categories')
+        .delete()
+        .eq('id', categoryId);
+        
+      if (error) throw error;
+      
+      setCategories(categories.filter(category => category.id !== categoryId));
+      
+      toast({
+        title: "تم حذف الفئة",
+        description: "تم حذف الفئة بنجاح"
+      });
+    } catch (error) {
+      console.error("Error deleting category:", error);
+      toast({
+        title: "خطأ في حذف الفئة",
+        description: "حدث خطأ أثناء حذف الفئة، يرجى المحاولة مرة أخرى",
+        variant: "destructive"
+      });
+    }
   };
 
-  const handleToggleActive = (categoryId: string) => {
-    setCategories(
-      categories.map(category => 
-        category.id === categoryId 
-          ? { ...category, isActive: !category.isActive } 
-          : category
-      )
-    );
-    
+  // Toggle category active state
+  const handleToggleActive = async (categoryId: string) => {
     const category = categories.find(c => c.id === categoryId);
-    const newStatus = !category?.isActive;
+    if (!category) return;
     
-    toast({
-      title: newStatus ? "تم تفعيل الفئة" : "تم تعطيل الفئة",
-      description: newStatus 
-        ? "الفئة الآن نشطة وستظهر للمستخدمين" 
-        : "الفئة الآن غير نشطة ولن تظهر للمستخدمين"
-    });
+    const newStatus = !category.is_active;
+    
+    try {
+      const { error } = await supabase
+        .from('categories')
+        .update({ 
+          is_active: newStatus,
+          status: newStatus ? "active" : "inactive" 
+        })
+        .eq('id', categoryId);
+        
+      if (error) throw error;
+      
+      setCategories(
+        categories.map(cat => 
+          cat.id === categoryId 
+            ? { 
+                ...cat, 
+                is_active: newStatus,
+                status: newStatus ? "active" : "inactive" 
+              } 
+            : cat
+        )
+      );
+      
+      toast({
+        title: newStatus ? "تم تفعيل الفئة" : "تم تعطيل الفئة",
+        description: newStatus 
+          ? "الفئة الآن نشطة وستظهر للمستخدمين" 
+          : "الفئة الآن غير نشطة ولن تظهر للمستخدمين"
+      });
+    } catch (error) {
+      console.error("Error toggling category status:", error);
+      toast({
+        title: "خطأ في تغيير حالة الفئة",
+        description: "حدث خطأ أثناء تغيير حالة الفئة، يرجى المحاولة مرة أخرى",
+        variant: "destructive"
+      });
+    }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Form submission handler for creating or updating a category
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.name.trim()) {
@@ -202,51 +308,108 @@ const Categories = () => {
       return;
     }
     
-    if (isCreating) {
-      // Generate a new category with a unique ID
-      const newCategory: Category = {
-        id: Date.now().toString(),
-        name: formData.name,
-        description: formData.description,
-        icon: formData.icon,
-        slug: formData.name.toLowerCase().replace(/\s+/g, '-'),
-        isActive: formData.isActive,
-        adCount: 0,
-        createdAt: new Date().toISOString()
-      };
-      
-      setCategories([...categories, newCategory]);
-      
+    if (!user?.id) {
       toast({
-        title: "تمت إضافة الفئة",
-        description: "تمت إضافة الفئة الجديدة بنجاح"
+        title: "خطأ في المعرض",
+        description: "لا يمكن العثور على معلومات المستخدم",
+        variant: "destructive"
       });
-    } else if (isEditing && selectedCategory) {
-      // Update existing category
-      setCategories(
-        categories.map(category => 
-          category.id === selectedCategory.id 
-            ? { 
-                ...category, 
-                name: formData.name,
-                description: formData.description,
-                icon: formData.icon,
-                isActive: formData.isActive
-              } 
-            : category
-        )
-      );
-      
-      toast({
-        title: "تم تحديث الفئة",
-        description: "تم تحديث الفئة بنجاح"
-      });
+      return;
     }
     
-    // Reset form and close dialogs
-    setIsCreating(false);
-    setIsEditing(false);
-    setSelectedCategory(null);
+    try {
+      let imageUrl = formData.image_url;
+      
+      // If there's a new image file, upload it
+      if (imageFile) {
+        imageUrl = await uploadCategoryImage(imageFile);
+      } else if (isCreating && !imageUrl) {
+        // If creating a new category with no image
+        toast({
+          title: "الصورة مطلوبة",
+          description: "يرجى اختيار صورة للفئة",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      // Prepare data for database
+      const categoryData = {
+        name: formData.name,
+        image_url: imageUrl,
+        is_active: formData.is_active,
+        user_id: user.id,
+        office_id: office?.id || null,
+        // Map is_active to status for compatibility
+        status: formData.is_active ? "active" : "inactive",
+        category_type: "general" // default value
+      };
+      
+      if (isCreating) {
+        // Create new category
+        const { data, error } = await supabase
+          .from('categories')
+          .insert(categoryData)
+          .select();
+          
+        if (error) throw error;
+        
+        if (data && data[0]) {
+          setCategories([...categories, { ...data[0], ad_count: 0 }]);
+          
+          toast({
+            title: "تمت إضافة الفئة",
+            description: "تمت إضافة الفئة الجديدة بنجاح"
+          });
+        }
+      } else if (isEditing && selectedCategory) {
+        // Update existing category
+        const { error } = await supabase
+          .from('categories')
+          .update({
+            name: formData.name,
+            image_url: imageUrl,
+            is_active: formData.is_active,
+            status: formData.is_active ? "active" : "inactive"
+          })
+          .eq('id', selectedCategory.id);
+          
+        if (error) throw error;
+        
+        setCategories(
+          categories.map(category => 
+            category.id === selectedCategory.id 
+              ? { 
+                  ...category, 
+                  name: formData.name,
+                  image_url: imageUrl,
+                  is_active: formData.is_active,
+                  status: formData.is_active ? "active" : "inactive"
+                } 
+              : category
+          )
+        );
+        
+        toast({
+          title: "تم تحديث الفئة",
+          description: "تم تحديث الفئة بنجاح"
+        });
+      }
+      
+      // Reset form and close dialogs
+      setIsCreating(false);
+      setIsEditing(false);
+      setSelectedCategory(null);
+      setImageFile(null);
+      setImagePreview("");
+    } catch (error) {
+      console.error("Error saving category:", error);
+      toast({
+        title: "خطأ في حفظ الفئة",
+        description: "حدث خطأ أثناء حفظ الفئة، يرجى المحاولة مرة أخرى",
+        variant: "destructive"
+      });
+    }
   };
 
   // Component for the empty state
@@ -266,9 +429,32 @@ const Categories = () => {
     </div>
   );
 
+  // Error state component
+  const ErrorState = () => (
+    <div className="text-center py-12 border border-dashed border-red-300 dark:border-red-700 rounded-lg bg-red-50/50 dark:bg-red-900/10">
+      <div className="mx-auto h-12 w-12 text-red-500 mb-4">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+      </div>
+      <p className="text-red-500 dark:text-red-400 mb-3">خطأ في تحميل الفئات</p>
+      <p className="text-gray-500 dark:text-gray-400 mb-5">{error || "حدث خطأ غير متوقع"}</p>
+      <Button 
+        variant="outline"
+        onClick={fetchCategories}
+        className="border-red-300 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+      >
+        <svg className="h-4 w-4 ml-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+        إعادة المحاولة
+      </Button>
+    </div>
+  );
+
   // Component for category card
   const CategoryCard = ({ category }: { category: Category }) => {
-    const formattedDate = new Date(category.createdAt).toLocaleDateString('ar-SA', {
+    const formattedDate = new Date(category.created_at).toLocaleDateString('ar-SA', {
       year: 'numeric',
       month: 'long',
       day: 'numeric'
@@ -276,17 +462,30 @@ const Categories = () => {
     
     return (
       <Card className="overflow-hidden">
+        <div className="w-full h-40 overflow-hidden bg-gray-100 dark:bg-gray-800 relative">
+          <img 
+            src={category.image_url || "/placeholder.svg"} 
+            alt={category.name}
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              const imgElement = e.target as HTMLImageElement;
+              imgElement.onerror = null;
+              imgElement.src = "/placeholder.svg";
+            }}
+          />
+          <div className="absolute top-2 right-2 flex gap-1">
+            <Badge 
+              className={`${category.is_active ? "bg-green-500" : "bg-gray-500"}`} 
+              variant="default"
+            >
+              {category.is_active ? "نشط" : "غير نشط"}
+            </Badge>
+            <Badge variant="outline" className="bg-white/80">{category.ad_count || 0} إعلان</Badge>
+          </div>
+        </div>
         <CardHeader className="pb-3">
           <div className="flex justify-between items-start">
-            <div className="flex items-center gap-2">
-              <Badge 
-                className={`${category.isActive ? "bg-green-500" : "bg-gray-500"}`} 
-                variant="default"
-              >
-                {category.isActive ? "نشط" : "غير نشط"}
-              </Badge>
-              <Badge variant="outline">{category.adCount} إعلان</Badge>
-            </div>
+            <CardTitle className="text-xl">{category.name}</CardTitle>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon">
@@ -299,7 +498,7 @@ const Categories = () => {
                   تعديل
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => handleToggleActive(category.id)}>
-                  {category.isActive ? (
+                  {category.is_active ? (
                     <>
                       <Trash2 className="h-4 w-4 ml-2 text-amber-500" />
                       تعطيل
@@ -314,7 +513,7 @@ const Categories = () => {
                 <DropdownMenuItem 
                   onClick={() => handleDeleteCategory(category.id)}
                   className="text-destructive"
-                  disabled={category.adCount > 0}
+                  disabled={(category.ad_count || 0) > 0}
                 >
                   <Trash2 className="h-4 w-4 ml-2" />
                   حذف
@@ -322,27 +521,20 @@ const Categories = () => {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-          <CardTitle className="text-xl mt-2">{category.name}</CardTitle>
-          {category.description && (
-            <p className="text-sm text-gray-500 mt-1">{category.description}</p>
-          )}
         </CardHeader>
-        <CardContent className="pt-0">
-          <div className="flex justify-between text-sm text-gray-500">
-            <span>الرابط: {category.slug}</span>
-            <span>تاريخ الإنشاء: {formattedDate}</span>
-          </div>
-        </CardContent>
         <CardFooter className="bg-gray-50 dark:bg-gray-800/50 p-3 border-t">
-          <Button 
-            size="sm" 
-            variant="outline" 
-            className="w-full" 
-            onClick={() => window.location.href = `/dashboard/advertisements?category=${category.slug}`}
-            disabled={!category.isActive}
-          >
-            عرض الإعلانات ({category.adCount})
-          </Button>
+          <div className="w-full flex justify-between text-sm text-gray-500">
+            <div>{formattedDate}</div>
+            <Button 
+              size="sm" 
+              variant="outline" 
+              className="px-2"
+              onClick={() => window.location.href = `/dashboard/advertisements?category=${category.id}`}
+              disabled={!category.is_active}
+            >
+              عرض الإعلانات
+            </Button>
+          </div>
         </CardFooter>
       </Card>
     );
@@ -407,11 +599,26 @@ const Categories = () => {
         </CardContent>
       </Card>
 
+      {/* Debug info in development mode */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="mb-4 p-4 bg-yellow-50 border border-yellow-300 rounded-md">
+          <h3 className="font-bold text-yellow-800 mb-2">معلومات التصحيح:</h3>
+          <p className="text-yellow-800">
+            المستخدم: {user?.id ? user.id : 'غير متاح'}<br />
+            جاري التحميل: {loading ? 'نعم' : 'لا'}<br />
+            عدد الفئات: {categories.length}
+          </p>
+        </div>
+      )}
+
       {/* Categories grid */}
       {loading ? (
-        <div className="flex justify-center items-center py-20">
-          <Loader2 className="animate-spin text-primary h-8 w-8" />
+        <div className="flex flex-col justify-center items-center py-20">
+          <Loader2 className="animate-spin text-primary h-8 w-8 mb-4" />
+          <p className="text-gray-500">جاري تحميل الفئات...</p>
         </div>
+      ) : error ? (
+        <ErrorState />
       ) : filteredCategories.length === 0 ? (
         <EmptyState />
       ) : (
@@ -422,13 +629,27 @@ const Categories = () => {
         </div>
       )}
 
-      {/* Create category dialog */}
-      <Dialog open={isCreating} onOpenChange={setIsCreating}>
+      {/* Create/Edit category dialog */}
+      <Dialog 
+        open={isCreating || isEditing} 
+        onOpenChange={(open) => {
+          if (!open) {
+            setIsCreating(false);
+            setIsEditing(false);
+            setSelectedCategory(null);
+            setImageFile(null);
+            setImagePreview("");
+          }
+        }}
+      >
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>إضافة فئة جديدة</DialogTitle>
+            <DialogTitle>{isCreating ? "إضافة فئة جديدة" : "تعديل الفئة"}</DialogTitle>
             <DialogDescription>
-              أضف فئة جديدة لتنظيم الإعلانات على صفحتك
+              {isCreating 
+                ? "أضف فئة جديدة لتنظيم الإعلانات على صفحتك" 
+                : "قم بتعديل معلومات الفئة"
+              }
             </DialogDescription>
           </DialogHeader>
           
@@ -445,102 +666,91 @@ const Categories = () => {
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="description">وصف الفئة</Label>
-              <Textarea 
-                id="description"
-                value={formData.description}
-                onChange={(e) => setFormData({...formData, description: e.target.value})}
-                placeholder="وصف قصير للفئة"
-                rows={3}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="icon">أيقونة الفئة</Label>
-              <Input 
-                id="icon"
-                value={formData.icon}
-                onChange={(e) => setFormData({...formData, icon: e.target.value})}
-                placeholder="مثال: car"
-              />
-              <p className="text-xs text-gray-500">اسم الأيقونة من مكتبة Lucide، اتركه فارغًا للأيقونة الافتراضية</p>
-            </div>
-            
-            <div className="flex items-center space-x-2 space-x-reverse">
-              <Checkbox 
-                id="isActive" 
-                checked={formData.isActive}
-                onCheckedChange={(checked) => 
-                  setFormData({...formData, isActive: checked as boolean})
-                }
-              />
-              <Label htmlFor="isActive">فئة نشطة (ستظهر للمستخدمين)</Label>
-            </div>
-            
-            <DialogFooter className="pt-4">
-              <Button type="submit">إضافة الفئة</Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Edit category dialog */}
-      <Dialog open={isEditing} onOpenChange={setIsEditing}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>تعديل الفئة</DialogTitle>
-            <DialogDescription>
-              قم بتعديل معلومات الفئة
-            </DialogDescription>
-          </DialogHeader>
-          
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="edit-name">اسم الفئة *</Label>
-              <Input 
-                id="edit-name"
-                value={formData.name}
-                onChange={(e) => setFormData({...formData, name: e.target.value})}
-                placeholder="مثال: سيارات"
-                required
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="edit-description">وصف الفئة</Label>
-              <Textarea 
-                id="edit-description"
-                value={formData.description}
-                onChange={(e) => setFormData({...formData, description: e.target.value})}
-                placeholder="وصف قصير للفئة"
-                rows={3}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="edit-icon">أيقونة الفئة</Label>
-              <Input 
-                id="edit-icon"
-                value={formData.icon}
-                onChange={(e) => setFormData({...formData, icon: e.target.value})}
-                placeholder="مثال: car"
-              />
-              <p className="text-xs text-gray-500">اسم الأيقونة من مكتبة Lucide، اتركه فارغًا للأيقونة الافتراضية</p>
+              <Label htmlFor="image">صورة الفئة *</Label>
+              <div className="border border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-4">
+                {imagePreview ? (
+                  <div className="relative mb-4">
+                    <img 
+                      src={imagePreview} 
+                      alt="معاينة الصورة" 
+                      className="w-full h-40 object-cover rounded-md" 
+                    />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      className="absolute top-2 left-2"
+                      onClick={() => {
+                        setImageFile(null);
+                        setImagePreview("");
+                        setFormData({...formData, image_url: ""});
+                      }}
+                    >
+                      حذف
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center h-40 bg-gray-50 dark:bg-gray-800 rounded-md mb-4">
+                    <div className="text-center">
+                      <Upload className="mx-auto h-8 w-8 text-gray-400 mb-2" />
+                      <p className="text-gray-500 dark:text-gray-400 text-sm">اختر صورة للفئة</p>
+                    </div>
+                  </div>
+                )}
+                
+                <div className="flex items-center gap-4">
+                  <Input
+                    id="image"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleImageChange}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => document.getElementById('image')?.click()}
+                    className="w-full"
+                    disabled={uploading}
+                  >
+                    {uploading ? (
+                      <>
+                        <Loader2 className="h-4 w-4 ml-2 animate-spin" />
+                        جاري الرفع...
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="h-4 w-4 ml-2" />
+                        اختيار صورة
+                      </>
+                    )}
+                  </Button>
+                </div>
+                <div className="mt-2 flex items-center text-xs text-gray-500">
+                  <Info className="h-3 w-3 ml-1" />
+                  <span>الحد الأقصى لحجم الصورة 2 ميجابايت</span>
+                </div>
+              </div>
             </div>
             
             <div className="flex items-center space-x-2 space-x-reverse">
               <Checkbox 
-                id="edit-isActive" 
-                checked={formData.isActive}
+                id="is_active" 
+                checked={formData.is_active}
                 onCheckedChange={(checked) => 
-                  setFormData({...formData, isActive: checked as boolean})
+                  setFormData({...formData, is_active: checked as boolean})
                 }
               />
-              <Label htmlFor="edit-isActive">فئة نشطة (ستظهر للمستخدمين)</Label>
+              <Label htmlFor="is_active">فئة نشطة (ستظهر للمستخدمين)</Label>
             </div>
             
             <DialogFooter className="pt-4">
-              <Button type="submit">حفظ التغييرات</Button>
+              <Button 
+                type="submit" 
+                disabled={uploading || (!imageFile && !formData.image_url)}
+              >
+                {isCreating ? "إضافة الفئة" : "حفظ التغييرات"}
+              </Button>
             </DialogFooter>
           </form>
         </DialogContent>

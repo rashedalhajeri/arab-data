@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, createContext, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -44,6 +43,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [office, setOffice] = useState<OfficeData | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
 
   // استدعاء وظيفة تحميل بيانات المكتب
   const fetchOfficeData = async () => {
@@ -135,10 +135,22 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
     
     checkSession();
 
+    // التحقق من حجم الشاشة لضبط isMobile
+    const checkIfMobile = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+    
+    // التحقق عند التحميل
+    checkIfMobile();
+    
+    // التحقق عند تغيير حجم النافذة
+    window.addEventListener("resize", checkIfMobile);
+
     // إلغاء الاشتراك عند تفكيك المكون
     return () => {
       console.log("تفكيك مكون لوحة التحكم");
       subscription.unsubscribe();
+      window.removeEventListener("resize", checkIfMobile);
     };
   }, [navigate]);
 
@@ -146,14 +158,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   if (loading && !office) {
     return (
       <div dir="rtl" className="bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-indigo-950 dark:to-slate-900 min-h-screen">
-        <GallerySidebar
-          galleryName="جاري التحميل..."
-          galleryUrl="#"
-          galleryLogo="/placeholder.svg"
-        />
-        <main className="mr-64 py-8 px-8 min-h-screen flex items-center justify-center">
+        <div className="flex items-center justify-center min-h-screen">
           <Loader2 className="animate-spin text-purple-700" size={40} />
-        </main>
+        </div>
       </div>
     );
   }
@@ -172,9 +179,10 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
           galleryLogo={office?.logoUrl || "/placeholder.svg"}
         />
 
-        {/* محتوى لوحة التحكم */}
-        <main className="mr-64 py-8 px-8 min-h-screen">
-          <div className="max-w-6xl space-y-8">
+        {/* محتوى لوحة التحكم - متجاوب مع أحجام الشاشات */}
+        <main className={`transition-all duration-300 py-6 px-4 md:py-8 md:px-6 min-h-screen
+                          lg:mr-64 lg:pr-8`}>
+          <div className="max-w-6xl mx-auto space-y-6 md:space-y-8 pt-12 lg:pt-0">
             {children}
           </div>
         </main>
