@@ -12,18 +12,21 @@ export type Database = {
       advertisement_features: {
         Row: {
           advertisement_id: string
+          category: string | null
           created_at: string
           feature: string
           id: string
         }
         Insert: {
           advertisement_id: string
+          category?: string | null
           created_at?: string
           feature: string
           id?: string
         }
         Update: {
           advertisement_id?: string
+          category?: string | null
           created_at?: string
           feature?: string
           id?: string
@@ -41,27 +44,42 @@ export type Database = {
       advertisement_images: {
         Row: {
           advertisement_id: string
+          alt_text: string | null
           created_at: string
+          height: number | null
           id: string
           image_url: string
           is_main: boolean | null
           order: number | null
+          size_in_bytes: number | null
+          storage_path: string | null
+          width: number | null
         }
         Insert: {
           advertisement_id: string
+          alt_text?: string | null
           created_at?: string
+          height?: number | null
           id?: string
           image_url: string
           is_main?: boolean | null
           order?: number | null
+          size_in_bytes?: number | null
+          storage_path?: string | null
+          width?: number | null
         }
         Update: {
           advertisement_id?: string
+          alt_text?: string | null
           created_at?: string
+          height?: number | null
           id?: string
           image_url?: string
           is_main?: boolean | null
           order?: number | null
+          size_in_bytes?: number | null
+          storage_path?: string | null
+          width?: number | null
         }
         Relationships: [
           {
@@ -78,6 +96,7 @@ export type Database = {
           advertisement_id: string
           created_at: string
           id: string
+          is_default: boolean | null
           period: string
           price: string
         }
@@ -85,6 +104,7 @@ export type Database = {
           advertisement_id: string
           created_at?: string
           id?: string
+          is_default?: boolean | null
           period: string
           price: string
         }
@@ -92,6 +112,7 @@ export type Database = {
           advertisement_id?: string
           created_at?: string
           id?: string
+          is_default?: boolean | null
           period?: string
           price?: string
         }
@@ -126,6 +147,8 @@ export type Database = {
           import: string | null
           interior_color: string | null
           is_active: boolean | null
+          is_featured: boolean | null
+          is_verified: boolean | null
           kilometers: string | null
           km_limit: string | null
           manufacturer: string | null
@@ -136,10 +159,12 @@ export type Database = {
           price: string | null
           property_type: string | null
           rent_period: string | null
+          search_vector: unknown | null
           show_features: boolean | null
           title: string
           updated_at: string
           user_id: string
+          view_count: number | null
           year: string | null
         }
         Insert: {
@@ -162,6 +187,8 @@ export type Database = {
           import?: string | null
           interior_color?: string | null
           is_active?: boolean | null
+          is_featured?: boolean | null
+          is_verified?: boolean | null
           kilometers?: string | null
           km_limit?: string | null
           manufacturer?: string | null
@@ -172,10 +199,12 @@ export type Database = {
           price?: string | null
           property_type?: string | null
           rent_period?: string | null
+          search_vector?: unknown | null
           show_features?: boolean | null
           title: string
           updated_at?: string
           user_id: string
+          view_count?: number | null
           year?: string | null
         }
         Update: {
@@ -198,6 +227,8 @@ export type Database = {
           import?: string | null
           interior_color?: string | null
           is_active?: boolean | null
+          is_featured?: boolean | null
+          is_verified?: boolean | null
           kilometers?: string | null
           km_limit?: string | null
           manufacturer?: string | null
@@ -208,53 +239,17 @@ export type Database = {
           price?: string | null
           property_type?: string | null
           rent_period?: string | null
+          search_vector?: unknown | null
           show_features?: boolean | null
           title?: string
           updated_at?: string
           user_id?: string
+          view_count?: number | null
           year?: string | null
         }
         Relationships: [
           {
             foreignKeyName: "advertisements_office_id_fkey"
-            columns: ["office_id"]
-            isOneToOne: false
-            referencedRelation: "offices"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      categories: {
-        Row: {
-          created_at: string
-          id: string
-          image_url: string
-          is_active: boolean
-          name: string
-          office_id: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          image_url: string
-          is_active?: boolean
-          name: string
-          office_id: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          image_url?: string
-          is_active?: boolean
-          name?: string
-          office_id?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "categories_office_id_fkey"
             columns: ["office_id"]
             isOneToOne: false
             referencedRelation: "offices"
